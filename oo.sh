@@ -8,6 +8,13 @@ oo:error() {
     echo ERROR: oo: $@
 }
 
+declare -a __oo__importedTypes
+declare -A __oo__storage
+declare -A __oo__objects
+
+#local -a __oo__importedTypes
+#local -A __oo__storage
+
 ## oo functions ##
 extends() {
     # we can only extend when there's what to extend...
@@ -34,8 +41,16 @@ oo:getFullName(){
 }
 
 oo:initialize(){
-    [ -z $extending ] || debug oo: extending $fullName with $objectType...
+    [ -z $extending ] || debug "oo: basing $fullName (${FUNCNAME[2]}) on $objectType..."
     [ -z $extending ] && debug oo: initializing and constructing $fullName
+
+    # if we are extending, then let's save the real type
+    local visibleAsType="${__oo__objects["$fullName"]}"
+#    local visibleAsType=$objectType
+#    [ -z $extending ] || {
+#        visibleAsType="${FUNCNAME[2]}"
+#        visibleAsType="${visibleAsType#*:}"
+#    }
 
     local methods=($(compgen -A function Type:$objectType::))
 
@@ -47,14 +62,15 @@ oo:initialize(){
             # leave just function name from end
             method=${method##*::}
 
+            #local parentName=${fullName%.*}
 
             # add method aliases
             eval "
                 $fullName.$method() {
                     local this=$fullName
-                    oo:enterObjectInstance $fullName
-                        Type:$objectType::$method \"\$@\"
-                    oo:exitObjectInstance
+                    local __objectType__=$visibleAsType
+                    local __parentType__=$parentType
+                    Type:$objectType::$method \"\$@\"
                 }
                 "
         done
@@ -67,21 +83,24 @@ oo:initialize(){
     # if not extending:
     [ -z $extending ] && eval "
         $fullName() {
+            local __objectType__=$objectType
+            local __parentType__=$parentType
+
             # if no arguments, use the getter:
             [[ \$@ ]] || {
                 $fullName.__getter__;
                 return 0
             }
-            local operator=\$1; shift
-            if [ -z \$1 ]; then
-                case \$operator in
-                    ++) $fullName.__increment__ \"\$@\" ;;
-                    --) $fullName.__decrement__ \"\$@\" ;;
+            local operator=\"\$1\"; shift
+            if [ -z \"\$1\" ]; then
+                case \"\$operator\" in
+                    '++') $fullName.__increment__ \"\$@\" ;;
+                    '--') $fullName.__decrement__ \"\$@\" ;;
                     *)  oo:error no value given
                         return 1 ;;
                 esac
             else
-                case \$operator in
+                case \"\$operator\" in
                     '=') $fullName.__setter__ \"\$@\" ;;
                     '==') $fullName.__equals__ \"\$@\" ;;
                     '+') $fullName.__add__ \"\$@\" ;;
@@ -112,13 +131,11 @@ array:contains(){
   return 1
 }
 
-declare -a importedTypes=()
-
 oo:enableType(){
     ## match Types (:) but not Methods (::) ##
     local types=($(compgen -A function Type: | grep -v ::))
 #    local allTypes=($(compgen -A function Type: | grep -v ::))
-#    local types=($(array:substract allTypes importedTypes))
+#    local types=($(array:substract allTypes __oo__importedTypes))
 
     if [ ${#types[@]} -eq 0 ]; then
         debug oo: no types to import... : ${types[@]}
@@ -127,7 +144,7 @@ oo:enableType(){
         #debug oo: parentName $fullName
         local type;
         for type in "${types[@]}"; do
-            if ! array:contains "$type" "${importedTypes[@]}"; then
+            if ! array:contains "$type" "${__oo__importedTypes[@]}"; then
                 debug oo: enabling type [ $type ]
 
                 # trim Type: from front
@@ -152,6 +169,9 @@ oo:enableType(){
                     debug oo: new object $type, parent: \$fullName
                     local fullName=\$(oo:getFullName \$1)
                     shift
+
+                    __oo__objects[\"\$fullName\"]=\$objectType
+
                     Type:$type
                     oo:initialize \"\$@\"
                 }
@@ -161,7 +181,7 @@ oo:enableType(){
     fi
 
 #    debug oo: all types currently imported: "${types[@]}"
-    importedTypes=("${types[@]}")
+    __oo__importedTypes=("${types[@]}")
 }
 
 ## add for Array ##
@@ -169,7 +189,74 @@ oo:enableType(){
 
 debug oo: starting bash-oo /infinity/ system
 
+Type:Object() {
+
+    if $instance
+    then
+
+        printf ""
+
+    else
+        Type:Object::__getter__() {
+            echo "[$__objectType__] $this"
+        }
+
+        Type:Object::__setter__() {
+            echo "[$__objectType__] is an immutable type"
+        }
+    fi
+
+} && oo:enableType
+
+Type:Var() {
+
+    extends Object
+
+    if $instance
+    then
+
+        printf ""
+
+    else
+
+        Type:Var::__getter__() {
+            [ ! -z $this ] && echo "${__oo__storage[$this]}"
+        }
+        Type:Var::__setter__() {
+            [ ! -z $this ] && __oo__storage["$this"]="$1"
+        }
+
+    fi
+
+} && oo:enableType
+
+Type:String() {
+
+    extends Var
+
+    if $instance
+    then
+
+        printf ""
+
+    else
+
+        printf ""
+
+    fi
+
+} && oo:enableType
+
+Type:Number() {
+
+    extends Var
+
+} && oo:enableType
+
+
 Type:Animal() {
+
+    extends Object
 
     if $instance
     then
@@ -184,35 +271,16 @@ Type:Animal() {
 
 } && oo:enableType
 
-Type:String() {
-#    extends Object
-
-    if $instance
-    then
-
-        Number phone
-
-    else
-        Type:String::__getter__() {
-            echo "That is the string"
-        }
-    fi
-} && oo:enableType
-
-Type:Number() {
-    printf ""
-#    extends Object
-} && oo:enableType
-
 Type:Human() {
+
     extends Animal
-#    extends immutable
 
     if $instance
     then
 
         Number height
         Number width
+        Number phone
         String name
 
     else
@@ -229,17 +297,12 @@ Type:Human() {
             echo "I'm a human ($this)"
         }
 
-        Type:Human::__setter__() {
-            echo "Human is immutable"
-        }
-
         Type:Human::__getter__() {
             $this.__toString__
-#            Type:Human::__toString__
         }
 
         Type:Human::__constructor__() {
-            echo "Hello, I am the constructor!"
+            echo "Hello, I am the constructor! You have passed these arguments: " "$@"
         }
 
     fi
@@ -256,7 +319,15 @@ Bazyli.eat strawberries
 Bazyli.eat lemon
 echo Who is he?
 Bazyli
+# empty
 Bazyli.name
+# set value
+Bazyli.name = "Bazyli Brzóska"
+# set height
+Bazyli.height = 170
+
+echo $(Bazyli.name) is $(Bazyli.height) cm tall.
+
 Bazyli = "house"
 #Bazyli == Mark
 
