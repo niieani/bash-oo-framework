@@ -33,35 +33,6 @@ oo:getFullName(){
 #    local parentObject=
 }
 
-## adds 'this' aliases for the object named $1
-oo:enterObjectInstance() {
-    local objectName=$1
-    #alias this=$1
-
-    local methods=($(compgen -A function $1))
-    if [ ! -z "${methods[*]}" ]; then
-        local method
-        for method in "${methods[@]}"; do
-#            method=${method#*.}
-#            alias this.$method=$1.$method
-            local methodSuffix=${method/$1/}
-            alias this$methodSuffix=$method
-            #debug oo: $method available as this$methodSuffix
-        done
-    fi
-}
-
-## removes 'this' aliases
-oo:exitObjectInstance() {
-    local methods=($(compgen -A alias this))
-    if [ ! -z "${methods[*]}" ]; then
-        local method
-        for method in "${methods[@]}"; do
-            unalias $method
-        done
-    fi
-}
-
 oo:initialize(){
     [ -z $extending ] || debug oo: extending $fullName with $objectType...
     [ -z $extending ] && debug oo: initializing and constructing $fullName
