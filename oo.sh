@@ -33,25 +33,40 @@ oo:getFullName(){
 #    local parentObject=
 }
 
+## adds 'this' aliases for the object named $1
+oo:enterObjectInstance() {
+    local objectName=$1
+    #alias this=$1
+
+    local methods=($(compgen -A function $1))
+    if [ ! -z "${methods[*]}" ]; then
+        local method
+        for method in "${methods[@]}"; do
+#            method=${method#*.}
+#            alias this.$method=$1.$method
+            local methodSuffix=${method/$1/}
+            alias this$methodSuffix=$method
+            #debug oo: $method available as this$methodSuffix
+        done
+    fi
+}
+
+## removes 'this' aliases
+oo:exitObjectInstance() {
+    local methods=($(compgen -A alias this))
+    if [ ! -z "${methods[*]}" ]; then
+        local method
+        for method in "${methods[@]}"; do
+            unalias $method
+        done
+    fi
+}
+
 oo:initialize(){
-    debug oo: initializing and constructing $fullName
-
-    # alias for accessing the object
-#    eval "$name(){ local this=$fullName; $objectType \"\$@\" }"
-# TODO: setter
-
-    # if not extending:
     [ -z $extending ] || debug oo: extending $fullName with $objectType...
-    [ -z $extending ] && eval "
-        $fullName() {
-            local this=$fullName
-            Type:$objectType::__getter__
-        }
-        "
+    [ -z $extending ] && debug oo: initializing and constructing $fullName
 
     local methods=($(compgen -A function Type:$objectType::))
-
-    debug oo: adding methods for type: $objectType
 
     if [ ! -z "${methods[*]}" ]; then
         for method in "${methods[@]}"; do
@@ -66,11 +81,47 @@ oo:initialize(){
             eval "
                 $fullName.$method() {
                     local this=$fullName
-                    Type:$objectType::$method \"\$@\"
+                    oo:enterObjectInstance $fullName
+                        Type:$objectType::$method \"\$@\"
+                    oo:exitObjectInstance
                 }
                 "
         done
     fi
+
+    # alias for accessing the object
+#    eval "$name(){ local this=$fullName; $objectType \"\$@\" }"
+    # TODO: setter
+
+    # if not extending:
+    [ -z $extending ] && eval "
+        $fullName() {
+            # if no arguments, use the getter:
+            [[ \$@ ]] || {
+                $fullName.__getter__;
+                return 0
+            }
+            local operator=\$1; shift
+            if [ -z \$1 ]; then
+                case \$operator in
+                    ++) $fullName.__increment__ \"\$@\" ;;
+                    --) $fullName.__decrement__ \"\$@\" ;;
+                    *)  oo:error no value given
+                        return 1 ;;
+                esac
+            else
+                case \$operator in
+                    '=') $fullName.__setter__ \"\$@\" ;;
+                    '==') $fullName.__equals__ \"\$@\" ;;
+                    '+') $fullName.__add__ \"\$@\" ;;
+                    '-') $fullName.__substract__ \"\$@\" ;;
+                    '*') $fullName.__multiply__ \"\$@\" ;;
+                    '/') $fullName.__divide__ \"\$@\" ;;
+                esac
+            fi
+        }
+        "
+
     # foreach property
     #eval "$name.$property(){ local this=$fullName; $type::$method \"\$@\" }"
 }
@@ -220,9 +271,9 @@ Type:Human() {
             echo "Human is immutable"
         }
 
-#        Type:Human::__getter__() {
-#            Type:Human::__toString__
-#        }
+        Type:Human::__getter__() {
+            Type:Human::__toString__
+        }
 
     fi
 } && oo:enableType
