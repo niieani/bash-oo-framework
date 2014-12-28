@@ -16,7 +16,7 @@ extends() {
     #    local realType=$objectType
     #    local objectType=$extensionType
         Type:$extensionType
-        extending=true objectType=$extensionType oo:initialize \"\$@\"
+        extending=true objectType=$extensionType oo:initialize "$@"
     fi
 }
 
@@ -122,26 +122,17 @@ oo:initialize(){
         }
         "
 
+    # first run with the arguments given only when an operator is in use
+    if [ ! -z $1 ]; then
+        if [ $1 = '~' ]; then
+            $fullName.__constructor__ "$@"
+        else
+            $fullName "$@"
+        fi
+    fi
+
     # foreach property
     #eval "$name.$property(){ local this=$fullName; $type::$method \"\$@\" }"
-}
-
-# TODO: something is wrong with this:
-array:substract(){
-    declare -a argAry1=("${!1}")
-    declare -a argAry2=("${!2}")
-    __output_array_temp__=()
-
-    for i in "${argAry1[@]}"; do
-        skip=
-        for j in "${argAry2[@]}"; do
-            [[ $i == $j ]] && { skip=1; break; }
-        done
-        [[ -n $skip ]] || __output_array_temp__+=("$i")
-    done
-    printf -- '%s\n' "${__output_array_temp__[@]}"
-#    echo "${__output_array_temp__[@]}"
-#    declare -p __output_array_temp__
 }
 
 array:contains(){
@@ -272,7 +263,12 @@ Type:Human() {
         }
 
         Type:Human::__getter__() {
-            Type:Human::__toString__
+            $this.__toString__
+#            Type:Human::__toString__
+        }
+
+        Type:Human::__constructor__() {
+            echo "Hello, I am the constructor!"
         }
 
     fi
@@ -281,6 +277,8 @@ Type:Human() {
 ## usage ##
 echo Creating Human Bazyli:
 Human Bazyli
+# if you want to use a constructor, create an object and use the tilda ~ operator
+#Human Mambo ~ Bazyli Brzoska 150 960
 #Bazyli.height = 100
 echo Eating:
 Bazyli.eat strawberries
@@ -288,4 +286,32 @@ Bazyli.eat lemon
 echo Who is he?
 Bazyli
 Bazyli.name
+Bazyli = "house"
 #Bazyli == Mark
+
+
+
+
+
+
+
+
+############
+
+# TODO: something is wrong with this:
+array:substract(){
+    declare -a argAry1=("${!1}")
+    declare -a argAry2=("${!2}")
+    __output_array_temp__=()
+
+    for i in "${argAry1[@]}"; do
+        skip=
+        for j in "${argAry2[@]}"; do
+            [[ $i == $j ]] && { skip=1; break; }
+        done
+        [[ -n $skip ]] || __output_array_temp__+=("$i")
+    done
+    printf -- '%s\n' "${__output_array_temp__[@]}"
+#    echo "${__output_array_temp__[@]}"
+#    declare -p __output_array_temp__
+}
