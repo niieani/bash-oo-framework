@@ -3,7 +3,7 @@ oo:extends() {
     if [ ! -z $fullName ]; then
         local extensionType="$1"
         shift
-        Type:$extensionType
+        class:$extensionType
         extending=true objectType=$extensionType oo:initialize "$@"
     fi
 }
@@ -81,17 +81,21 @@ oo:isMethodDeclared() {
 }
 
 oo:initialize(){
-    [ -z $extending ] || oo:debug "oo: basing $fullName (${FUNCNAME[2]}) on $objectType..."
-    [ -z $extending ] && oo:debug "oo: initializing and constructing $fullName"
-
     # if we are extending, then let's save the real type
     local visibleAsType="${__oo__objects["$fullName"]}"
 
-    local methods=($(compgen -A function Type:$objectType::))
-    methods+=($(compgen -A function Static:$objectType::))
+    [ -z $extending ] || oo:debug "oo: basing $fullName (${FUNCNAME[2]}) on $objectType..."
+    [ -z $extending ] && oo:debug "oo: initializing and constructing $fullName ($visibleAsType)"
 
-    if [ ! -z "${methods[*]}" ]; then
-        for method in "${methods[@]}"; do
+    ## add methods
+    local instanceMethods=($(compgen -A function $objectType::))
+    local staticMethods=($(compgen -A function $objectType.))
+
+#    local methods=( "${instanceMethods[@]}" "${staticMethods[@]}" )
+
+    if [ ! -z "${instanceMethods[*]}" ]; then
+        local method
+        for method in "${instanceMethods[@]}"; do
 
             # leave just function name from end
             method=${method##*::}
@@ -106,12 +110,36 @@ oo:initialize(){
                     local this=$fullName
                     local __objectType__=$visibleAsType
                     local __parentType__=$parentType
-                    Type:$objectType::$method \"\$@\"
+                    $objectType::$method \"\$@\"
                 }
                 "
         done
     fi
-    
+
+    ## don't map static types
+    if [[ $fullName != $visibleAsType ]] && [ ! -z "${staticMethods[*]}" ]; then
+        local method
+        for method in "${staticMethods[@]}"; do
+
+            # leave just function name from end
+            method=${method##*.}
+
+            oo:debug:2 "oo: mapping static method: $fullName.$method ==> $method"
+
+            #local parentName=${fullName%.*}
+
+            # add method aliases
+            eval "
+                $fullName.$method() {
+                    local self=$fullName
+                    local __objectType__=$visibleAsType
+                    local __parentType__=$parentType
+                    $objectType.$method \"\$@\"
+                }
+                "
+        done
+    fi
+
     # if not extending:
     [ -z $extending ] && eval "
         $fullName() {
@@ -176,8 +204,8 @@ oo:initialize(){
 
 oo:enableType(){
     ## match Types (:) but not Methods (::) ##
-    local types=($(compgen -A function Type: | grep -v ::))
-    types+=($(compgen -A function Static: | grep -v ::))
+    local types=($(compgen -A function class:)) # | grep -v ::
+    types+=($(compgen -A function static:))
 
     if [ ${#types[@]} -eq 0 ]; then
         oo:debug "oo: no types to import... : ${types[@]}"
@@ -187,14 +215,14 @@ oo:enableType(){
         for fullType in "${types[@]}"; do
             if ! oo:array:contains "$fullType" "${__oo__importedTypes[@]}"; then
 
-                # trim Type: or Static: from front
+                # trim class: or static: from front
                 type=${fullType#*:}
 
                 # import methods if not static
-                if [[ ${fullType:0:6} != "Static" ]]; then
+                if [[ ${fullType:0:6} != "static" ]]; then
                 {
                     oo:debug "oo: enabling type [ $fullType ]"
-                    instance=false Type:$type
+                    instance=false class:$type
                 }
                 else
                 {
@@ -205,6 +233,8 @@ oo:enableType(){
                 # 'new' function for creating the object
                 eval "
                 $type() {
+                    ## TODO: add name sanitization, like, you cannot create objects with DOTs (.)
+
                     local parentType=\${FUNCNAME[1]}
                     [[ ! -z \$__private__ ]] && parentType=\${FUNCNAME[2]}
                     parentType=\${parentType#*:}
@@ -233,7 +263,7 @@ oo:enableType(){
                 }
                 "
 
-                if [[ ${fullType:0:6} == "Static" ]]; then
+                if [[ ${fullType:0:6} == "static" ]]; then
                 {
                     ## static means singleton - simply replace the function with an instance ##
                     $type $type
@@ -244,7 +274,7 @@ oo:enableType(){
                     eval "
                     # TODO: if private, don't allow public access
 
-                    ~$type() {
+                    private:$type() {
                         __private__=true $type \"\$@\"
                     }
                     "

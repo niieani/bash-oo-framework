@@ -12,8 +12,8 @@ Bazyli.height = 100
 
 echo "[Eating:]"
 
-Bazyli.eat strawberries
-Bazyli.eat lemon
+Bazyli.Eat strawberries
+Bazyli.Eat lemon
 
 echo "[Who is he?]"
 
@@ -44,14 +44,14 @@ Bazyli = "house"
 Array Letters
 Array Letters2
 
-Letters.add "Hello Bobby"
-Letters.add "Hello Jean" "Hello Maria"
-Letters2.add "Hello Frank" "Bomba"
-Letters2.add "Dude,
+Letters.Add "Hello Bobby"
+Letters.Add "Hello Jean" "Hello Maria"
+Letters2.Add "Hello Frank" "Bomba"
+Letters2.Add "Dude,
               How are you doing?"
 
 letters2=$(Letters2)
-Letters.merge "${!letters2}"
+Letters.Merge "${!letters2}"
 
 letters=$(Letters)
 for letter in "${!letters}"; do
@@ -60,9 +60,17 @@ for letter in "${!letters}"; do
 done
 
 ## or simply:
-Letters.list
+Letters.List
 
-Letters.contains "Hello" && echo "This shouldn't happen"
-Letters.contains "Hello Bobby" && echo "Bobby was welcomed"
+Letters.Contains "Hello" && echo "This shouldn't happen"
+Letters.Contains "Hello Bobby" && echo "Bobby was welcomed"
 
-Bazyli.example "one single sentence" two "and here" "we put" "some stuff"
+Bazyli.Example "one single sentence" two "and here" "we put" "some stuff"
+
+Singleton.PrintYoMama
+Singleton = "some value"
+Singleton
+
+Singleton.YoMamaNumber
+Singleton.YoMamaNumber ++
+Singleton.YoMamaNumber

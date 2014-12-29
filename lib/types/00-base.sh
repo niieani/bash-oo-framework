@@ -1,4 +1,4 @@
-Type:Object() {
+class:Object() {
 
     if $instance
     then
@@ -6,22 +6,22 @@ Type:Object() {
         :
 
     else
-        Type:Object::__getter__() {
+        Object::__getter__() {
             echo "[$__objectType__] $this"
         }
 
-        Type:Object::__setter__() {
+        Object::__setter__() {
             oo:throw "[$__objectType__] is an immutable type."
         }
 
-        Type:Object::__type__() {
+        Object::__type__() {
             echo "$__objectType__"
         }
     fi
 
 } && oo:enableType
 
-Type:Var() {
+class:Var() {
 
     extends Object
 
@@ -32,10 +32,11 @@ Type:Var() {
 
     else
 
-        Type:Var::__getter__() {
+        Var::__getter__() {
             [ ! -z $this ] && echo "${__oo__storage[$this]}"
         }
-        Type:Var::__setter__() {
+
+        Var::__setter__() {
             [ ! -z $this ] && __oo__storage["$this"]="$1"
         }
 
@@ -43,7 +44,7 @@ Type:Var() {
 
 } && oo:enableType
 
-Type:Array() {
+class:Array() {
     ## TODO: add for Array ##
     # http://brizzled.clapper.org/blog/2011/10/28/a-bash-stack/
 
@@ -55,11 +56,11 @@ Type:Array() {
     if $instance
     then
 
-        ~Var storedAsName
+        private:Var storedAsName
 
     else
 
-        Type:Array::__constructor__() {
+        Array::__constructor__() {
             local storedAsName="__oo__array_${this//./_}"
             $this.storedAsName = "$storedAsName"
             oo:debug oo: creating array [ $storedAsName ]
@@ -67,12 +68,12 @@ Type:Array() {
         }
 
         ## use the array like this: "${!Array}"
-        Type:Array::__getter__() {
+        Array::__getter__() {
             echo "$($this.storedAsName)[@]"
         }
 
         ## generates a list separated by new lines
-        Type:Array::list() {
+        Array::List() {
             (
                 IFS=$'\n'
                 local indirectAccess="$($this.storedAsName)[*]"
@@ -80,7 +81,7 @@ Type:Array() {
             )
         }
 
-        Type:Array::contains() {
+        Array::Contains() {
             local realArray="$($this)"
             local e
             for e in "${!realArray}"
@@ -89,17 +90,17 @@ Type:Array() {
             return 1
         }
 
-        Type:Array::add() {
+        Array::Add() {
             declare -ga "$($this.storedAsName)+=( \"\$@\" )"
         }
 
-        Type:Array::merge() {
-            $this.add "$@"
+        Array::Merge() {
+            $this.Add "$@"
         }
     fi
 }
 
-Type:String() {
+class:String() {
 
     extends Var
 
@@ -116,35 +117,40 @@ Type:String() {
 
 } && oo:enableType
 
-Type:Number() {
+class:Number() {
 
     extends Var
 
     if $instance
     then
 
-        ~Var storedAsName
+        private:Var storedAsName
 
     else
 
-        Type:Number::__constructor__() {
+        Number::__constructor__() {
             local storedAsName="__oo__number_${this//./_}"
             $this.storedAsName = "$storedAsName"
             oo:debug oo: creating number [ $storedAsName ]
             declare -gi "$storedAsName"
         }
 
-        Type:Number::__getter__() {
+        Number::__getter__() {
             local storedAsName=$($this.storedAsName)
             echo "${!storedAsName}"
         }
 
-        Type:Number::__setter__() {
+        Number::__setter__() {
             @mixed newValue
             @@verify "$@"
 
             local storedAsName=$($this.storedAsName)
             declare -gi "$storedAsName=$newValue"
+        }
+
+        Number::__increment__() {
+            local storedAsName=$($this.storedAsName)
+            declare -gi "$storedAsName+=1"
         }
 
     fi

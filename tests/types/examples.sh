@@ -1,4 +1,4 @@
-Type:Animal() {
+class:Animal() {
 
     extends Object
 
@@ -8,14 +8,14 @@ Type:Animal() {
         :
 
     else
-        Type:Animal::__getter__() {
+        Animal::__getter__() {
             echo "That is the animal"
         }
     fi
 
 } && oo:enableType
 
-Type:Human() {
+class:Human() {
 
     extends Animal
 
@@ -29,11 +29,11 @@ Type:Human() {
 
     else
 
-        Type:Human::eat() {
+        Human::Eat() {
             echo "$this is eating $1"
         }
 
-        Type:Human::example() {
+        Human::Example() {
             ## TODO: this shouldn't need eval, but for the strangest reason ever, it does.
             ## also: subshell protects variables from falling through to another overload
             ## perhaps we could use it here?
@@ -61,31 +61,39 @@ Type:Human() {
 
         }
 
-        Type:Human::__equals__() {
+        Human::__equals__() {
             echo "TODO: Checking if $this equals $1"
         }
 
-        Type:Human::__toString__() {
+        Human::__toString__() {
             echo "I'm a human ($this)"
         }
 
-        Type:Human::__getter__() {
+        Human::__getter__() {
             $this.__toString__
         }
 
-        Type:Human::__constructor__() {
+        Human::__constructor__() {
             oo:debug "Hello, I am the constructor! You have passed these arguments [ $@ ]"
         }
 
     fi
 } && oo:enableType
 
-Static:Singleton() {
+static:Singleton() {
 
     extends Var
 
-    Type:Singleton::__constructor__() {
+    Number YoMamaNumber = 150
+
+    Singleton::__constructor__() {
         echo "Yo Yo. I'm a singleton. Meaning. Static. Yo."
+        Singleton = "Yo Mama!"
+    }
+
+    Singleton.PrintYoMama() {
+        ## prints the stored value, which is set in the constructor above
+        echo "$(Singleton) $(Singleton.YoMamaNumber)!"
     }
 
 } && oo:enableType
