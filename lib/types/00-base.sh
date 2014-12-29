@@ -110,13 +110,7 @@ Type:String() {
 
     else
 
-        Type:String::__setter__() {
-            $this.doTheBoogy "$1"
-        }
-
-        Type:String::doTheBoogy() {
-            [ ! -z $this ] && __oo__storage["$this"]="$1"
-        }
+        :
 
     fi
 

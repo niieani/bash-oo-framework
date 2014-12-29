@@ -88,6 +88,7 @@ oo:initialize(){
     local visibleAsType="${__oo__objects["$fullName"]}"
 
     local methods=($(compgen -A function Type:$objectType::))
+    methods+=($(compgen -A function Static:$objectType::))
 
     if [ ! -z "${methods[*]}" ]; then
         for method in "${methods[@]}"; do
@@ -176,21 +177,30 @@ oo:initialize(){
 oo:enableType(){
     ## match Types (:) but not Methods (::) ##
     local types=($(compgen -A function Type: | grep -v ::))
+    types+=($(compgen -A function Static: | grep -v ::))
 
     if [ ${#types[@]} -eq 0 ]; then
-        oo:debug oo: no types to import... : ${types[@]}
+        oo:debug "oo: no types to import... : ${types[@]}"
     else
-        local type;
-        for type in "${types[@]}"; do
-            if ! oo:array:contains "$type" "${__oo__importedTypes[@]}"; then
-            
-                oo:debug "oo: enabling type [ $type ]"
+        local fullType
+        local type
+        for fullType in "${types[@]}"; do
+            if ! oo:array:contains "$fullType" "${__oo__importedTypes[@]}"; then
 
-                # trim Type: from front
-                type=${type#*:}
+                # trim Type: or Static: from front
+                type=${fullType#*:}
 
-                # import methods
-                instance=false Type:$type
+                # import methods if not static
+                if [[ ${fullType:0:6} != "Static" ]]; then
+                {
+                    oo:debug "oo: enabling type [ $fullType ]"
+                    instance=false Type:$type
+                }
+                else
+                {
+                    oo:debug "oo: enabling static type [ $fullType ]"
+                }
+                fi
 
                 # 'new' function for creating the object
                 eval "
@@ -218,19 +228,31 @@ oo:enableType(){
                         __oo__objects_private[\"\$fullName\"]=\$objectType
                     fi
 
-                    Type:$type
+                    $fullType
                     oo:initialize \"\$@\"
                 }
-
-                # TODO: if private, don't allow public access
-                ## private definition ##
-                ~$type() {
-                    __private__=true $type \"\$@\"
-                }
                 "
-                
-                ## alias enabling to define parameters ##
-                alias @$type="oo:stashPreviousLocal; declare -a \"__oo__param_types+=( $type )\"; local "
+
+                if [[ ${fullType:0:6} == "Static" ]]; then
+                {
+                    ## static means singleton - simply replace the function with an instance ##
+                    $type $type
+                }
+                else
+                {
+                    ## private definition only for non-static types ##
+                    eval "
+                    # TODO: if private, don't allow public access
+
+                    ~$type() {
+                        __private__=true $type \"\$@\"
+                    }
+                    "
+
+                    ## alias enabling to define parameters ##
+                    alias @$type="oo:stashPreviousLocal; declare -a \"__oo__param_types+=( $type )\"; local "
+                }
+                fi
             fi
         done
     fi

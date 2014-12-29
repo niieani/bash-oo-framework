@@ -80,3 +80,12 @@ Type:Human() {
     fi
 } && oo:enableType
 
+Static:Singleton() {
+
+    extends Var
+
+    Type:Singleton::__constructor__() {
+        echo "Yo Yo. I'm a singleton. Meaning. Static. Yo."
+    }
+
+} && oo:enableType

@@ -8,7 +8,7 @@ source "${__oo__path}/lib/boilerplate.sh"
 ## MAIN ##
 oo:debug:enable
 
-oo:import lib/oo-core
+oo:import lib/kernel
 oo:import lib/types
 oo:import tests/types/examples
 oo:import tests/core-test
