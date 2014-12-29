@@ -55,27 +55,27 @@ Type:Array() {
     if $instance
     then
 
-        ~Var arrayName
+        ~Var storedAsName
 
     else
 
         Type:Array::__constructor__() {
-            local arrayName="__oo__array_${this//./_}"
-            $this.arrayName = "$arrayName"
-            oo:debug oo: creating array [ $arrayName ]
-            declare -ga "$arrayName"
+            local storedAsName="__oo__array_${this//./_}"
+            $this.storedAsName = "$storedAsName"
+            oo:debug oo: creating array [ $storedAsName ]
+            declare -ga "$storedAsName"
         }
 
         ## use the array like this: "${!Array}"
         Type:Array::__getter__() {
-            echo "$($this.arrayName)[@]"
+            echo "$($this.storedAsName)[@]"
         }
 
         ## generates a list separated by new lines
         Type:Array::list() {
             (
                 IFS=$'\n'
-                local indirectAccess="$($this.arrayName)[*]"
+                local indirectAccess="$($this.storedAsName)[*]"
                 echo "${!indirectAccess}"
             )
         }
@@ -83,12 +83,14 @@ Type:Array() {
         Type:Array::contains() {
             local realArray="$($this)"
             local e
-            for e in "${!realArray}"; do [[ "$e" == "$1" ]] && return 0; done
+            for e in "${!realArray}"
+                do [[ "$e" == "$1" ]] && return 0
+            done
             return 1
         }
 
         Type:Array::add() {
-            declare -ga "$($this.arrayName)+=( \"\$@\" )"
+            declare -ga "$($this.storedAsName)+=( \"\$@\" )"
         }
 
         Type:Array::merge() {
@@ -122,8 +124,36 @@ Type:String() {
 
 Type:Number() {
 
-    ## TODO: use declare -gi
     extends Var
+
+    if $instance
+    then
+
+        ~Var storedAsName
+
+    else
+
+        Type:Number::__constructor__() {
+            local storedAsName="__oo__number_${this//./_}"
+            $this.storedAsName = "$storedAsName"
+            oo:debug oo: creating number [ $storedAsName ]
+            declare -gi "$storedAsName"
+        }
+
+        Type:Number::__getter__() {
+            local storedAsName=$($this.storedAsName)
+            echo "${!storedAsName}"
+        }
+
+        Type:Number::__setter__() {
+            @mixed newValue
+            @@verify "$@"
+
+            local storedAsName=$($this.storedAsName)
+            declare -gi "$storedAsName=$newValue"
+        }
+
+    fi
 
 } && oo:enableType
 

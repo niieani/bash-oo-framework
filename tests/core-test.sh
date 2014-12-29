@@ -1,10 +1,11 @@
 #!/bin/bash
 
-
-oo:debug:enable
+#oo:debug:enable
 
 ## usage ##
 echo "[Creating Human Bazyli:]"
+
+Object simpleObject
 
 Human Bazyli
 Bazyli.height = 100
@@ -63,5 +64,5 @@ Letters.list
 
 Letters.contains "Hello" && echo "This shouldn't happen"
 Letters.contains "Hello Bobby" && echo "Bobby was welcomed"
-Letters.example "one single sentence" two "and here" "we put" "some stuff"
 
+Bazyli.example "one single sentence" two "and here" "we put" "some stuff"

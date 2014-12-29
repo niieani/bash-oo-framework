@@ -1,64 +1,7 @@
-shopt -s expand_aliases
-
-declare -a __oo__importedTypes
-declare -A __oo__storage
-declare -A __oo__objects
-declare -A __oo__objects_private
-
-oo:array:contains(){
-  local e
-  for e in "${@:2}"; do [[ "$e" == "$1" ]] && return 0; done
-  return 1
-}
-
-# http://stackoverflow.com/questions/2990414/echo-that-outputs-to-stderr
-oo:echoerr() { cat <<< "$@" 1>&2; }
-
-oo:debug() {
-    [ ! -z $__oo__debug ] && oo:echoerr "[oo-oo:debug] " "$@"
-}
-
-oo:debug:2() {
-    [ $__oo__debug > 1 ] && oo:echoerr "[oo-oo:debug] " "$@"
-}
-
-oo:debug:3() {
-    [ $__oo__debug > 2 ] && oo:echoerr "[oo-oo:debug] " "$@"
-}
-
-oo:debug:enable() {
-    [ -z $1 ] && declare -ig "__oo__debug=1"
-    [ -z $1 ] || declare -ig "__oo__debug=$1"
-}
-
-oo:throw() {
-    oo:echoerr "[oo-error] " "$@"
-}
-
-oo:import() {
-    local libPath
-	for libPath in "$@"; do
-	    ## correct path if relative
-	    [ ! -e "$libPath" ] && libPath="${__oo__path}/${libPath}"
-        [ ! -e "$libPath" ] && libPath="${libPath}.sh"
-        [ ! -e "$libPath" ] && oo:throw "cannot import $libPath" && return 1
-
-		if [ -d "$libPath" ]; then
-		    local file
-			for file in $libPath/*.sh
-			do
-			    source "$file"
-			done
-		elif [ -f "$libPath" ]; then
-			source "$libPath"
-		fi
-	done
-}
-
 oo:extends() {
     # we can only extend when there's what to extend...
     if [ ! -z $fullName ]; then
-        local extensionType=$1
+        local extensionType="$1"
         shift
         Type:$extensionType
         extending=true objectType=$extensionType oo:initialize "$@"
@@ -95,7 +38,7 @@ oo:assignParamsToLocal() {
         if [ $type = 'params' ]; then
             for _x in "${!__oo__params[@]}"
             do
-                oo:debug:3 oo: we are params so we shift
+                oo:debug:3 "oo: we are params so we shift"
                 [ "${__oo__param_types[$_x]}" != 'params' ] && eval shift
             done
             eval "$variable=\"\$@\""
@@ -117,6 +60,7 @@ oo:assignParamsToLocal() {
 alias oo:stashPreviousLocal="declare -a \"__oo__params+=( \$_ )\""
 alias @@verify="oo:stashPreviousLocal; oo:assignParamsToLocal " # ; for i in \${!__oo__params[@]}; do
 alias @params="oo:stashPreviousLocal; declare -a \"__oo__param_types+=( params )\"; local "
+alias @mixed="oo:stashPreviousLocal; declare -a \"__oo__param_types+=( mixed )\"; local "
 
 oo:getFullName(){
     local thisName=$1
@@ -138,7 +82,7 @@ oo:isMethodDeclared() {
 
 oo:initialize(){
     [ -z $extending ] || oo:debug "oo: basing $fullName (${FUNCNAME[2]}) on $objectType..."
-    [ -z $extending ] && oo:debug oo: initializing and constructing $fullName
+    [ -z $extending ] && oo:debug "oo: initializing and constructing $fullName"
 
     # if we are extending, then let's save the real type
     local visibleAsType="${__oo__objects["$fullName"]}"
@@ -148,10 +92,10 @@ oo:initialize(){
     if [ ! -z "${methods[*]}" ]; then
         for method in "${methods[@]}"; do
 
-            oo:debug:2 "oo: mapping method: $fullName.${method##*::} ==> $method"
-
             # leave just function name from end
             method=${method##*::}
+
+            oo:debug:2 "oo: mapping method: $fullName.$method ==> $method"
 
             #local parentName=${fullName%.*}
 
@@ -213,9 +157,9 @@ oo:initialize(){
         "
 
     # first run with the arguments given only when an operator is in use
-    if [ ! -z $1 ]; then
+    if [ ! -z "$1" ]; then
         # do we use the constructor operator? ~~
-        if [ $1 = '~~' ]; then
+        if [ "$1" = '~~' ]; then
             shift
             oo:isMethodDeclared $fullName.__constructor__ && $fullName.__constructor__ "$@"
         else
@@ -240,7 +184,7 @@ oo:enableType(){
         for type in "${types[@]}"; do
             if ! oo:array:contains "$type" "${__oo__importedTypes[@]}"; then
             
-                oo:debug oo: enabling type [ $type ]
+                oo:debug "oo: enabling type [ $type ]"
 
                 # trim Type: from front
                 type=${type#*:}
@@ -257,7 +201,7 @@ oo:enableType(){
                     local objectType=$type
 
                     if [ \$parentType = \$objectType ]; then
-                        oo:throw recurrent nesting types within itself is not possible
+                        oo:throw 'recurrent nesting types within itself is not possible'
                         return 1
                     fi
 
