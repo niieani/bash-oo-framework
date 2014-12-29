@@ -8,9 +8,11 @@ oo:error() {
     echo ERROR: oo: $@
 }
 
+shopt -s expand_aliases
 declare -a __oo__importedTypes
 declare -A __oo__storage
 declare -A __oo__objects
+declare -A __oo__objects_private
 
 #local -a __oo__importedTypes
 #local -A __oo__storage
@@ -29,6 +31,14 @@ extends() {
 
 ### REAL THING ###
 
+--(){
+    :
+    # get count of 'params'
+    # get the names of latest 'count' of added declarations ( declare ), ignore the "params" one
+    # test if the types are right, if not, add note and "read" to wait for user input
+    # assign correct values approprietly so they are avail later on
+}
+
 oo:getFullName(){
     local thisName=$1
     local parentName=$fullName
@@ -38,6 +48,13 @@ oo:getFullName(){
         echo $parentName.$thisName;
     fi
 #    local parentObject=
+}
+
+oo:isMethodDeclared() {
+    local fullMethodName="$1"
+    local compgenOutput=($(compgen -A function $fullMethodName))
+    [[ ${#compgenOutput[@]} -gt 0 ]] && return 0
+    return 1
 }
 
 oo:initialize(){
@@ -83,6 +100,16 @@ oo:initialize(){
     # if not extending:
     [ -z $extending ] && eval "
         $fullName() {
+
+            #debug \"oo: CALL STACK: \${FUNCNAME[@]}\"
+#            array:contains __oo__objects_private \"${__oo__objects_private[@]}\" || {
+#                parentType=\${FUNCNAME[2]}
+#                [[ \${parentType%%:*} = 'Type' ]] && {
+#                    oo:error cannot access private type
+#                    return 1
+#                }
+#            }
+
             local __objectType__=$objectType
             local __parentType__=$parentType
 
@@ -114,11 +141,17 @@ oo:initialize(){
 
     # first run with the arguments given only when an operator is in use
     if [ ! -z $1 ]; then
-        if [ $1 = '~' ]; then
-            $fullName.__constructor__ "$@"
+        if [ $1 = '~~' ]; then
+            shift
+            oo:isMethodDeclared $fullName.__constructor__ && $fullName.__constructor__ "$@"
         else
+            # we are immediately doing an operation, so use the default constructor and run the thing!
+            oo:isMethodDeclared $fullName.__constructor__ && $fullName.__constructor__
             $fullName "$@"
         fi
+    else
+        # just run the constructor if any
+        oo:isMethodDeclared $fullName.__constructor__ && $fullName.__constructor__
     fi
 
     # foreach property
@@ -136,6 +169,8 @@ oo:enableType(){
     local types=($(compgen -A function Type: | grep -v ::))
 #    local allTypes=($(compgen -A function Type: | grep -v ::))
 #    local types=($(array:substract allTypes __oo__importedTypes))
+
+
 
     if [ ${#types[@]} -eq 0 ]; then
         debug oo: no types to import... : ${types[@]}
@@ -157,6 +192,7 @@ oo:enableType(){
                 eval "
                 $type() {
                     local parentType=\${FUNCNAME[1]}
+                    [[ ! -z \$__private__ ]] && parentType=\${FUNCNAME[2]}
                     parentType=\${parentType#*:}
                     local objectType=$type
 
@@ -166,16 +202,46 @@ oo:enableType(){
                     fi
 
                     local parentName=\$fullName
-                    debug oo: new object $type, parent: \$fullName
                     local fullName=\$(oo:getFullName \$1)
                     shift
 
                     __oo__objects[\"\$fullName\"]=\$objectType
 
+                    if [[ -z \$__private__ ]]; then
+                        debug oo: new object $type, parent: \$parentName
+                    else
+                        debug oo: new private object $type, parent: \$parentName
+                        __oo__objects_private[\"\$fullName\"]=\$objectType
+                    fi
+
                     Type:$type
                     oo:initialize \"\$@\"
                 }
+
+                # TODO: if private, don't allow public access
+                ## private definition ##
+                ~$type() {
+                    __private__=true $type \"\$@\"
+                }
+
+                ## for defining parameters ##
+                #alias @$type=\"declare -a \\\"params+=( $type )\\\"; local\"
                 "
+
+                local mimikpart="Mimi"
+
+                local mimik="A${mimikpart}"
+                echo \'$mimik\'
+                alias $mimik='echo DOING MIMI'
+
+                local newAlias=\"A${type}\"
+                echo \'$newAlias\'
+                alias $newAlias='echo DOING MIMI'
+                
+#                alias $newAlias='declare -a "params+=( $type )"; local'
+#                eval "alias mimi='ls'"
+#                alias mimi='ls'
+#                eval mimi
             fi
         done
     fi
@@ -188,13 +254,14 @@ oo:enableType(){
 # http://brizzled.clapper.org/blog/2011/10/28/a-bash-stack/
 
 debug oo: starting bash-oo /infinity/ system
+#alias mimi='echo umpa'
 
 Type:Object() {
 
     if $instance
     then
 
-        printf ""
+        :
 
     else
         Type:Object::__getter__() {
@@ -202,7 +269,11 @@ Type:Object() {
         }
 
         Type:Object::__setter__() {
-            echo "[$__objectType__] is an immutable type"
+            debug "[$__objectType__] is an immutable type."
+        }
+
+        Type:Object::__type__() {
+            echo "$__objectType__"
         }
     fi
 
@@ -215,7 +286,7 @@ Type:Var() {
     if $instance
     then
 
-        printf ""
+        :
 
     else
 
@@ -230,6 +301,80 @@ Type:Var() {
 
 } && oo:enableType
 
+Type:Array() {
+
+    extends Object
+
+    if $instance
+    then
+
+        ~Var arrayName
+
+    else
+
+        Type:Array::__constructor__() {
+            local arrayName="__oo__array_${this//./_}"
+            $this.arrayName = "$arrayName"
+            debug oo: creating array [ $arrayName ]
+            declare -ga "$arrayName"
+        }
+
+#        Type:Array::elements() {
+##            eval "echo \"\${$($this.arrayName)[@]}\""
+#            local indirectAccess="$($this.arrayName)[@]"
+#            echo "${!indirectAccess}"
+#        }
+
+        ## use the array like this: "${!Array}"
+        Type:Array::__getter__() {
+            echo "$($this.arrayName)[@]"
+        }
+
+        ## generates a list separated by new lines
+        Type:Array::list() {
+            (
+                IFS=$'\n'
+                local indirectAccess="$($this.arrayName)[*]"
+                echo "${!indirectAccess}"
+            )
+        }
+
+        Type:Array::contains() {
+            local realArray="$($this)"
+            local e
+            for e in "${!realArray}"; do [[ "$e" == "$1" ]] && return 0; done
+            return 1
+        }
+
+        Type:Array::add() {
+            declare -ga "$($this.arrayName)+=( \"\$@\" )"
+        }
+
+        Type:Array::merge() {
+            AMimi  something
+            AArray      mergeWith
+            ANumber     many
+
+            declare -p | grep mergeWith
+            declare -p | grep many
+            declare -p | grep params
+
+#            @mixed      additive
+#            @mixed:optional size
+#            @params rest
+            -- "$*"
+
+
+        }
+
+#        Type:Array::merge() {
+#            local params="$@"
+#            $($this.arrayName)=( ${params[@]} $(${this}.elements) )
+#        }
+
+    fi
+}
+
 Type:String() {
 
     extends Var
@@ -237,11 +382,17 @@ Type:String() {
     if $instance
     then
 
-        printf ""
+        :
 
     else
 
-        printf ""
+        Type:String::__setter__() {
+            $this.doTheBoogy "$1"
+        }
+
+        Type:String::doTheBoogy() {
+            [ ! -z $this ] && __oo__storage["$this"]="$1"
+        }
 
     fi
 
@@ -261,7 +412,7 @@ Type:Animal() {
     if $instance
     then
 
-        printf ""
+        :
 
     else
         Type:Animal::__getter__() {
@@ -302,7 +453,7 @@ Type:Human() {
         }
 
         Type:Human::__constructor__() {
-            echo "Hello, I am the constructor! You have passed these arguments: " "$@"
+            debug "Hello, I am the constructor! You have passed these arguments [ $@ ]"
         }
 
     fi
@@ -311,8 +462,8 @@ Type:Human() {
 ## usage ##
 echo Creating Human Bazyli:
 Human Bazyli
-# if you want to use a constructor, create an object and use the tilda ~ operator
-#Human Mambo ~ Bazyli Brzoska 150 960
+# if you want to use a constructor, create an object and use the double tilda ~~ operator
+Human Mambo ~~ Mambo Jumbo 150 960
 #Bazyli.height = 100
 echo Eating:
 Bazyli.eat strawberries
@@ -328,14 +479,35 @@ Bazyli.height = 170
 
 echo $(Bazyli.name) is $(Bazyli.height) cm tall.
 
+# throws an error
 Bazyli = "house"
-#Bazyli == Mark
+
+Array Letters
+Array Letters2
+
+Letters.add "Hello Jean" "Hello Maria"
+Letters.add "Hello Bobby"
+Letters2.add "Hello Frank" "Bomba"
+Letters2.add "Dude,
+              How are you doing?"
+
+letters2=$(Letters2)
+Letters.add "${!letters2}"
+#Letters.merge "yes" "true"
 
 
+letters=$(Letters)
+for letter in "${!letters}"; do
+    echo ----
+    echo "$letter"
+done
 
+## or simply:
+#Letters.list
 
-
-
+Letters.contains "Hello" && echo "This shouldn't happen"
+Letters.contains "Hello Bobby" && echo "Bobby was welcomed"
+Letters.merge
 
 
 ############
