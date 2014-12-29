@@ -49,7 +49,7 @@ oo:assignParamsToLocal() {
 
         i+=-1
         type="${__oo__param_types[$i]}"
-        debug "type : ${__oo__param_types[$i]}"
+#        debug "type : ${__oo__param_types[$i]}"
 
         ### TODO: check if type is correct
         # test if the types are right, if not, add note and "read" to wait for user input
@@ -74,8 +74,7 @@ oo:assignParamsToLocal() {
     done
 }
 
-#alias oo:stashPreviousLocal="declare -a \"__oo__params+=( \$(declare -p | grep 'declare -- ' | tail -1 | cut -d ' ' -f 3) )\""
-alias oo:stashPreviousLocal="declare -a \"__oo__params+=( \$(declare -p | grep 'declare -- _=' | cut -d ' ' -f 3 | cut -d '=' -f 2 | cut -d '\"' -f 2) )\""
+alias oo:stashPreviousLocal="declare -a \"__oo__params+=( \$_ )\""
 alias @@verify="oo:stashPreviousLocal; oo:assignParamsToLocal " # ; for i in \${!__oo__params[@]}; do
 alias @params="oo:stashPreviousLocal; declare -a \"__oo__param_types+=( params )\"; local "
 
@@ -548,7 +547,7 @@ done
 
 Letters.contains "Hello" && echo "This shouldn't happen"
 Letters.contains "Hello Bobby" && echo "Bobby was welcomed"
-Letters.test "one single sentence" two "and here" "we put" "some stuff"
+Letters.example "one single sentence" two "and here" "we put" "some stuff"
 
 
 ############
