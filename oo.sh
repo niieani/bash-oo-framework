@@ -31,13 +31,53 @@ extends() {
 
 ### REAL THING ###
 
---(){
-    :
-    # get count of 'params'
-    # get the names of latest 'count' of added declarations ( declare ), ignore the "params" one
-    # test if the types are right, if not, add note and "read" to wait for user input
-    # assign correct values approprietly so they are avail later on
+oo:assignParamsToLocal() {
+    ## unset first miss
+    unset __oo__params[0]
+    declare -i i
+    local iparam
+    local variable
+    local type
+    for i in "${!__oo__params[@]}"
+    do
+#        debug "i    : $i"
+
+        iparam=$i
+
+        variable="${__oo__params[$i]}"
+#        debug "var  : ${__oo__params[$i]}"
+
+        i+=-1
+        type="${__oo__param_types[$i]}"
+        debug "type : ${__oo__param_types[$i]}"
+
+        ### TODO: check if type is correct
+        # test if the types are right, if not, add note and "read" to wait for user input
+        # assign correct values approprietly so they are avail later on
+
+        if [ $type = 'params' ]; then
+            for _x in "${!__oo__params[@]}"
+            do
+                #debug oo: we are params so we shift
+                [ "${__oo__param_types[$_x]}" != 'params' ] && eval shift
+            done
+            eval "$variable=\"\$@\""
+#            $variable="$@"
+            return
+        else
+            ## assign value ##
+
+    #        debug "value: ${!iparam}"
+    #        eval "$variable=\"${!iparam}\""
+            eval "$variable=\"\$$iparam\""
+        fi
+    done
 }
+
+#alias oo:stashPreviousLocal="declare -a \"__oo__params+=( \$(declare -p | grep 'declare -- ' | tail -1 | cut -d ' ' -f 3) )\""
+alias oo:stashPreviousLocal="declare -a \"__oo__params+=( \$(declare -p | grep 'declare -- _=' | cut -d ' ' -f 3 | cut -d '=' -f 2 | cut -d '\"' -f 2) )\""
+alias @@verify="oo:stashPreviousLocal; oo:assignParamsToLocal " # ; for i in \${!__oo__params[@]}; do
+alias @params="oo:stashPreviousLocal; declare -a \"__oo__param_types+=( params )\"; local "
 
 oo:getFullName(){
     local thisName=$1
@@ -225,23 +265,24 @@ oo:enableType(){
                 }
 
                 ## for defining parameters ##
-                #alias @$type=\"declare -a \\\"params+=( $type )\\\"; local\"
+#                alias @$type=\"declare -a \\\"params+=( $type )\\\"; local\"
                 "
+                alias @$type="oo:stashPreviousLocal; declare -a \"__oo__param_types+=( $type )\"; local "
 
-                local mimikpart="Mimi"
+#                local mimikpart="Mimi"
+#
+#                local mimik=${mimikpart}A
+#                echo \'$mimik\'
+#                alias $mimik='echo DOING MIMI'
+#                alias $mimik
+#
+#                local newAlias=${type}A
+#                echo \'$newAlias\'
+#                alias $newAlias='echo DOING MIMI'
+#                alias $newAlias
 
-                local mimik="A${mimikpart}"
-                echo \'$mimik\'
-                alias $mimik='echo DOING MIMI'
-
-                local newAlias=\"A${type}\"
-                echo \'$newAlias\'
-                alias $newAlias='echo DOING MIMI'
-                
-#                alias $newAlias='declare -a "params+=( $type )"; local'
-#                eval "alias mimi='ls'"
-#                alias mimi='ls'
-#                eval mimi
+#                alias @$type='declare -a "params+=( $type )"; local'
+#                alias @$type
             fi
         done
     fi
@@ -319,12 +360,6 @@ Type:Array() {
             declare -ga "$arrayName"
         }
 
-#        Type:Array::elements() {
-##            eval "echo \"\${$($this.arrayName)[@]}\""
-#            local indirectAccess="$($this.arrayName)[@]"
-#            echo "${!indirectAccess}"
-#        }
-
         ## use the array like this: "${!Array}"
         Type:Array::__getter__() {
             echo "$($this.arrayName)[@]"
@@ -351,27 +386,33 @@ Type:Array() {
         }
 
         Type:Array::merge() {
-            AMimi  something
-            AArray      mergeWith
-            ANumber     many
-
-            declare -p | grep mergeWith
-            declare -p | grep many
-            declare -p | grep params
-
-#            @mixed      additive
-#            @mixed:optional size
-#            @params rest
-            -- "$*"
-
-
+            $this.add "$@"
         }
 
-#        Type:Array::merge() {
-#            local params="$@"
-#            $($this.arrayName)=( ${params[@]} $(${this}.elements) )
-#        }
+        Type:Array::example() {
+            ## TODO: this shouldn't need eval, but for the strangest reason ever, it does
+            eval @Array      mergeWith
+            eval @Number     many
+            eval @params     stuff
 
+            @@verify "$@" && {
+                echo Merging \"$mergeWith\" at manyCount: $many
+                echo Stuff: "${stuff[*]}"
+                return
+            }
+
+            ## here we have an overloaded version of this function that takes in Array, Object and params
+            ## beauty is that by passing different objects we can get
+            eval @Array      mergeWith
+            eval @Object     overloadedType
+            eval @params     stuff
+
+            @@verify "$@" && {
+                echo Merging \"$mergeWith\", we use the Object: $overloadedType
+                echo Stuff: "${stuff[*]}"
+                return
+            }
+        }
     fi
 }
 
@@ -507,7 +548,7 @@ done
 
 Letters.contains "Hello" && echo "This shouldn't happen"
 Letters.contains "Hello Bobby" && echo "Bobby was welcomed"
-Letters.merge
+Letters.test "one single sentence" two "and here" "we put" "some stuff"
 
 
 ############
