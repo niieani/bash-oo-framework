@@ -97,3 +97,39 @@ static:Singleton() {
     }
 
 } && oo:enableType
+
+class:BaseTestBase() {
+
+    extends Var
+
+    if $instance
+    then
+
+        :
+
+    else
+        BaseTestBase::__setter__() {
+            echo "I am the setter of the BaseTestBase"
+            Var::__setter__ "$@"
+        }
+    fi
+
+} && oo:enableType
+
+class:ExtensionTest() {
+
+    extends BaseTestBase
+
+    if $instance
+    then
+
+        :
+
+    else
+        ExtensionTest::__setter__() {
+            echo "That is just the test that I can call the base constructor"
+            BaseTestBase::__setter__ "$@"
+        }
+    fi
+
+} && oo:enableType

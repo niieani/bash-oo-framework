@@ -74,3 +74,6 @@ Singleton
 Singleton.YoMamaNumber
 Singleton.YoMamaNumber ++
 Singleton.YoMamaNumber
+
+ExtensionTest specialVar
+specialVar = "testing setter"

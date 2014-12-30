@@ -3,8 +3,10 @@ oo:extends() {
     if [ ! -z $fullName ]; then
         local extensionType="$1"
         shift
-        class:$extensionType
-        extending=true objectType=$extensionType oo:initialize "$@"
+        oo:isMethodDeclared "class:$extensionType" && {
+            class:$extensionType
+            extending=true objectType=$extensionType oo:initialize "$@"
+        }
     fi
 }
 
@@ -75,7 +77,8 @@ oo:getFullName(){
 oo:isMethodDeclared() {
     local fullMethodName="$1"
     # http://stackoverflow.com/questions/511683/bash-get-list-of-commands-starting-with-a-given-string
-    local compgenOutput=($(compgen -A function $fullMethodName))
+    local compgenOutput=($(compgen -A function "$fullMethodName"))
+    ## TODO: add exact matching
     [[ ${#compgenOutput[@]} -gt 0 ]] && return 0
     return 1
 }
@@ -83,15 +86,24 @@ oo:isMethodDeclared() {
 oo:initialize(){
     # if we are extending, then let's save the real type
     local visibleAsType="${__oo__objects["$fullName"]}"
+    local baseNow=${FUNCNAME[2]#*:}
 
-    [ -z $extending ] || oo:debug "oo: basing $fullName (${FUNCNAME[2]}) on $objectType..."
-    [ -z $extending ] && oo:debug "oo: initializing and constructing $fullName ($visibleAsType)"
+    [ -z $extending ] || oo:debug "oo: basing ($baseNow) $fullName on $objectType..."
+    [ -z $extending ] && oo:debug "oo: initializing and constructing $fullName ($visibleAsType) of $objectType"
 
     ## add methods
     local instanceMethods=($(compgen -A function $objectType::))
     local staticMethods=($(compgen -A function $objectType.))
 
 #    local methods=( "${instanceMethods[@]}" "${staticMethods[@]}" )
+
+    # TODO: base cannot be set as $base because that means it cannot be called from the base
+    # - the reference will always be to just that one base
+    local baseType
+    oo:isMethodDeclared "$fullName.__baseType__" && {
+        baseType="$($fullName.__baseType__)"
+        oo:debug:3 "oo: baseType = $baseType"
+    }
 
     if [ ! -z "${instanceMethods[*]}" ]; then
         local method
@@ -100,14 +112,27 @@ oo:initialize(){
             # leave just function name from end
             method=${method##*::}
 
-            oo:debug:2 "oo: mapping method: $fullName.$method ==> $method"
+            oo:debug:3 "oo: mapping method: $fullName.$method ==> $method"
 
             #local parentName=${fullName%.*}
+
+            local baseMethod="$baseType::$method"
+
+#            [ ! -z $extending ] && {
+#                oo:isMethodDeclared "$fullName.__baseType__" && {
+#                    baseType="$($fullName.__baseType__)"
+#                    oo:isMethodDeclared "$baseType::$method" && {
+#                        base="$baseType::$method"
+#                    }
+#                }
+#            }
 
             # add method aliases
             eval "
                 $fullName.$method() {
                     local this=$fullName
+                    local baseMethod=$baseMethod
+                    local base=$baseType
                     local __objectType__=$visibleAsType
                     local __parentType__=$parentType
                     $objectType::$method \"\$@\"
@@ -200,6 +225,12 @@ oo:initialize(){
         # just run the constructor if any
         oo:isMethodDeclared $fullName.__constructor__ && $fullName.__constructor__
     fi
+
+    [ ! -z $extending ] &&
+    eval "$fullName.__baseType__() {
+#        echo $objectType
+        echo $baseNow
+    }"
 }
 
 oo:enableType(){
