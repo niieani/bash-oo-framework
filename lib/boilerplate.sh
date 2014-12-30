@@ -4,6 +4,7 @@ declare -a __oo__importedTypes
 declare -A __oo__storage
 declare -A __oo__objects
 declare -A __oo__objects_private
+declare -a __oo__functionsTernaryOperator
 
 # http://stackoverflow.com/questions/2990414/echo-that-outputs-to-stderr
 #oo:echoerr() { cat <<< "$@" 1>&2; }

@@ -56,27 +56,27 @@ class:Array() {
     if $instance
     then
 
-        private:Var storedAsName
+        private:Var _storedVariableName
 
     else
 
         Array::__constructor__() {
-            local storedAsName="__oo__array_${this//./_}"
-            $this.storedAsName = "$storedAsName"
-            oo:debug oo: creating array [ $storedAsName ]
-            declare -ga "$storedAsName"
+            local _storedVariableName="__oo__array_${this//./_}"
+            $this._storedVariableName = "$_storedVariableName"
+            oo:debug oo: creating array [ $_storedVariableName ]
+            declare -ga "$_storedVariableName"
         }
 
         ## use the array like this: "${!Array}"
         Array::__getter__() {
-            echo "$($this.storedAsName)[@]"
+            echo "$($this._storedVariableName)[@]"
         }
 
         ## generates a list separated by new lines
         Array::List() {
             (
                 IFS=$'\n'
-                local indirectAccess="$($this.storedAsName)[*]"
+                local indirectAccess="$($this._storedVariableName)[*]"
                 echo "${!indirectAccess}"
             )
         }
@@ -91,7 +91,7 @@ class:Array() {
         }
 
         Array::Add() {
-            declare -ga "$($this.storedAsName)+=( \"\$@\" )"
+            declare -ga "$($this._storedVariableName)+=( \"\$@\" )"
         }
 
         Array::Merge() {
@@ -124,33 +124,33 @@ class:Number() {
     if $instance
     then
 
-        private:Var storedAsName
+        private:Var _storedVariableName
 
     else
 
         Number::__constructor__() {
-            local storedAsName="__oo__number_${this//./_}"
-            $this.storedAsName = "$storedAsName"
-            oo:debug oo: creating number [ $storedAsName ]
-            declare -gi "$storedAsName"
+            local _storedVariableName="__oo__number_${this//./_}"
+            $this._storedVariableName = "$_storedVariableName"
+            oo:debug oo: creating number [ $_storedVariableName ]
+            declare -gi "$_storedVariableName"
         }
 
         Number::__getter__() {
-            local storedAsName=$($this.storedAsName)
-            echo "${!storedAsName}"
+            local _storedVariableName=$($this._storedVariableName)
+            echo "${!_storedVariableName}"
         }
 
         Number::__setter__() {
             @mixed newValue
             @@verify "$@"
 
-            local storedAsName=$($this.storedAsName)
-            declare -gi "$storedAsName=$newValue"
+            local _storedVariableName=$($this._storedVariableName)
+            declare -gi "$_storedVariableName=$newValue"
         }
 
         Number::__increment__() {
-            local storedAsName=$($this.storedAsName)
-            declare -gi "$storedAsName+=1"
+            local _storedVariableName=$($this._storedVariableName)
+            declare -gi "$_storedVariableName+=1"
         }
 
     fi

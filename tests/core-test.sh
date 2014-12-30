@@ -74,6 +74,9 @@ Singleton
 Singleton.YoMamaNumber
 Singleton.YoMamaNumber ++
 Singleton.YoMamaNumber
+Singleton.YoMamaNumber._storedVariableName
 
 ExtensionTest specialVar
 specialVar = "testing setter"
+
+echo "Color Test: $(Color.Blue)Hello $(Color.White)There$(Color.Default)"

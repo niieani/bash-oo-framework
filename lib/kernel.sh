@@ -1,20 +1,39 @@
-oo:extends() {
-    # we can only extend when there's what to extend...
-    if [ ! -z $fullName ]; then
-        local extensionType="$1"
-        shift
-        oo:isMethodDeclared "class:$extensionType" && {
-            class:$extensionType
-            extending=true objectType=$extensionType oo:initialize "$@"
-        }
-    fi
-}
-
+## KEYWORDS ##
 alias extends="oo:extends"
+
+alias methods="if ! \$instance; then : "
+alias ~methods="fi"
+alias method="test ! \$instance && "
+
+alias statics="if ! \$instance; then : "
+alias ~statics="fi"
+alias static="test ! \$instance && "
+
+alias public="test \$instance && local __oo__public=true && "
+alias private="test \$instance && local __oo__public=false && "
+
+## TODO:
+alias oo:enable:TernaryOperator="__oo__functionsTernaryOperator+=( ${FUNCNAME[0]} )"
+
+oo:extends() {
+  # we can only extend when there's what to extend...
+  if [ ! -z $fullName ]; then
+    local extensionType="$1"
+    shift
+    oo:isMethodDeclared "class:$extensionType" && {
+      class:$extensionType
+      extending=true objectType=$extensionType oo:initialize "$@"
+    }
+  fi
+}
 
 oo:assignParamsToLocal() {
     ## unset first miss
     unset __oo__params[0]
+
+    ## TODO: if no params were defined, we can add ternary operator and others
+    # __oo__functionsTernaryOperator+=( ${FUNCNAME[1]} )
+
     declare -i i
     local iparam
     local variable
@@ -170,7 +189,7 @@ oo:initialize(){
         $fullName() {
 
             ## TODO: access control / private, etc.
-            
+
             #oo:debug \"oo: CALL STACK: \${FUNCNAME[@]}\"
 #            oo:array:contains __oo__objects_private \"${__oo__objects_private[@]}\" || {
 #                parentType=\${FUNCNAME[2]}
@@ -188,7 +207,7 @@ oo:initialize(){
                 $fullName.__getter__;
                 return 0
             }
-            
+
             local operator=\"\$1\"; shift
             if [ -z \"\$1\" ]; then
                 case \"\$operator\" in

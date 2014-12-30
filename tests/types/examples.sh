@@ -133,3 +133,13 @@ class:ExtensionTest() {
     fi
 
 } && oo:enableType
+
+static:Color() {
+    extends Object
+
+    String Default = $'\033[0m'
+    String White = $'\033[0;37m'
+    String Black = $'\033[0;30m'
+    String Blue = $'\033[0;34m'
+
+} && oo:enableType
