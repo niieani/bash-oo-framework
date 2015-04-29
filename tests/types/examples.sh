@@ -19,15 +19,20 @@ class:Human() {
 
     extends Animal
 
-    if $instance
-    then
+    public Number height
+    public Number width
+    public Number phone
+    public String name
 
-        Number height
-        Number width
-        Number phone
-        String name
+    methods
 
-    else
+        Human::__toString__() {
+            echo "I'm a human ($this)"
+        }
+
+        Human::__getter__() {
+            $this.__toString__
+        }
 
         Human::Eat() {
             echo "$this is eating $1"
@@ -65,19 +70,13 @@ class:Human() {
             echo "TODO: Checking if $this equals $1"
         }
 
-        Human::__toString__() {
-            echo "I'm a human ($this)"
-        }
-
-        Human::__getter__() {
-            $this.__toString__
-        }
 
         Human::__constructor__() {
             oo:debug "Hello, I am the constructor! You have passed these arguments [ $@ ]"
         }
 
-    fi
+    ~methods
+
 } && oo:enableType
 
 static:Singleton() {
@@ -102,17 +101,10 @@ class:BaseTestBase() {
 
     extends Var
 
-    if $instance
-    then
-
-        :
-
-    else
-        BaseTestBase::__setter__() {
-            echo "I am the setter of the BaseTestBase"
-            Var::__setter__ "$@"
-        }
-    fi
+    method BaseTestBase::__setter__() {
+        echo "I am the setter of the BaseTestBase"
+        Var::__setter__ "$@"
+    }
 
 } && oo:enableType
 
@@ -120,17 +112,10 @@ class:ExtensionTest() {
 
     extends BaseTestBase
 
-    if $instance
-    then
-
-        :
-
-    else
-        ExtensionTest::__setter__() {
-            echo "That is just the test that I can call the base constructor"
-            BaseTestBase::__setter__ "$@"
-        }
-    fi
+    method ExtensionTest::__setter__() {
+        echo "That is just the test showing that I can call the base method"
+        BaseTestBase::__setter__ "$@"
+    }
 
 } && oo:enableType
 

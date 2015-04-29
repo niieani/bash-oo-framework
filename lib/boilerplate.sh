@@ -24,8 +24,9 @@ oo:debug:3() {
 }
 
 oo:debug:enable() {
-    [ -z $1 ] && declare -ig "__oo__debug=1"
-    [ -z $1 ] || declare -ig "__oo__debug=$1"
+    declare -ig "__oo__debug=${1:-1}"
+    # [[ -z "$1" ]] && declare -ig "__oo__debug=1"
+    # [[ -z "$1" ]] || declare -ig "__oo__debug=$1"
 }
 
 oo:throw() {

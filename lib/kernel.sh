@@ -12,7 +12,7 @@ alias static="test ! \$instance && "
 alias public="test \$instance && local __oo__public=true && "
 alias private="test \$instance && local __oo__public=false && "
 
-## TODO:
+## TODO: add implementation & use inside of class declaration
 alias oo:enable:TernaryOperator="__oo__functionsTernaryOperator+=( ${FUNCNAME[0]} )"
 
 oo:extends() {
@@ -38,11 +38,15 @@ oo:assignParamsToLocal() {
     local iparam
     local variable
     local type
+    local optional=false
     for i in "${!__oo__params[@]}"
     do
         oo:debug:3 "i    : $i"
 
         iparam=$i
+
+        ### TODO: variable might be optional, in this case we test if it has '=' sign and split it
+        ### then we assign a variable optional=true and only require input for those that aren't optional
 
         variable="${__oo__params[$i]}"
         oo:debug:3 "var  : ${__oo__params[$i]}"
@@ -78,7 +82,7 @@ oo:assignParamsToLocal() {
     unset __oo__param_types
 }
 
-alias oo:stashPreviousLocal="declare -a \"__oo__params+=( \$_ )\""
+alias oo:stashPreviousLocal="declare -a \"__oo__params+=( '\$_' )\""
 alias @@verify="oo:stashPreviousLocal; oo:assignParamsToLocal " # ; for i in \${!__oo__params[@]}; do
 alias @params="oo:stashPreviousLocal; declare -a \"__oo__param_types+=( params )\"; local "
 alias @mixed="oo:stashPreviousLocal; declare -a \"__oo__param_types+=( mixed )\"; local "
@@ -124,6 +128,32 @@ oo:initialize(){
         oo:debug:3 "oo: baseType = $baseType"
     }
 
+    ## TODO: does this make sense?
+    ## don't map static types
+    if [[ $fullName != $visibleAsType ]] && [ ! -z "${staticMethods[*]}" ]; then
+        local method
+        for method in "${staticMethods[@]}"; do
+
+            # leave just function name from end
+            method=${method##*.}
+
+            oo:debug:2 "oo: mapping static method: $fullName.$method ==> $method"
+
+            #local parentName=${fullName%.*}
+
+            # add method aliases
+            eval "
+            $fullName.$method() {
+                local self=$fullName
+                local __objectType__=$visibleAsType
+                local __parentType__=$parentType
+                $objectType.$method \"\$@\"
+            }
+            "
+        done
+    fi
+
+    ## instance methods hide static ones if the name is the same
     if [ ! -z "${instanceMethods[*]}" ]; then
         local method
         for method in "${instanceMethods[@]}"; do
@@ -160,29 +190,6 @@ oo:initialize(){
         done
     fi
 
-    ## don't map static types
-    if [[ $fullName != $visibleAsType ]] && [ ! -z "${staticMethods[*]}" ]; then
-        local method
-        for method in "${staticMethods[@]}"; do
-
-            # leave just function name from end
-            method=${method##*.}
-
-            oo:debug:2 "oo: mapping static method: $fullName.$method ==> $method"
-
-            #local parentName=${fullName%.*}
-
-            # add method aliases
-            eval "
-                $fullName.$method() {
-                    local self=$fullName
-                    local __objectType__=$visibleAsType
-                    local __parentType__=$parentType
-                    $objectType.$method \"\$@\"
-                }
-                "
-        done
-    fi
 
     # if not extending:
     [ -z $extending ] && eval "
@@ -209,11 +216,13 @@ oo:initialize(){
             }
 
             local operator=\"\$1\"; shift
-            if [ -z \"\$1\" ]; then
+
+            # if the parameter after the operator is empty...
+            if [ -z \"\${1+x}\" ]; then
                 case \"\$operator\" in
                     '++') $fullName.__increment__ \"\$@\" ;;
                     '--') $fullName.__decrement__ \"\$@\" ;;
-                    *)  oo:throw no value given
+                    *)  oo:throw "no value given"
                         return 1 ;;
                 esac
             else

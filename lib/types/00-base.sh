@@ -1,11 +1,6 @@
 class:Object() {
 
-    if $instance
-    then
-
-        :
-
-    else
+    methods
         Object::__getter__() {
             echo "[$__objectType__] $this"
         }
@@ -17,7 +12,7 @@ class:Object() {
         Object::__type__() {
             echo "$__objectType__"
         }
-    fi
+    ~methods
 
 } && oo:enableType
 
@@ -25,13 +20,7 @@ class:Var() {
 
     extends Object
 
-    if $instance
-    then
-
-        :
-
-    else
-
+    methods
         Var::__getter__() {
             [ ! -z $this ] && echo "${__oo__storage[$this]}"
         }
@@ -39,8 +28,7 @@ class:Var() {
         Var::__setter__() {
             [ ! -z $this ] && __oo__storage["$this"]="$1"
         }
-
-    fi
+    ~methods
 
 } && oo:enableType
 
@@ -53,13 +41,9 @@ class:Array() {
 
     extends Object
 
-    if $instance
-    then
+    private Var _storedVariableName
 
-        private:Var _storedVariableName
-
-    else
-
+    methods
         Array::__constructor__() {
             local _storedVariableName="__oo__array_${this//./_}"
             $this._storedVariableName = "$_storedVariableName"
@@ -97,37 +81,103 @@ class:Array() {
         Array::Merge() {
             $this.Add "$@"
         }
-    fi
-}
+    ~methods
+
+} && oo:enableType
 
 class:String() {
-
     extends Var
 
-    if $instance
-    then
+    static String.GetSanitizedVariableName() {
+        @mixed input
+        @@verify "$@"
 
-        :
+        local clean="${input//[^a-zA-Z0-9]/_}"
+        echo "${clean^^}"
+    }
 
-    else
+    method String::GetSanitizedVariableName() {
+        String.GetSanitizedVariableName "$($this)"
+    }
 
-        :
+    static String.TabsForSpaces() {
+        @mixed input
+        # TODO: @mixed spaceCount=4
+        @@verify "$@"
 
-    fi
+        # hardcoded 1 tab = 4 spaces
+        echo "${input//[	]/    }"
+    }
 
+    static String.RegexMatch() {
+        @mixed text
+        @mixed regex
+        @mixed param
+        @@verify "$@"
+
+        if [[ "$text" =~ $regex ]]; then
+            if [[ ! -z $param ]]; then
+                echo "${BASH_REMATCH[${param}]}"
+            fi
+            return 0
+        else
+            return 1
+            # no match
+        fi
+    }
+
+    method String::RegexMatch() {
+        @mixed regex
+        @mixed param
+        @@verify "$@"
+
+        String.RegexMatch "$($this)" "$regex" "$param"
+    }
+
+    static String.SpaceCount() {
+        @mixed text
+        @@verify "$@"
+
+        # note: you shouldn't mix tabs and spaces, we explicitly don't count tabs here
+        local spaces="$(String.RegexMatch "$text" "^[	]*([ ]*)[.]*" 1)"
+        echo "${#spaces}"
+    }
+
+    static String.Trim() {
+        @mixed text
+        @@verify "$@"
+
+        echo "$(String.RegexMatch "$text" "^[ 	]*(.*)" 1)"
+    }
+
+    static String.GetXSpaces() {
+        @mixed howMany
+        @@verify "$@"
+        
+        [[ "$howMany" -gt 0 ]] && ( printf "%*s" "$howMany" )
+    }
+
+} && oo:enableType
+
+class:ImmutableString() {
+    extends String
+
+    method ImmutableString::__constructor__() {
+        Var::__setter__ "$@"
+    }
+
+    method ImmutableString::__setter__() {
+        oo:throw "$this is immutable"
+    }
 } && oo:enableType
 
 class:Number() {
 
     extends Var
 
-    if $instance
-    then
+    private Var _storedVariableName
 
-        private:Var _storedVariableName
-
-    else
-
+    methods
         Number::__constructor__() {
             local _storedVariableName="__oo__number_${this//./_}"
             $this._storedVariableName = "$_storedVariableName"
@@ -152,8 +202,6 @@ class:Number() {
             local _storedVariableName=$($this._storedVariableName)
             declare -gi "$_storedVariableName+=1"
         }
-
-    fi
+    ~methods
 
 } && oo:enableType
-
