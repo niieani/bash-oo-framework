@@ -1,16 +1,28 @@
 ## KEYWORDS ##
 alias extends="oo:extends"
 
-alias methods="if ! \$instance; then : "
+alias notInstance="[ -z $instance ] || [ $instance = false ] &&"
+alias notInstanceIf="if [ -z $instance ] || [ $instance = false ]; then "
+alias isInstance="[ ! -z $instance ] && [ $instance = true ] &&"
+alias isInstance="if [ ! -z $instance ] && [ $instance = true ]; then "
+
+alias methods="notInstanceIf"
+#alias methods="if ! \$instance; then : "
 alias ~methods="fi"
-alias method="test ! \$instance && "
+alias method="notInstance"
+#alias method="test ! \$instance && "
 
-alias statics="if ! \$instance; then : "
+alias statics="notInstanceIf"
+#alias statics="if ! \$instance; then : "
 alias ~statics="fi"
-alias static="test ! \$instance && "
+alias static="notInstance"
+#alias static="test ! \$instance && "
 
-alias public="test \$instance && local __oo__public=true && "
-alias private="test \$instance && local __oo__public=false && "
+alias public="isInstance local __oo__public=true && "
+alias private="isInstance local __oo__public=false && "
+
+#alias public="test \$instance && local __oo__public=true && "
+#alias private="test \$instance && local __oo__public=false && "
 
 ## TODO: add implementation & use inside of class declaration
 alias oo:enable:TernaryOperator="__oo__functionsTernaryOperator+=( ${FUNCNAME[0]} )"
@@ -83,7 +95,7 @@ oo:assignParamsToLocal() {
 }
 
 alias oo:stashPreviousLocal="declare -a \"__oo__params+=( '\$_' )\""
-alias @@verify="oo:stashPreviousLocal; oo:assignParamsToLocal " # ; for i in \${!__oo__params[@]}; do
+alias @@verify="oo:stashPreviousLocal; oo:assignParamsToLocal \"\$@\"" # ; for i in \${!__oo__params[@]}; do
 alias @params="oo:stashPreviousLocal; declare -a \"__oo__param_types+=( params )\"; local "
 alias @mixed="oo:stashPreviousLocal; declare -a \"__oo__param_types+=( mixed )\"; local "
 
@@ -230,7 +242,7 @@ oo:initialize(){
                     '=') $fullName.__setter__ \"\$@\" ;;
                     '==') $fullName.__equals__ \"\$@\" ;;
                     '+') $fullName.__add__ \"\$@\" ;;
-                    '-') $fullName.__substract__ \"\$@\" ;;
+                    '-') $fullName.__subtract__ \"\$@\" ;;
                     '*') $fullName.__multiply__ \"\$@\" ;;
                     '/') $fullName.__divide__ \"\$@\" ;;
                 esac
@@ -279,14 +291,14 @@ oo:enableType(){
 
                 # import methods if not static
                 if [[ ${fullType:0:6} != "static" ]]; then
-                {
+                #{
                     oo:debug "oo: enabling type [ $fullType ]"
                     instance=false class:$type
-                }
+                #}
                 else
-                {
+                #{
                     oo:debug "oo: enabling static type [ $fullType ]"
-                }
+                #}
                 fi
 
                 # 'new' function for creating the object
@@ -317,18 +329,18 @@ oo:enableType(){
                         __oo__objects_private[\"\$fullName\"]=\$objectType
                     fi
 
-                    $fullType
+                    instance=true $fullType
                     oo:initialize \"\$@\"
                 }
                 "
 
                 if [[ ${fullType:0:6} == "static" ]]; then
-                {
+                #{
                     ## static means singleton - simply replace the function with an instance ##
                     $type $type
-                }
+                #}
                 else
-                {
+                #{
                     ## private definition only for non-static types ##
                     eval "
                     # TODO: if private, don't allow public access
@@ -340,7 +352,7 @@ oo:enableType(){
 
                     ## alias enabling to define parameters ##
                     alias @$type="oo:stashPreviousLocal; declare -a \"__oo__param_types+=( $type )\"; local "
-                }
+                #}
                 fi
             fi
         done
@@ -348,4 +360,23 @@ oo:enableType(){
 
     ## update the list of imported types
     __oo__importedTypes=("${types[@]}")
+}
+
+command_not_found_handle () {
+    local script="${BASH_SOURCE[1]}"
+    local prefix='./'
+    local lineNo=${BASH_LINENO[0]}
+    local errLine="$(sed "${lineNo}q;d" "$script")"
+    script="${script#$prefix}"
+    if oo:isMethodDeclared UI.Color
+    then
+        echo
+        echo $(UI.Color.Blue)[${script}:${lineNo}] $(UI.Color.Red)Error when trying to: 
+        echo "  $(UI.Color.White)$*$(UI.Color.Default)"
+        echo " " $(UI.Color.Magenta)${errLine}$(UI.Color.Default)
+        echo
+    else
+        echo [${script}:${lineNo}] Error at: ${errLine}
+    fi
+    return 127
 }

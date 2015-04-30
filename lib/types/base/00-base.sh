@@ -32,6 +32,21 @@ class:Var() {
 
 } && oo:enableType
 
+class:Boolean() {
+    extends Var
+    
+    methods
+        Boolean::__setter__() {
+            if [ ! -z $this ] && ([ $this = "true" ] || [ $this = "false" ])
+            then
+                __oo__storage["$this"]="$1"
+            else
+                oo:throw "Invalid value"
+            fi 
+        }
+    ~methods
+} && oo:enableType
+
 class:Array() {
     ## TODO: add for Array ##
     # http://brizzled.clapper.org/blog/2011/10/28/a-bash-stack/
@@ -96,10 +111,6 @@ class:String() {
         echo "${clean^^}"
     }
 
-    method String::GetSanitizedVariableName() {
-        String.GetSanitizedVariableName "$($this)"
-    }
-
     static String.TabsForSpaces() {
         @mixed input
         # TODO: @mixed spaceCount=4
@@ -110,9 +121,7 @@ class:String() {
     }
 
     static String.RegexMatch() {
-        @mixed text
-        @mixed regex
-        @mixed param
+        @mixed text; @mixed regex; @mixed param
         @@verify "$@"
 
         if [[ "$text" =~ $regex ]]; then
@@ -124,14 +133,6 @@ class:String() {
             return 1
             # no match
         fi
-    }
-
-    method String::RegexMatch() {
-        @mixed regex
-        @mixed param
-        @@verify "$@"
-
-        String.RegexMatch "$($this)" "$regex" "$param"
     }
 
     static String.SpaceCount() {
@@ -155,6 +156,17 @@ class:String() {
         @@verify "$@"
         
         [[ "$howMany" -gt 0 ]] && ( printf "%*s" "$howMany" )
+    }
+    
+    method String::GetSanitizedVariableName() {
+        String.GetSanitizedVariableName "$($this)"
+    }
+
+    method String::RegexMatch() {
+        @mixed regex; @mixed param
+        @@verify "$@"
+
+        String.RegexMatch "$($this)" "$regex" "$param"
     }
 
 } && oo:enableType
@@ -193,7 +205,7 @@ class:Number() {
         Number::__setter__() {
             @mixed newValue
             @@verify "$@"
-
+            
             local _storedVariableName=$($this._storedVariableName)
             declare -gi "$_storedVariableName=$newValue"
         }
@@ -201,6 +213,44 @@ class:Number() {
         Number::__increment__() {
             local _storedVariableName=$($this._storedVariableName)
             declare -gi "$_storedVariableName+=1"
+        }
+
+        Number::__decrement__() {
+            local _storedVariableName=$($this._storedVariableName)
+            declare -gi "$_storedVariableName-=1"
+        }
+
+        Number::__add__() {
+            @mixed value
+            @@verify
+        
+            local _storedVariableName=$($this._storedVariableName)
+            echo $_storedVariableName+=$value
+            declare -gi "$_storedVariableName+=$value"
+        }
+
+        Number::__subtract__() {
+            @mixed value
+            @@verify
+            
+            local _storedVariableName=$($this._storedVariableName)
+            declare -gi "$_storedVariableName-=$value"
+        }
+
+        Number::__multiply__() {
+            @mixed value
+            @@verify
+            
+            local _storedVariableName=$($this._storedVariableName)
+            declare -gi "$_storedVariableName\*=$value"
+        }
+
+        Number::__divide__() {
+            @mixed value
+            @@verify
+            
+            local _storedVariableName=$($this._storedVariableName)
+            declare -gi "$_storedVariableName/=$value"
         }
     ~methods
 

@@ -87,5 +87,3 @@ static:UI.Color() {
     String NoInvisible = "$(UI.Color.Print '28')"
 
 } && oo:enableType
-
-echo $(UI.Color.Red)Red $(UI.Color.256text 213)here$(UI.Color.Default) Boom

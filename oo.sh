@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 ## BOOTSTRAP ##
 __oo__path="${BASH_SOURCE[0]%/*}"
@@ -6,9 +6,10 @@ __oo__path="${BASH_SOURCE[0]%/*}"
 source "${__oo__path}/lib/boilerplate.sh"
 
 ## MAIN ##
-oo:debug:enable
 
+oo:import lib/try-catch
 oo:import lib/kernel
-oo:import lib/types
-oo:import tests/types/examples
-oo:import tests/core-test
+oo:import lib/types/base
+oo:debug:enable 2
+oo:import lib/types/ui
+

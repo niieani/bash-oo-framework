@@ -11,16 +11,28 @@ declare -a __oo__functionsTernaryOperator
 oo:echoerr() { cat <<< "$*" 1>&2; }
 
 oo:debug() {
-    [ ! -z $__oo__debug ] && oo:echoerr "[oo-oo:debug] $*"
+    # http://stackoverflow.com/questions/16623835/bash-remove-a-fixed-prefix-suffix-from-a-string
+    local script=${BASH_SOURCE[1]}
+    local prefix='./'
+    script="${script#$prefix}"
+    [ ! -z $__oo__debug ] && oo:echoerr "[${script}:${BASH_LINENO[1]}] $*"
 }
 alias oo:debug:1="oo:debug"
 
 oo:debug:2() {
-    [ $__oo__debug -gt 1 ] && oo:echoerr "[oo-oo:debug] $*"
+    local script=${BASH_SOURCE[1]}
+    local prefix='./'
+    script="${script#$prefix}"
+    #set -xv
+    [ ! -z $__oo__debug ] && [ $__oo__debug -gt 1 ] && oo:echoerr "[${script}:${BASH_LINENO[1]}] $*"
+    #set +xv
 }
 
 oo:debug:3() {
-    [ $__oo__debug -gt 2 ] && oo:echoerr "[oo-oo:debug] $*"
+    local script=${BASH_SOURCE[1]}
+    local prefix='./'
+    script="${script#$prefix}"
+    [ ! -z $__oo__debug ] && [ $__oo__debug -gt 2 ] && oo:echoerr "[${script}:${BASH_LINENO[1]}] $*"
 }
 
 oo:debug:enable() {
