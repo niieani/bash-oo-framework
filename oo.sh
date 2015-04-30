@@ -10,6 +10,6 @@ source "${__oo__path}/lib/boilerplate.sh"
 oo:import lib/try-catch
 oo:import lib/kernel
 oo:import lib/types/base
-oo:debug:enable 2
 oo:import lib/types/ui
 
+#oo:debug:enable 2

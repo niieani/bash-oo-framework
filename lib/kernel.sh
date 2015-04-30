@@ -1,25 +1,25 @@
 ## KEYWORDS ##
 alias extends="oo:extends"
 
-alias notInstance="[ -z $instance ] || [ $instance = false ] &&"
-alias notInstanceIf="if [ -z $instance ] || [ $instance = false ]; then "
-alias isInstance="[ ! -z $instance ] && [ $instance = true ] &&"
-alias isInstance="if [ ! -z $instance ] && [ $instance = true ]; then "
+#alias notInstance="[ -z $instance ] || [ $instance = false ] &&"
+#alias notInstanceIf="if [ -z $instance ] || [ $instance = false ]; then "
+#alias isInstance="[ ! -z $instance ] && [ $instance = true ] &&"
+#alias isInstance="if [ ! -z $instance ] && [ $instance = true ]; then "
 
-alias methods="notInstanceIf"
+alias methods="if [[ -z \$instance ]] || [[ \$instance = false ]]; then "
 #alias methods="if ! \$instance; then : "
 alias ~methods="fi"
-alias method="notInstance"
+alias method="[[ -z \$instance ]] || [[ \$instance = false ]] &&"
 #alias method="test ! \$instance && "
 
-alias statics="notInstanceIf"
+alias statics="if [[ -z \$instance ]] || [[ \$instance = false ]]; then "
 #alias statics="if ! \$instance; then : "
 alias ~statics="fi"
-alias static="notInstance"
+alias static="[[ -z \$instance ]] || [[ \$instance = false ]] &&"
 #alias static="test ! \$instance && "
 
-alias public="isInstance local __oo__public=true && "
-alias private="isInstance local __oo__public=false && "
+alias public="[[ \$instance = true ]] && __private__=false "
+alias private="[[ \$instance = true ]] && __private__=true "
 
 #alias public="test \$instance && local __oo__public=true && "
 #alias private="test \$instance && local __oo__public=false && "
@@ -118,6 +118,7 @@ oo:isMethodDeclared() {
     return 1
 }
 
+# the creation of a new object
 oo:initialize(){
     # if we are extending, then let's save the real type
     local visibleAsType="${__oo__objects["$fullName"]}"
@@ -149,7 +150,7 @@ oo:initialize(){
             # leave just function name from end
             method=${method##*.}
 
-            oo:debug:2 "oo: mapping static method: $fullName.$method ==> $method"
+            oo:debug:3 "oo: mapping static method: $fullName.$method ==> $method"
 
             #local parentName=${fullName%.*}
 
@@ -173,7 +174,7 @@ oo:initialize(){
             # leave just function name from end
             method=${method##*::}
 
-            oo:debug:3 "oo: mapping method: $fullName.$method ==> $method"
+            oo:debug:3 "oo: mapping instance method: $fullName.$method ==> $method"
 
             #local parentName=${fullName%.*}
 
@@ -224,7 +225,7 @@ oo:initialize(){
             # if no arguments, use the getter:
             [[ \$@ ]] || {
                 $fullName.__getter__;
-                return 0
+                return \$?
             }
 
             local operator=\"\$1\"; shift
@@ -301,6 +302,7 @@ oo:enableType(){
                 #}
                 fi
 
+                oo:debug "oo: building the constructor for [ $type ]"
                 # 'new' function for creating the object
                 eval "
                 $type() {

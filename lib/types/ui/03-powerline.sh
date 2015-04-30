@@ -1,5 +1,5 @@
 class:UnicodeString() {
-	extends String
+	extends Const
 	
 	UnicodeString::__getter__() {
 		[ ! -z $this ] && echo -e "${__oo__storage[$this]}"

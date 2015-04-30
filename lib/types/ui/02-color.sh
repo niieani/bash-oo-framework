@@ -17,7 +17,7 @@ static:UI.Color() {
         @@verify "$@"
 
         if UI.Color.IsAvailable
-            then
+        then
             local colorString="\$'\033[${colorCode}m'"
             eval echo "${colorString}"
         else
@@ -30,7 +30,7 @@ static:UI.Color() {
         @@verify "$@"
 
         if UI.Color.IsAvailable
-            then
+        then
             local colorString="\$'\033[38;5;${colorNumber}m'"
             eval echo "${colorString}"
         else
@@ -43,7 +43,7 @@ static:UI.Color() {
         @@verify "$@"
 
         if UI.Color.IsAvailable
-            then
+        then
             local colorString="\$'\033[48;5;${colorNumber}m'"
             eval echo "${colorString}"
         else
@@ -51,39 +51,39 @@ static:UI.Color() {
         fi
     }
 
-    String Default = "$(UI.Color.Print '0')"
+    Const Default = "$(UI.Color.Print '0')"
 
-    String Black = "$(UI.Color.Print '0;30')"
-    String Red = "$(UI.Color.Print '0;31')"
-    String Green = "$(UI.Color.Print '0;32')"
-    String Yellow = "$(UI.Color.Print '0;33')"
-    String Blue = "$(UI.Color.Print '0;34')"
-    String Magenta = "$(UI.Color.Print '0;35')"
-    String Cyan = "$(UI.Color.Print '0;36')"
-    String LightGray = "$(UI.Color.Print '0;37')"
+    Const Black = "$(UI.Color.Print '0;30')"
+    Const Red = "$(UI.Color.Print '0;31')"
+    Const Green = "$(UI.Color.Print '0;32')"
+    Const Yellow = "$(UI.Color.Print '0;33')"
+    Const Blue = "$(UI.Color.Print '0;34')"
+    Const Magenta = "$(UI.Color.Print '0;35')"
+    Const Cyan = "$(UI.Color.Print '0;36')"
+    Const LightGray = "$(UI.Color.Print '0;37')"
 
-    String DarkGray = "$(UI.Color.Print '0;90')"
-    String LightRed = "$(UI.Color.Print '0;91')"
-    String LightGreen = "$(UI.Color.Print '0;92')"
-    String LightYellow = "$(UI.Color.Print '0;93')"
-    String LightBlue = "$(UI.Color.Print '0;94')"
-    String LightMagenta = "$(UI.Color.Print '0;95')"
-    String LightCyan = "$(UI.Color.Print '0;96')"
-    String White = "$(UI.Color.Print '0;97')"
+    Const DarkGray = "$(UI.Color.Print '0;90')"
+    Const LightRed = "$(UI.Color.Print '0;91')"
+    Const LightGreen = "$(UI.Color.Print '0;92')"
+    Const LightYellow = "$(UI.Color.Print '0;93')"
+    Const LightBlue = "$(UI.Color.Print '0;94')"
+    Const LightMagenta = "$(UI.Color.Print '0;95')"
+    Const LightCyan = "$(UI.Color.Print '0;96')"
+    Const White = "$(UI.Color.Print '0;97')"
 
     # flags
-    String Bold = "$(UI.Color.Print '1')"
-    String Dim = "$(UI.Color.Print '2')"
-    String Underline = "$(UI.Color.Print '4')"
-    String Blink = "$(UI.Color.Print '5')"
-    String Invert = "$(UI.Color.Print '7')"
-    String Invisible = "$(UI.Color.Print '8')"
+    Const Bold = "$(UI.Color.Print '1')"
+    Const Dim = "$(UI.Color.Print '2')"
+    Const Underline = "$(UI.Color.Print '4')"
+    Const Blink = "$(UI.Color.Print '5')"
+    Const Invert = "$(UI.Color.Print '7')"
+    Const Invisible = "$(UI.Color.Print '8')"
 
-    String NoBold = "$(UI.Color.Print '21')"
-    String NoDim = "$(UI.Color.Print '22')"
-    String NoUnderline = "$(UI.Color.Print '24')"
-    String NoBlink = "$(UI.Color.Print '25')"
-    String NoInvert = "$(UI.Color.Print '27')"
-    String NoInvisible = "$(UI.Color.Print '28')"
+    Const NoBold = "$(UI.Color.Print '21')"
+    Const NoDim = "$(UI.Color.Print '22')"
+    Const NoUnderline = "$(UI.Color.Print '24')"
+    Const NoBlink = "$(UI.Color.Print '25')"
+    Const NoInvert = "$(UI.Color.Print '27')"
+    Const NoInvisible = "$(UI.Color.Print '28')"
 
 } && oo:enableType

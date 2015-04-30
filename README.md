@@ -22,3 +22,8 @@ bash goodness
 * http://kvz.io/blog/2013/11/21/bash-best-practices/
 * http://www.davidpashley.com/articles/writing-robust-shell-scripts/
 * http://qntm.org/bash
+
+info
+====
+
+Don't use 'private' or 'public' properties within static classes.

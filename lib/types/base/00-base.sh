@@ -32,6 +32,20 @@ class:Var() {
 
 } && oo:enableType
 
+class:Const() {
+    extends Var
+
+    method Const::__constructor__() {
+        [[ $1 = '=' ]] && shift
+        Var::__setter__ "$@"
+    }
+
+    # TODO [cannot use setter when creating the object]
+    #method Const::__setter__() {
+    #    oo:throw "$this is immutable"
+    #}
+} && oo:enableType
+
 class:Boolean() {
     extends Var
     
@@ -175,6 +189,7 @@ class:ImmutableString() {
     extends String
 
     method ImmutableString::__constructor__() {
+        #[ $1 = '=' ] && shift
         Var::__setter__ "$@"
     }
 
@@ -204,7 +219,8 @@ class:Number() {
 
         Number::__setter__() {
             @mixed newValue
-            @@verify "$@"
+            @@verify
+            #echo "NEW VALUE: _${newValue}_"
             
             local _storedVariableName=$($this._storedVariableName)
             declare -gi "$_storedVariableName=$newValue"
@@ -217,40 +233,42 @@ class:Number() {
 
         Number::__decrement__() {
             local _storedVariableName=$($this._storedVariableName)
-            declare -gi "$_storedVariableName-=1"
+            declare -gi "$_storedVariableName+=-1"
         }
 
         Number::__add__() {
             @mixed value
             @@verify
-        
-            local _storedVariableName=$($this._storedVariableName)
-            echo $_storedVariableName+=$value
-            declare -gi "$_storedVariableName+=$value"
+            
+            expr $($this) + $value
+            #local _storedVariableName=$($this._storedVariableName)
+            #echo $_storedVariableName+=$value
+            #declare -gi "$_storedVariableName+=$value"
         }
 
         Number::__subtract__() {
             @mixed value
             @@verify
             
-            local _storedVariableName=$($this._storedVariableName)
-            declare -gi "$_storedVariableName-=$value"
+            expr $($this) - $value
+            #local _storedVariableName=$($this._storedVariableName)
+            #declare -gi "$_storedVariableName=$(expr $this - $value)"
         }
 
         Number::__multiply__() {
             @mixed value
             @@verify
             
-            local _storedVariableName=$($this._storedVariableName)
-            declare -gi "$_storedVariableName\*=$value"
+            expr $($this) \* $value
         }
 
         Number::__divide__() {
             @mixed value
             @@verify
             
-            local _storedVariableName=$($this._storedVariableName)
-            declare -gi "$_storedVariableName/=$value"
+            expr $($this) / $value
+            #local _storedVariableName=$($this._storedVariableName)
+            #declare -gi "$_storedVariableName/=$value"
         }
     ~methods
 
