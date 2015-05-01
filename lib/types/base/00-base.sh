@@ -22,11 +22,16 @@ class:Var() {
 
     methods
         Var::__getter__() {
-            [ ! -z $this ] && echo "${__oo__storage[$this]}"
+            [[ ! -z $this ]] && echo "${__oo__storage[$this]}"
         }
 
         Var::__setter__() {
-            [ ! -z $this ] && __oo__storage["$this"]="$1"
+            [[ ! -z $this ]] && __oo__storage["$this"]="$1"
+        }
+        
+        Var::Equals() {
+            [[ "$($this)" = "$1" ]]
+            return $?
         }
     ~methods
 
@@ -51,7 +56,7 @@ class:Boolean() {
     
     methods
         Boolean::__setter__() {
-            if [ ! -z $this ] && ([ $this = "true" ] || [ $this = "false" ])
+            if [[ ! -z $this ]] && ([[ $this = "true" ]] || [[ $this = "false" ]])
             then
                 __oo__storage["$this"]="$1"
             else
@@ -119,7 +124,7 @@ class:String() {
 
     static String.GetSanitizedVariableName() {
         @mixed input
-        @@verify "$@"
+        @@verify
 
         local clean="${input//[^a-zA-Z0-9]/_}"
         echo "${clean^^}"
@@ -128,7 +133,7 @@ class:String() {
     static String.TabsForSpaces() {
         @mixed input
         # TODO: @mixed spaceCount=4
-        @@verify "$@"
+        @@verify
 
         # hardcoded 1 tab = 4 spaces
         echo "${input//[	]/    }"
@@ -136,7 +141,7 @@ class:String() {
 
     static String.RegexMatch() {
         @mixed text; @mixed regex; @mixed param
-        @@verify "$@"
+        @@verify
 
         if [[ "$text" =~ $regex ]]; then
             if [[ ! -z $param ]]; then
@@ -151,7 +156,7 @@ class:String() {
 
     static String.SpaceCount() {
         @mixed text
-        @@verify "$@"
+        @@verify
 
         # note: you shouldn't mix tabs and spaces, we explicitly don't count tabs here
         local spaces="$(String.RegexMatch "$text" "^[	]*([ ]*)[.]*" 1)"
@@ -160,14 +165,17 @@ class:String() {
 
     static String.Trim() {
         @mixed text
-        @@verify "$@"
+        @@verify
 
         echo "$(String.RegexMatch "$text" "^[ 	]*(.*)" 1)"
+        #text="${text#"${text%%[![:space:]]*}"}"   # remove leading whitespace characters
+        #text="${text%"${text##*[![:space:]]}"}"   # remove trailing whitespace characters
+        #echo -n "$text"
     }
 
     static String.GetXSpaces() {
         @mixed howMany
-        @@verify "$@"
+        @@verify
         
         [[ "$howMany" -gt 0 ]] && ( printf "%*s" "$howMany" )
     }
@@ -178,7 +186,7 @@ class:String() {
 
     method String::RegexMatch() {
         @mixed regex; @mixed param
-        @@verify "$@"
+        @@verify
 
         String.RegexMatch "$($this)" "$regex" "$param"
     }
@@ -220,7 +228,7 @@ class:Number() {
         Number::__setter__() {
             @mixed newValue
             @@verify
-            #echo "NEW VALUE: _${newValue}_"
+            oo:debug "Var: $($this._storedVariableName), New Value: ${newValue}"
             
             local _storedVariableName=$($this._storedVariableName)
             declare -gi "$_storedVariableName=$newValue"
