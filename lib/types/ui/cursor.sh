@@ -1,4 +1,5 @@
 # http://askubuntu.com/questions/366103/saving-more-corsor-positions-with-tput-in-bash-terminal
+import ../base/Object
 
 class:UI.Cursor() {
 	extends Object
@@ -28,5 +29,5 @@ class:UI.Cursor() {
 			tput cup $($this.X) $($this.Y)
 		}
 	~methods
-} && oo:enableType
+}
 

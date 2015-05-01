@@ -1,6 +1,6 @@
 #!/bin/bash
 
-#oo:debug:enable
+#Log.Debug:Enable
 
 ## usage ##
 echo "[Creating Human Bazyli:]"

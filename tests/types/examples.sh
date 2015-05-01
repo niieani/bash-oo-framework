@@ -13,7 +13,7 @@ class:Animal() {
         }
     fi
 
-} && oo:enableType
+} && Type.Load
 
 class:Human() {
 
@@ -72,12 +72,12 @@ class:Human() {
 
 
         Human::__constructor__() {
-            oo:debug "Hello, I am the constructor! You have passed these arguments [ $@ ]"
+            Log.Debug "Hello, I am the constructor! You have passed these arguments [ $@ ]"
         }
 
     ~methods
 
-} && oo:enableType
+} && Type.Load
 
 static:Singleton() {
 
@@ -95,7 +95,7 @@ static:Singleton() {
         echo "$(Singleton) $(Singleton.YoMamaNumber)!"
     }
 
-} && oo:enableType
+} && Type.Load
 
 class:BaseTestBase() {
 
@@ -106,7 +106,7 @@ class:BaseTestBase() {
         Var::__setter__ "$@"
     }
 
-} && oo:enableType
+} && Type.Load
 
 class:ExtensionTest() {
 
@@ -117,7 +117,7 @@ class:ExtensionTest() {
         BaseTestBase::__setter__ "$@"
     }
 
-} && oo:enableType
+} && Type.Load
 
 static:Color() {
     extends Object
@@ -127,4 +127,4 @@ static:Color() {
     String Black = $'\033[0;30m'
     String Blue = $'\033[0;34m'
 
-} && oo:enableType
+} && Type.Load

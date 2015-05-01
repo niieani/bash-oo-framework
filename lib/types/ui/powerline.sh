@@ -1,16 +1,4 @@
-class:UnicodeString() {
-	extends Const
-	
-	UnicodeString::__getter__() {
-		[ ! -z $this ] && echo -e "${__oo__storage[$this]}"
-	}
-} && oo:enableType
-
-static:UI.Unicode() {
-	UI.Unicode.Print() {
-		echo -e "$1"
-	}
-} && oo:enableType
+import ../base/Object
 
 static:UI.Powerline() {
     extends Object
@@ -30,4 +18,18 @@ static:UI.Powerline() {
 	alias UI.Powerline.Star="UI.Unicode.Print '\u2b50'"
 	alias UI.Powerline.Saxophone="UI.Unicode.Print $'\U1F3B7'"
 	alias UI.Powerline.ThumbsUp="UI.Unicode.Print $'\U1F44D'"
-} && oo:enableType
+}
+
+#class:UnicodeString() {
+#	extends Const
+#
+#	UnicodeString::__getter__() {
+#		[ ! -z $this ] && echo -e "${__oo__storage[$this]}"
+#	}
+#}
+#
+#static:UI.Unicode() {
+#	UI.Unicode.Print() {
+#		echo -e "$1"
+#	}
+#}

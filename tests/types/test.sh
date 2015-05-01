@@ -24,12 +24,12 @@ static:Test() {
     Test.Fail()
     {
         #Test.OnEndCursor.Capture
-        Test.OnStartCursor.Restore
+        #Test.OnStartCursor.Restore
         echo $(UI.Color.Red)$(UI.Powerline.Fail) $(UI.Color.Yellow)[$(UI.Color.Red)$(UI.Color.Bold)FAIL$(UI.Color.NoBold)$(UI.Color.Yellow)]$(UI.Color.Default)
         #Test.OnEndCursor.Restore
     }
 
-} && oo:enableType
+} && Type.Load
 
 alias it="Test.Start"
 alias finish="Test.OK; catch Test.Fail" 

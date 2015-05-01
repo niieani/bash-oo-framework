@@ -2,7 +2,7 @@
 
 shopt -s expand_aliases
 
-oo:assignParamsToLocal() {
+Function.AssignParamsLocally() {
     ## unset first miss
     unset __oo__params[0]
     declare -i i
@@ -31,7 +31,7 @@ oo:assignParamsToLocal() {
 
 alias oo:stashPreviousLocal="declare -a \"__oo__params+=( \$(declare -p | grep 'declare -- ' | tail -1 | cut -d ' ' -f 3) )\""
 alias @var="oo:stashPreviousLocal; declare -a \"__oo__param_types+=( TYPE )\"; local "
-alias @@verify="oo:stashPreviousLocal; oo:assignParamsToLocal"
+alias @@verify="oo:stashPreviousLocal; Function.AssignParamsLocally"
 
 bambo() {
     @var test1

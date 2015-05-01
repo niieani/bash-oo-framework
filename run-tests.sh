@@ -1,7 +1,14 @@
 #!/usr/bin/env bash
 
-source oo.sh
-oo:import tests/types/test
+__oo__path="${BASH_SOURCE[0]%/*}"
+[ -f "$__oo__path" ] && __oo__path=$(dirname "$__oo__path")
+source "${__oo__path}/lib/boilerplate.sh"
+
+import lib/types/system
+import lib/types/base
+import lib/types/ui
+
+import tests/types/test
 
 it 'should print a colorful message'
 try
@@ -12,34 +19,34 @@ finish
 
 it 'should make an instance of an Object'
 try
-#    set -v
-#    set -x
-    #oo:debug:enable 3
     Object anObject
-    #oo:debug:disable
-#    set +v
-#    set +x
-    #isMethodDeclared aNumber
 finish
 
 it 'should make an instance of a number'
 try
     Number aNumber
-    oo:isDeclared aNumber
+    Object.Exists aNumber
 finish
 
-it 'should make an instance of a number and initialize with 10'
+it 'should have destroyed the previous instance'
 try
-    Number aNumber = 10
-    #aNumber.Equals 10
+    ! Object.Exists aNumber
 finish
 
-it "should make a number and change it's value"
+it 'should make an instance of a number and initialize with 5'
+try
+    Number aNumber = 5
+    aNumber.Equals 5
+finish
+
+it 'should make a number and change its value'
 try
     Number aNumber = 10
     aNumber = 12
     aNumber.Equals 12
 finish
+
+#echo "${__oo__importedFiles[@]}"
 
 #it 'should fail'
 #try
@@ -54,5 +61,5 @@ finish
 #finish
 #echo $(UI.Powerline.ThumbsUp) All tests completed succesfully.
 
-#oo:import tests/types/examples
-#oo:import tests/core-test
+#import tests/types/examples
+#import tests/core-test

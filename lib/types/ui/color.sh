@@ -1,3 +1,5 @@
+import ../base/Object
+
 static:UI.Color() {
     extends Object
 
@@ -14,7 +16,7 @@ static:UI.Color() {
 
     UI.Color.Print() {
         @mixed colorCode
-        @@verify "$@"
+        @@verify
 
         if UI.Color.IsAvailable
         then
@@ -27,7 +29,7 @@ static:UI.Color() {
 
     UI.Color.256text() {
         @mixed colorNumber
-        @@verify "$@"
+        @@verify
 
         if UI.Color.IsAvailable
         then
@@ -40,7 +42,7 @@ static:UI.Color() {
 
     UI.Color.256background() {
         @mixed colorNumber
-        @@verify "$@"
+        @@verify
 
         if UI.Color.IsAvailable
         then
@@ -87,4 +89,4 @@ static:UI.Color() {
     alias UI.Color.NoInvert="UI.Color.Print '27'"
     alias UI.Color.NoInvisible="UI.Color.Print '28'"
 
-} && oo:enableType
+}
