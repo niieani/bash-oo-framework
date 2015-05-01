@@ -8,14 +8,18 @@ declare -a __oo__functionsTernaryOperator
 
 # http://stackoverflow.com/questions/2990414/echo-that-outputs-to-stderr
 #oo:echoerr() { cat <<< "$@" 1>&2; }
-oo:echoerr() { cat <<< "$*" 1>&2; }
+oo:echoerr() { 
+    cat <<< "$*" 1>&2
+    return 0 
+}
 
 oo:debug() {
     # http://stackoverflow.com/questions/16623835/bash-remove-a-fixed-prefix-suffix-from-a-string
     local script=${BASH_SOURCE[1]}
     local prefix='./'
     script="${script#$prefix}"
-    [ ! -z $__oo__debug ] && oo:echoerr "[${script}:${BASH_LINENO[1]}] $*"
+    [[ ! -z $__oo__debug ]] && oo:echoerr "[${script}:${BASH_LINENO[1]}] $*"
+    return 0
 }
 alias oo:debug:1="oo:debug"
 
@@ -24,21 +28,27 @@ oo:debug:2() {
     local prefix='./'
     script="${script#$prefix}"
     #set -xv
-    [ ! -z $__oo__debug ] && [ $__oo__debug -gt 1 ] && oo:echoerr "[${script}:${BASH_LINENO[1]}] $*"
+    [[ ! -z $__oo__debug ]] && [[ $__oo__debug -gt 1 ]] && oo:echoerr "[${script}:${BASH_LINENO[1]}] $*"
     #set +xv
+    return 0
 }
 
 oo:debug:3() {
     local script=${BASH_SOURCE[1]}
     local prefix='./'
     script="${script#$prefix}"
-    [ ! -z $__oo__debug ] && [ $__oo__debug -gt 2 ] && oo:echoerr "[${script}:${BASH_LINENO[1]}] $*"
+    [[ ! -z $__oo__debug ]] && [[ $__oo__debug -gt 2 ]] && oo:echoerr "[${script}:${BASH_LINENO[1]}] $*"
+    return 0
 }
 
 oo:debug:enable() {
     declare -ig "__oo__debug=${1:-1}"
     # [[ -z "$1" ]] && declare -ig "__oo__debug=1"
     # [[ -z "$1" ]] || declare -ig "__oo__debug=$1"
+}
+
+oo:debug:disable() {
+    unset __oo__debug
 }
 
 oo:throw() {
