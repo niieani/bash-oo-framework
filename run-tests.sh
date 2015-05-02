@@ -4,7 +4,7 @@ __oo__path="${BASH_SOURCE[0]%/*}"
 [ -f "$__oo__path" ] && __oo__path=$(dirname "$__oo__path")
 source "${__oo__path}/lib/boilerplate.sh"
 
-import lib/types/system
+#Log.Debug:Enable 3
 import lib/types/base
 import lib/types/ui
 
@@ -47,18 +47,16 @@ try
 finish
 
 #echo "${__oo__importedFiles[@]}"
-
+#
 #it 'should fail'
 #try
 #    false
 #finish
 
-#it 'is playing on a saxomophone!'
-#try
-#    sleep 1
-#    UI.Powerline.Saxophone
-#    echo
-#finish
+it "is playing der saxomophone! $(UI.Powerline.Saxophone)"
+try
+    sleep 1
+finish
 #echo $(UI.Powerline.ThumbsUp) All tests completed succesfully.
 
 #import tests/types/examples
