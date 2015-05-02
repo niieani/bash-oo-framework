@@ -49,6 +49,16 @@ class:Array() {
         Array::Merge() {
             $this.Add "$@"
         }
+
+        Array::LastElement() {
+            local realArray="$($this)"
+            echo "${realArray[(${#realArray[@]}-1)]}"
+        }
+
+        Array::WithoutLastElement() {
+            local realArray="$($this)"
+            echo "${realArray[@]:0:(${#realArray[@]}-1)}"
+        }
     ~methods
 
 }
