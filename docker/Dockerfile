@@ -1,5 +1,7 @@
-FROM ubuntu
-VOLUME /home/ubuntu/docs
+FROM phusion/baseimage
 
-ENTRYPOINT ["bash"]
-CMD ["-il"]
+VOLUME /root/oo
+
+# Use baseimage-docker's init system.
+CMD ["/sbin/my_init"]
+

@@ -15,7 +15,7 @@ static:UI.Color() {
     }
 
     UI.Color.Print() {
-        @mixed colorCode
+        : @mixed colorCode
         @@verify
 
         if UI.Color.IsAvailable
@@ -28,7 +28,7 @@ static:UI.Color() {
     }
 
     UI.Color.256text() {
-        @mixed colorNumber
+        : @mixed colorNumber
         @@verify
 
         if UI.Color.IsAvailable
@@ -41,7 +41,7 @@ static:UI.Color() {
     }
 
     UI.Color.256background() {
-        @mixed colorNumber
+        : @mixed colorNumber
         @@verify
 
         if UI.Color.IsAvailable

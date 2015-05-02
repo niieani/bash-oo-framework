@@ -34,8 +34,8 @@ alias @var="oo:stashPreviousLocal; declare -a \"__oo__param_types+=( TYPE )\"; l
 alias @@verify="oo:stashPreviousLocal; Function.AssignParamsLocally"
 
 bambo() {
-    @var test1
-    @var test2
+    : @var test1
+    : @var test2
     @@verify "$@"
 
     echo here is first: "$test1"

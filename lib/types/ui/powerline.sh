@@ -1,5 +1,11 @@
 import ../base/Object
 
+static:UI.Unicode() {
+	UI.Unicode.Print() {
+		echo -e "$1"
+	}
+}
+
 static:UI.Powerline() {
     extends Object
 	alias UI.Powerline.PointingArrow="UI.Unicode.Print '\u27a1'"
@@ -28,8 +34,3 @@ static:UI.Powerline() {
 #	}
 #}
 #
-#static:UI.Unicode() {
-#	UI.Unicode.Print() {
-#		echo -e "$1"
-#	}
-#}

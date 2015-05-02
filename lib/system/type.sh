@@ -31,23 +31,26 @@ Type.CreateInstance(){
     local visibleAsType="${__oo__objects["$fullName"]}"
     local baseNow=${FUNCNAME[2]#*:}
 
-    [[ -z $extending ]] || Log.Debug "oo: basing ($baseNow) $fullName on $objectType..."
-    [[ -z $extending ]] && Log.Debug "oo: initializing and constructing $fullName ($visibleAsType) of $objectType"
+    if [[ ! -z $extending ]]; then
+        Log.Debug "oo: basing ($baseNow) $fullName on $objectType..."
+
+        # TODO: base cannot be set as $base because that means it cannot be called from the base
+        # - the reference will always be to just that one base
+        local baseType
+        if Function.Exists "$fullName.__baseType__"
+        then
+            baseType="$($fullName.__baseType__)"
+            Log.Debug:3 "oo: baseType = $baseType"
+        fi
+    else
+        Log.Debug "oo: initializing and constructing $fullName ($visibleAsType) of $objectType"
+    fi
 
     ## add methods
     local instanceMethods=($(compgen -A 'function' $objectType::))
     local staticMethods=($(compgen -A 'function' $objectType.))
 
     #    local methods=( "${instanceMethods[@]}" "${staticMethods[@]}" )
-
-    # TODO: base cannot be set as $base because that means it cannot be called from the base
-    # - the reference will always be to just that one base
-    local baseType
-    if Function.Exists "$fullName.__baseType__"
-    then
-        baseType="$($fullName.__baseType__)"
-        Log.Debug:3 "oo: baseType = $baseType"
-    fi
 
     ## TODO: does this make sense?
     ## don't map static types
@@ -215,6 +218,12 @@ Type.CallInstance() {
     fi
 }
 
+Type.Exists(){
+    local type=${1#*:}
+    Array.Contains "static:$type" "${__oo__importedTypes[@]}" || Array.Contains "class:$type" "${__oo__importedTypes[@]}"
+    return $?
+}
+
 Type.Load(){
     ## match Types (:) but not Methods (::) ##
     local types=($(compgen -A function class:)) # | grep -v ::
@@ -240,12 +249,10 @@ Type.Load(){
                     Log.Debug "oo: enabling static type [ $fullType ]"
                 fi
 
-                Log.Debug "oo: building the constructor for [ $type ]"
-
                 typeInitializer() {
-                    @mixed objectType
-                    @mixed fullType
-                    @mixed newObjectName
+                    : @mixed objectType
+                    : @mixed fullType
+                    : @mixed newObjectName
                     @@verify
                     # TODO: @params paramsForInitializing
                     shift; shift
@@ -319,7 +326,13 @@ Type.Load(){
                     #"
 
                     ## alias enabling to define parameters ##
+                    Log.Debug:4 "Aliasing @$type"
                     alias @$type="oo:stashPreviousLocal; declare -a \"__oo__param_types+=( $type )\"; local "
+                    #eval "alias @$type=\"oo:stashPreviousLocal; declare -a \\\"__oo__param_types+=( $type )\\\"; local \""
+
+                    #eval "alias \"@$type=echo I alias\""
+                    #shopt -s expand_aliases
+
                 #}
                 fi
             fi

@@ -22,7 +22,7 @@ Log.Debug.Write() {
 
     if [[ ! -z $level ]] || [[ ! -z $__oo__debug ]] && [[ $__oo__debug -ge $level ]]
     then
-        if Function.Exists UI.Color
+        if Function.Exists UI.Color.Default
         then
             Log.Write "$(UI.Color.Blue)[${script}:${lineNo}] $color[$type] $(UI.Color.White)$*$(UI.Color.Default)"
         else
@@ -31,14 +31,11 @@ Log.Debug.Write() {
     fi
 }
 
-unalias Log.Debug
-unalias Log.Debug:1
-unalias Log.Debug:2
-unalias Log.Debug:3
 alias Log.Debug="Log.Debug.Write '1' 'DEBUG' $'\033[0;33m'"
 alias Log.Debug:1="Log.Debug.Write '1' 'DEBUG' $'\033[0;33m'"
 alias Log.Debug:2="Log.Debug.Write '2' 'DEBUG' $'\033[0;33m'"
 alias Log.Debug:3="Log.Debug.Write '3' 'DEBUG' $'\033[0;33m'"
+alias Log.Debug:4="Log.Debug.Write '4' 'DEBUG' $'\033[0;33m'"
 
 Log.Debug:Enable() {
     declare -ig "__oo__debug=${1:-1}"

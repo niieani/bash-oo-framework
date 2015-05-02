@@ -43,9 +43,9 @@ class:Human() {
             ## also: subshell protects variables from falling through to another overload
             ## perhaps we could use it here?
 
-            eval @Array      mergeWith
-            eval @Number     many
-            eval @params     stuff
+            : @Array      mergeWith
+            : @Number     many
+            : @params     stuff
 
             @@verify "$@" && {
                 echo Testing \"$mergeWith\" at manyCount: $many
@@ -56,8 +56,8 @@ class:Human() {
 
             ## here we have an overloaded version of this function that takes in Array, Object and params
             ## beauty is that by passing different objects we can get
-            eval @Array      mergeWith
-            eval @Object     overloadedType
+            : @Array      mergeWith
+            : @Object     overloadedType
 
             @@verify "$@" && {
                 echo Merging \"$mergeWith\", we use the Object: $overloadedType
