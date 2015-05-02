@@ -7,6 +7,7 @@ declare -A __oo__objects_private
 declare -a __oo__functionsTernaryOperator
 declare -g __oo__logger=${LOGGER:-STDERR}
 declare -a __oo__importedFiles
+declare -ig __oo__insideTryCatch=0
 
 ## note: aliases are visible inside functions only if
 ## they were initialized AFTER they were created
@@ -93,6 +94,17 @@ import() {
 }
 
 throw() {
+    local script="${BASH_SOURCE[1]#./}"
+    local lineNo=${BASH_LINENO[0]}
+    local type="UNCAUGHT EXCEPTION"
+    if [[ $__oo__insideTryCatch -gt 0 ]]
+    then
+#        echo yes, we are inside throw: "$*"
+        echo "$*" > /tmp/stored_exception
+        echo $lineNo > /tmp/stored_exception_line
+#        echo "$script" > /tmp/stored_exception_source
+        return 1
+    fi
     if [[ $BASH_SUBSHELL -ge 20 ]]
     then
         echo "ERROR: Call stack exceeded (20)."
@@ -100,9 +112,6 @@ throw() {
         read
         return 1
     fi
-    local script="${BASH_SOURCE[1]#./}"
-    local lineNo=${BASH_LINENO[0]}
-    local type="EXCEPTION"
     if Function.Exists UI.Color.Default
     then
         Log.Write "$(UI.Color.Blue)[${script}:${lineNo}] $(UI.Color.Red)$(UI.Color.Blink)[$type] $(UI.Color.NoBlink)$(UI.Color.White)$*$(UI.Color.Default)"
@@ -114,30 +123,38 @@ throw() {
     return 1
 }
 
-#command_not_found_handle() {
-#    if [[ $BASH_SUBSHELL -ge 20 ]]
-#    then
-#        echo "ERROR: Call stack exceeded (20)."
-#        echo "Press [CTRL+C] to exit or [Return] to continue execution."
-#        read
-#        return 1
-#    fi
-#    local script="${BASH_SOURCE[1]#./}"
-#    local lineNo=${BASH_LINENO[0]}
-#    local undefinedObject=$*
-#    #script="${script#./}"
-#    if Function.Exists UI.Color.Default
-#    then
-#        local errLine=$(sed "${lineNo}q;d" "$script")
-#        local underlinedObject="$(UI.Color.Magenta)$(UI.Color.Underline)$undefinedObject"$(UI.Color.White)$(UI.Color.NoUnderline)
-#        local underlinedObjectInLine="${errLine/$undefinedObject/$underlinedObject}"
-#        underlinedObjectInLine="$(String.Trim "$underlinedObjectInLine")"
-#        Log.Write
-#        Log.Write "$(UI.Color.Red)Undefined object:"
-#        Log.Write "$(UI.Color.Blue)[${script}:${lineNo}] $(UI.Color.Red)$(UI.Color.Blink)[EXCEPTION] $(UI.Color.NoBlink)$(UI.Color.White)${underlinedObjectInLine}$(UI.Color.Default)"
-#        Log.Write
-#    else
-#        Log.Write "[${script}:${lineNo}] [EXCEPTION] Undefined object: $undefinedObject"
-#    fi
-#    return 127
-#}
+command_not_found_handle() {
+    local script="${BASH_SOURCE[1]#./}"
+    local lineNo=${BASH_LINENO[0]}
+    local undefinedObject=$*
+    if [[ $__oo__insideTryCatch -gt 0 ]]
+    then
+        echo inside Try $__oo__insideTryCatch
+        echo "$undefinedObject is undefined" > /tmp/stored_exception
+        echo $lineNo > /tmp/stored_exception_line
+#        echo "$script" > /tmp/stored_exception_source
+        return 1
+    fi
+    if [[ $BASH_SUBSHELL -ge 20 ]]
+    then
+        echo "ERROR: Call stack exceeded (20)."
+        echo "Press [CTRL+C] to exit or [Return] to continue execution."
+        read
+        return 1
+    fi
+    #script="${script#./}"
+    if Function.Exists UI.Color.Default
+    then
+        local errLine=$(sed "${lineNo}q;d" "$script")
+        local underlinedObject="$(UI.Color.Magenta)$(UI.Color.Underline)$undefinedObject"$(UI.Color.White)$(UI.Color.NoUnderline)
+        local underlinedObjectInLine="${errLine/$undefinedObject/$underlinedObject}"
+        underlinedObjectInLine="$(String.Trim "$underlinedObjectInLine")"
+        Log.Write
+        Log.Write "$(UI.Color.Red)Undefined object:"
+        Log.Write "$(UI.Color.Blue)[${script}:${lineNo}] $(UI.Color.Red)$(UI.Color.Blink)[EXCEPTION] $(UI.Color.NoBlink)$(UI.Color.White)${underlinedObjectInLine}$(UI.Color.Default)"
+        Log.Write
+    else
+        Log.Write "[${script}:${lineNo}] [EXCEPTION] Undefined object: $undefinedObject"
+    fi
+    return 127
+}
