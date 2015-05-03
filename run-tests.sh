@@ -12,6 +12,11 @@ import lib/types/util/test
 #( export __EXCEPTION__="test"; )
 #echo $__EXCEPTION__
 
+#trap 'echo ERROR' ERR
+
+trap "throw \$BASH_COMMAND" ERR
+set -o errtrace  # trace ERR through 'time command' and other functions
+
 Test.NewGroup "Objects"
 
 it 'should print a colorful message'

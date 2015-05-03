@@ -1,5 +1,7 @@
 import ../base/Object
 
+# Don't use colors on pipes or non-recognized terminals
+#[[ "${TERM}" == *"xterm"* ]] || [ ! -t 1 ] &&
 static:UI.Color() {
     extends Object
 
@@ -54,7 +56,6 @@ static:UI.Color() {
     }
 
     alias UI.Color.Default="UI.Color.Print '0'"
-    #alias UI.Color.Default="UI.Color.Print '0'"
 
     alias UI.Color.Black="UI.Color.Print '0;30'"
     alias UI.Color.Red="UI.Color.Print '0;31'"
@@ -88,5 +89,43 @@ static:UI.Color() {
     alias UI.Color.NoBlink="UI.Color.Print '25'"
     alias UI.Color.NoInvert="UI.Color.Print '27'"
     alias UI.Color.NoInvisible="UI.Color.Print '28'"
+    # regex:
+    #UI.Color.Print '([\d]+[;]*[\d]*')
+    #echo \\\\\\$'\\\\033[$1m'
+
+#    alias UI.Color.Default="echo \$'\033[0'm'"
+#
+#    alias UI.Color.Black="echo \$'\033[0;30'm'"
+#    alias UI.Color.Red="echo \$'\033[0;31'm'"
+#    alias UI.Color.Green="echo \$'\033[0;32'm'"
+#    alias UI.Color.Yellow="echo \$'\033[0;33'm'"
+#    alias UI.Color.Blue="echo \$'\033[0;34'm'"
+#    alias UI.Color.Magenta="echo \$'\033[0;35'm'"
+#    alias UI.Color.Cyan="echo \$'\033[0;36'm'"
+#    alias UI.Color.LightGray="echo \$'\033[0;37'm'"
+#
+#    alias UI.Color.DarkGray="echo \$'\033[0;90'm'"
+#    alias UI.Color.LightRed="echo \$'\033[0;91'm'"
+#    alias UI.Color.LightGreen="echo \$'\033[0;92'm'"
+#    alias UI.Color.LightYellow="echo \$'\033[0;93'm'"
+#    alias UI.Color.LightBlue="echo \$'\033[0;94'm'"
+#    alias UI.Color.LightMagenta="echo \$'\033[0;95'm'"
+#    alias UI.Color.LightCyan="echo \$'\033[0;96'm'"
+#    alias UI.Color.White="echo \$'\033[0;97'm'"
+#
+#    # flags
+#    alias UI.Color.Bold="echo \$'\033[1'm'"
+#    alias UI.Color.Dim="echo \$'\033[2'm'"
+#    alias UI.Color.Underline="echo \$'\033[4'm'"
+#    alias UI.Color.Blink="echo \$'\033[5'm'"
+#    alias UI.Color.Invert="echo \$'\033[7'm'"
+#    alias UI.Color.Invisible="echo \$'\033[8'm'"
+#
+#    alias UI.Color.NoBold="echo \$'\033[21'm'"
+#    alias UI.Color.NoDim="echo \$'\033[22'm'"
+#    alias UI.Color.NoUnderline="echo \$'\033[24'm'"
+#    alias UI.Color.NoBlink="echo \$'\033[25'm'"
+#    alias UI.Color.NoInvert="echo \$'\033[27'm'"
+#    alias UI.Color.NoInvisible="echo \$'\033[28'm'"
 
 }

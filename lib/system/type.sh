@@ -53,7 +53,7 @@ Type.CreateInstance(){
     #    local methods=( "${instanceMethods[@]}" "${staticMethods[@]}" )
 
     ## TODO: does this make sense?
-    ## don't map static types
+    ## should we map static types?
     if [[ $fullName != $visibleAsType ]] && [[ ! -z "${staticMethods[*]}" ]]; then
         local method
         for method in "${staticMethods[@]}"; do
@@ -66,21 +66,13 @@ Type.CreateInstance(){
             #local parentName=${fullName%.*}
 
             # add method aliases
-            #alias $fullName.$method="self=$fullName __objectType__=$visibleAsType __parentType__=$parentType $objectType.$method"
+#            alias $fullName.$method="self=$fullName __objectType__=$visibleAsType __parentType__=$parentType $objectType.$method"
             eval "$fullName.$method() {
                 self=$fullName \
                 __objectType__=$visibleAsType \
                 __parentType__=$parentType \
                 $objectType.$method \"\$@\"
             }"
-        #eval "
-        #$fullName.$method() {
-        #    local self=$fullName
-        #    local __objectType__=$visibleAsType
-        #    local __parentType__=$parentType
-        #    $objectType.$method \"\$@\"
-        #}
-        #"
         done
     fi
 

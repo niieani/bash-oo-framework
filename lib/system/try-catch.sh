@@ -18,20 +18,26 @@ saveThrowLine() {
 }
 
 extractException(){
+#    export __EXCEPTION_HANDLED__=false
+
     if [[ $__oo__insideTryCatch -gt 1 ]]
     then
         set -e
     fi
     __oo__insideTryCatch+=-1
 
-    __EXCEPTION__=($(lastException))
+    __EXCEPTION_CATCH__=($(lastException))
 
     local retVal=$1
     if [[ $retVal -gt 0 ]]
     then
-        export __EXCEPTION_SOURCE__=${__EXCEPTION__[(${#__EXCEPTION__[@]}-1)]}
-        export __EXCEPTION_LINE__=${__EXCEPTION__[(${#__EXCEPTION__[@]}-2)]}
-        export __EXCEPTION__="${__EXCEPTION__[@]:0:(${#__EXCEPTION__[@]}-2)}"
+    #${realArray[-1]}
+        export __EXCEPTION_SOURCE__="${__EXCEPTION_CATCH__[-1]}"
+        export __EXCEPTION_LINE__="${__EXCEPTION_CATCH__[-2]}"
+        export __EXCEPTION__="${__EXCEPTION_CATCH__[@]:0:(${#__EXCEPTION_CATCH__[@]} - 2)}"
+#        export __EXCEPTION_SOURCE__="${__EXCEPTION_CATCH__[(${#__EXCEPTION_CATCH__[@]}-1)]}"
+#        export __EXCEPTION_LINE__="${__EXCEPTION_CATCH__[(${#__EXCEPTION_CATCH__[@]}-2)]}"
+#        export __EXCEPTION__="${__EXCEPTION_CATCH__[@]:0:(${#__EXCEPTION_CATCH__[@]}-2)}"
         return 1 # so that we may continue
     fi
 }

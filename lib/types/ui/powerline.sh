@@ -11,6 +11,8 @@ static:UI.Powerline() {
 	alias UI.Powerline.PointingArrow="UI.Unicode.Print '\u27a1'"
 	alias UI.Powerline.ArrowLeft="UI.Unicode.Print '\ue0b2'"
 	alias UI.Powerline.ArrowRight="UI.Unicode.Print '\ue0b0'"
+	alias UI.Powerline.ArrowRightDown="UI.Unicode.Print '\u2198'"
+	alias UI.Powerline.ArrowDown="UI.Unicode.Print '\u2B07'"
 	alias UI.Powerline.PlusMinus="UI.Unicode.Print '\ue00b1'"
 	alias UI.Powerline.Branch="UI.Unicode.Print '\ue0a0'"
 	alias UI.Powerline.RefersTo="UI.Unicode.Print '\u27a6'"

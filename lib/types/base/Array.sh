@@ -53,6 +53,7 @@ class:Array() {
         Array::LastElement() {
             local realArray="$($this)"
             echo "${realArray[(${#realArray[@]}-1)]}"
+            # alternative in bash 4.2: ${realArray[-1]}
         }
 
         Array::WithoutLastElement() {

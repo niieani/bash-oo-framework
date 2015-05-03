@@ -58,7 +58,7 @@ class:String() {
         @mixed howMany
         @@verify
 
-        [[ "$howMany" -gt 0 ]] && ( printf "%*s" "$howMany" )
+        [[ "$howMany" -gt 0 ]] && ( printf "%*s" "$howMany" ) || echo
     }
 
     method String::GetSanitizedVariableName() {

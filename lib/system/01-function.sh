@@ -2,8 +2,8 @@ Function.Exists(){
     local fullMethodName="$1"
     #echo checking method $fullMethodName
     # http://stackoverflow.com/questions/511683/bash-get-list-of-commands-starting-with-a-given-string
-    local compgenFunctions=($(compgen -A 'function' "$fullMethodName"))
-    local compgenAliases=($(compgen -A 'alias' "$fullMethodName"))
+    local compgenFunctions=($(compgen -A 'function' "$fullMethodName" || true))
+    local compgenAliases=($(compgen -A 'alias' "$fullMethodName" || true))
     ## TODO: add exact matching
     [[ ${#compgenFunctions[@]} -gt 0 ]] || [[ ${#compgenAliases[@]} -gt 0 ]] && return 0
     return 1
