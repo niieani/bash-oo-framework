@@ -98,7 +98,7 @@ Using Logging, Colors and Powerline Emoji
 =========================================
 
 ```bash
-echo $(UI.Color.Blue)I'm blue...$($UI.Color.Default)
+echo "$(UI.Color.Blue)I'm blue...$($UI.Color.Default)"
 # show all debug messages below log level 2
 Debug.Log.Enable 2
 # write to debug log at level 1
