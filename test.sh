@@ -2,7 +2,7 @@
 
 __oo__path="${BASH_SOURCE[0]%/*}"
 [ -f "$__oo__path" ] && __oo__path=$(dirname "$__oo__path")
-source "${__oo__path}/lib/boilerplate.sh"
+source "${__oo__path}/lib/oo-framework.sh"
 
 import lib/types/base
 import lib/types/ui/color
@@ -113,6 +113,6 @@ de test1 test2 test3
 #}
 #fe
 
-#Log.Debug:Enable:4
+#Log.Debug.SetLevel:4
 
 #Test.Start 'should print a colorful message'

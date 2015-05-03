@@ -1,21 +1,11 @@
 #!/usr/bin/env bash
 
-__oo__path="${BASH_SOURCE[0]%/*}"
-[ -f "$__oo__path" ] && __oo__path=$(dirname "$__oo__path")
-source "${__oo__path}/lib/boilerplate.sh"
+source "$( cd "$( echo "${BASH_SOURCE[0]%/*}" )"; pwd )/lib/oo-framework.sh"
 
-#Log.Debug:Enable 3
+#Log.Debug.SetLevel 3
 import lib/types/base
 import lib/types/ui
 import lib/types/util/test
-
-#( export __EXCEPTION__="test"; )
-#echo $__EXCEPTION__
-
-#trap 'echo ERROR' ERR
-
-trap "throw \$BASH_COMMAND" ERR
-set -o errtrace  # trace ERR through 'time command' and other functions
 
 Test.NewGroup "Objects"
 

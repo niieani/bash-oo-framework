@@ -10,7 +10,7 @@ class:Number() {
         Number::__constructor__() {
             local _storedVariableName="__oo__number_${this//./_}"
             $this._storedVariableName = "$_storedVariableName"
-            Log.Debug oo: creating number [ $_storedVariableName ]
+            Log.Debug 1 oo: creating number [ $_storedVariableName ]
             declare -gi "$_storedVariableName"
         }
 
@@ -22,7 +22,7 @@ class:Number() {
         Number::__setter__() {
             @mixed newValue
             @@verify
-            Log.Debug "Var: $($this._storedVariableName), New Value: ${newValue}"
+            Log.Debug 1 "Var: $($this._storedVariableName), New Value: ${newValue}"
 
             local _storedVariableName=$($this._storedVariableName)
             declare -gi "$_storedVariableName=$newValue"

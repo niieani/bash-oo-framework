@@ -1,6 +1,6 @@
 #!/bin/bash
 
-#Log.Debug:Enable
+#Log.Debug.SetLevel
 
 ## usage ##
 echo "[Creating Human Bazyli:]"

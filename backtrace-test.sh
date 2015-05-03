@@ -2,13 +2,13 @@
 
 __oo__path="${BASH_SOURCE[0]%/*}"
 [ -f "$__oo__path" ] && __oo__path=$(dirname "$__oo__path")
-source "${__oo__path}/lib/boilerplate.sh"
+source "${__oo__path}/lib/oo-framework.sh"
 
 #trap "previous_command=\$this_command; this_command=\$BASH_COMMAND" DEBUG
 #trap "throw \$previous_command" ERR
 
 
-#Log.Debug:Enable 3
+#Log.Debug.SetLevel 3
 import lib/types/base
 import lib/types/ui
 

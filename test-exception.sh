@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 
-__oo__path="${BASH_SOURCE[0]%/*}"
-[ -f "$__oo__path" ] && __oo__path=$(dirname "$__oo__path")
-source "${__oo__path}/lib/boilerplate.sh"
+source "$( cd "$( echo "${BASH_SOURCE[0]%/*}" )"; pwd )/lib/oo-framework.sh"
+
+#Log.Debug.SetLevel 2
 
 import lib/types/base
 import lib/types/ui

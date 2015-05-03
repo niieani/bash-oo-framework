@@ -47,7 +47,7 @@ class:Human() {
             : @Number     many
             : @params     stuff
 
-            @@verify "$@" && {
+            @@verify && {
                 echo Testing \"$mergeWith\" at manyCount: $many
                 echo Stuff: "${stuff[*]}"
                 return
@@ -59,7 +59,7 @@ class:Human() {
             : @Array      mergeWith
             : @Object     overloadedType
 
-            @@verify "$@" && {
+            @@verify && {
                 echo Merging \"$mergeWith\", we use the Object: $overloadedType
                 return
             }
@@ -72,7 +72,7 @@ class:Human() {
 
 
         Human::__constructor__() {
-            Log.Debug "Hello, I am the constructor! You have passed these arguments [ $@ ]"
+            Log.Debug 1 "Hello, I am the constructor! You have passed these arguments [ $@ ]"
         }
 
     ~methods

@@ -15,6 +15,8 @@ alias private="[[ \$instance = true ]] && __private__=true "
 ## TODO: add implementation & use inside of class declaration
 alias oo:enable:TernaryOperator="__oo__functionsTernaryOperator+=( ${FUNCNAME[0]} )"
 
+alias Object.Exists="Function.Exists"
+
 Type.GetFullName(){
     local thisName=$1
     local parentName=$fullName
@@ -32,7 +34,7 @@ Type.CreateInstance(){
     local baseNow=${FUNCNAME[2]#*:}
 
     if [[ ! -z $extending ]]; then
-        Log.Debug "oo: basing ($baseNow) $fullName on $objectType..."
+        Log.Debug 1 "oo: basing ($baseNow) $fullName on $objectType..."
 
         # TODO: base cannot be set as $base because that means it cannot be called from the base
         # - the reference will always be to just that one base
@@ -40,10 +42,10 @@ Type.CreateInstance(){
         if Function.Exists "$fullName.__baseType__"
         then
             baseType="$($fullName.__baseType__)"
-            Log.Debug:3 "oo: baseType = $baseType"
+            Log.Debug 2 "oo: baseType = $baseType"
         fi
     else
-        Log.Debug "oo: initializing and constructing $fullName ($visibleAsType) of $objectType"
+        Log.Debug 1 "oo: initializing and constructing $fullName ($visibleAsType) of $objectType"
     fi
 
     ## add methods
@@ -61,7 +63,7 @@ Type.CreateInstance(){
             # leave just function name from end
             method=${method##*.}
 
-            Log.Debug:3 "oo: mapping static method: $fullName.$method ==> $method"
+            Log.Debug 2 "oo: mapping static method: $fullName.$method ==> $method"
 
             #local parentName=${fullName%.*}
 
@@ -84,7 +86,7 @@ Type.CreateInstance(){
             # leave just function name from end
             method=${method##*::}
 
-            Log.Debug:3 "oo: mapping instance method: $fullName.$method ==> $method"
+            Log.Debug 2 "oo: mapping instance method: $fullName.$method ==> $method"
 
             #local parentName=${fullName%.*}
 
@@ -173,7 +175,7 @@ Type.CreateInstance(){
 Type.CallInstance() {
     ## TODO: access control / private, etc.
 
-    #Log.Debug "oo: CALL STACK: ${FUNCNAME[@]}"
+    #Log.Debug 1 "oo: CALL STACK: ${FUNCNAME[@]}"
     #            Array.Contains __oo__objects_private "${__oo__objects_private[@]}" || {
     #                parentType=${FUNCNAME[2]}
     #                [[ ${parentType%%:*} = 'Type' ]] && {
@@ -222,7 +224,7 @@ Type.Load(){
     types+=($(compgen -A function static:))
 
     if [[ ${#types[@]} -eq 0 ]]; then
-        Log.Debug "oo: no types to import... : ${types[@]}"
+        Log.Debug 1 "oo: no types to import... : ${types[@]}"
     else
         local fullType
         local type
@@ -235,10 +237,10 @@ Type.Load(){
                 # import methods if not static
                 if [[ ${fullType:0:6} != "static" ]]
                 then
-                    Log.Debug "oo: enabling type [ $fullType ]"
+                    Log.Debug 1 "oo: enabling type [ $fullType ]"
                     instance=false class:$type
                 else
-                    Log.Debug "oo: enabling static type [ $fullType ]"
+                    Log.Debug 1 "oo: enabling static type [ $fullType ]"
                 fi
 
                 typeInitializer() {
@@ -249,10 +251,10 @@ Type.Load(){
                     # TODO: @params paramsForInitializing
                     shift; shift
 
-                    Log.Debug Running the initializer for: $objectType
-                    Log.Debug Type: $fullType
-                    Log.Debug Name: $newObjectName
-                    Log.Debug Params for the initializing: $*
+                    Log.Debug 1 Running the initializer for: $objectType
+                    Log.Debug 1 Type: $fullType
+                    Log.Debug 1 Name: $newObjectName
+                    Log.Debug 1 Params for the initializing: $*
 
                     ## TODO: add name sanitization, like, you cannot create objects with DOTs (.)
 
@@ -273,20 +275,20 @@ Type.Load(){
                     __oo__objects["$fullName"]=$objectType
 
                     if [[ -z $__private__ ]]; then
-                        Log.Debug oo: new object $type, parent: $parentName
+                        Log.Debug 1 oo: new object $type, parent: $parentName
                     else
-                        Log.Debug oo: new private object $type, parent: $parentName
+                        Log.Debug 1 oo: new private object $type, parent: $parentName
                         __oo__objects_private["$fullName"]=$objectType
                     fi
 
                     #try
-                    Log.Debug "Creating an instance of $fullType"
+                    Log.Debug 1 "Creating an instance of $fullType"
                     instance=true $fullType
                     #catch
                     #throw "Unable to create the instance ($THROW_LINE)"
 
                     #try
-                    Log.Debug "Initializing the instance of $fullType"
+                    Log.Debug 1 "Initializing the instance of $fullType"
                     Type.CreateInstance "$@"
                     # TODO: Type.CreateInstance "${paramsForInitializing[@]}"
                     #catch
@@ -294,9 +296,8 @@ Type.Load(){
                 }
 
                 # 'new' function for creating the object
-                eval "$type() {
-                    typeInitializer $type $fullType \"\$@\"
-                }"
+                eval "$type() { typeInitializer $type $fullType \"\$@\"; }"
+
                 # INFO: IF USING THE ALIAS VERSION REMEMBER TO LOWER FUNCNAME[NUM] INSIDE!
                 #alias $type="typeInitializer $type $fullType"
 
@@ -318,9 +319,9 @@ Type.Load(){
                     #"
 
                     ## alias enabling to define parameters ##
-                    Log.Debug:4 "Aliasing @$type"
-                    alias @$type="oo:stashPreviousLocal; declare -a \"__oo__param_types+=( $type )\"; local "
-                    #eval "alias @$type=\"oo:stashPreviousLocal; declare -a \\\"__oo__param_types+=( $type )\\\"; local \""
+                    Log.Debug 4 "Aliasing @$type"
+                    alias @$type="Function.StashPreviousLocal; declare -a \"__oo__param_types+=( $type )\"; local "
+                    #eval "alias @$type=\"Function.StashPreviousLocal; declare -a \\\"__oo__param_types+=( $type )\\\"; local \""
 
                     #eval "alias \"@$type=echo I alias\""
                     #shopt -s expand_aliases

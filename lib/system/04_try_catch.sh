@@ -31,12 +31,12 @@ extractException(){
     local retVal=$1
     if [[ $retVal -gt 0 ]]
     then
-    #${realArray[-1]}
+        # BACKWARDS COMPATIBILE WAY:
+#        export __EXCEPTION_SOURCE__="${__EXCEPTION_CATCH__[(${#__EXCEPTION_CATCH__[@]}-1)]}"
+#        export __EXCEPTION_LINE__="${__EXCEPTION_CATCH__[(${#__EXCEPTION_CATCH__[@]}-2)]}"
         export __EXCEPTION_SOURCE__="${__EXCEPTION_CATCH__[-1]}"
         export __EXCEPTION_LINE__="${__EXCEPTION_CATCH__[-2]}"
         export __EXCEPTION__="${__EXCEPTION_CATCH__[@]:0:(${#__EXCEPTION_CATCH__[@]} - 2)}"
-#        export __EXCEPTION_SOURCE__="${__EXCEPTION_CATCH__[(${#__EXCEPTION_CATCH__[@]}-1)]}"
-#        export __EXCEPTION_LINE__="${__EXCEPTION_CATCH__[(${#__EXCEPTION_CATCH__[@]}-2)]}"
 #        export __EXCEPTION__="${__EXCEPTION_CATCH__[@]:0:(${#__EXCEPTION_CATCH__[@]}-2)}"
         return 1 # so that we may continue
     fi

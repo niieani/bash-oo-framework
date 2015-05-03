@@ -54,11 +54,28 @@ class:String() {
         #echo -n "$text"
     }
 
-    static String.GetXSpaces() {
-        @mixed howMany
-        @@verify
+    static String.Contains() {
+        @mixed string
+        @mixed match
 
-        [[ "$howMany" -gt 0 ]] && ( printf "%*s" "$howMany" ) || echo
+        [[ "$string" == *"$match"* ]]
+        return $?
+    }
+
+    static String.StartsWith() {
+        @mixed string
+        @mixed match
+
+        [[ "$string" == "$match"* ]]
+        return $?
+    }
+
+    static String.EndsWith() {
+        @mixed string
+        @mixed match
+
+        [[ "$string" == *"$match" ]]
+        return $?
     }
 
     method String::GetSanitizedVariableName() {
