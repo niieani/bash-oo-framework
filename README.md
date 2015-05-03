@@ -1,7 +1,6 @@
-bash-oo-framework
-=================
+Bash Infinity Framework
+=======================
 
-Bash Infinity Framework for Bash 4. 
 This is a boilerplate framework for writing tools using **bash**.
 It's highly modular and lightweight, while managing to implement some concepts from C#, Java or JavaScript into bash. 
 The Infinity Framework is also plug & play: include it at the beginning of your existing script to get the error handling benefits, and start using other features gradually.
@@ -71,7 +70,7 @@ Using Logging, Colors and Powerline Emoji
 =========================================
 
 ```bash
-echo "$(UI.Color.Blue)I'm blue...$($UI.Color.Default)"
+echo "$(UI.Color.Blue)I'm blue...$(UI.Color.Default)"
 # show all debug messages below log level 2
 Debug.Log.Enable 2
 # write to debug log at level 1
@@ -180,16 +179,16 @@ It's really simple and straight-forward, like with most object-oriented language
 
 Keywords for definition:
 
-* class:YourName() - defining a class
-* static:YourName() - defining a static class (singleton types)
+* **class:YourName()** - defining a class
+* **static:YourName()** - defining a static class (singleton types)
 
 Keywords to use inside of the class definition:
 
-* **extends *SomeClass*** - As the name suggests - inherit from a base class
-* **method *ClassName::FunctionName()*** - Use for defining methods that have access to *$this*
-* **static *ClassName.StaticFunctionName()*** - static methods inside of non-static classes
-* **public *Type yourProperty*** - define public properties (works in all types of classes)
-* **private *Type yourProperty*** - as above, but accessible only for internal methods
+* **extends SomeClass** - As the name suggests - inherit from a base class
+* **method ClassName::FunctionName()** - Use for defining methods that have access to *$this*
+* **static ClassName.StaticFunctionName()** - static methods inside of non-static classes
+* **public Type yourProperty** - define public properties (works in all types of classes)
+* **private Type yourProperty** - as above, but accessible only for internal methods
 * **$this** - Contains the name of the instance and makes it possible to call it's own methods or access it's own properties
 
 If you want to call a base method that you overrode, just call it with the name of the base instead of **$this** and with ```::``` before method's name, instead of ```.```.
