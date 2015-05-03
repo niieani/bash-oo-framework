@@ -64,7 +64,7 @@ Error handling with Exceptions and ```throw```
 
 Error handling should work out of the box. If the script generates an error it will break and display a call stack:
 
-![example call stack](https://github.com/niieani/bash-oo-framework/raw/master/docs/images/exception.png "Example Call Stack")
+![example call stack](https://raw.githubusercontent.com/niieani/bash-oo-framework/master/docs/exception.png "Example Call Stack")
 
 You may force an error by ```throw```ing your own Exception:
 
@@ -118,7 +118,7 @@ Fork and contribute more!
 Writing Unit Tests
 ==================
 
-![unit tests](https://github.com/niieani/bash-oo-framework/raw/master/docs/images/unit.png "Unit tests for the framework itself")
+![unit tests](https://raw.githubusercontent.com/niieani/bash-oo-framework/master/docs/unit.png "Unit tests for the framework itself")
 
 Example usage (taken from tests/run-tests.sh):
    
