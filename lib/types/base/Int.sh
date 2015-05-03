@@ -10,7 +10,7 @@ class:Number() {
         Number::__constructor__() {
             local _storedVariableName="__oo__number_${this//./_}"
             $this._storedVariableName = "$_storedVariableName"
-            Log.Debug 1 oo: creating number [ $_storedVariableName ]
+            Log.Debug 1 "creating number [ $_storedVariableName ]"
             declare -gi "$_storedVariableName"
         }
 
@@ -43,6 +43,7 @@ class:Number() {
             @@verify
 
             expr $($this) + $value
+
             #local _storedVariableName=$($this._storedVariableName)
             #echo $_storedVariableName+=$value
             #declare -gi "$_storedVariableName+=$value"
@@ -53,8 +54,6 @@ class:Number() {
             @@verify
 
             expr $($this) - $value
-            #local _storedVariableName=$($this._storedVariableName)
-            #declare -gi "$_storedVariableName=$(expr $this - $value)"
         }
 
         Number::__multiply__() {
@@ -69,8 +68,6 @@ class:Number() {
             @@verify
 
             expr $($this) / $value
-            #local _storedVariableName=$($this._storedVariableName)
-            #declare -gi "$_storedVariableName/=$value"
         }
     ~methods
 

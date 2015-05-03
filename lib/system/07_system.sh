@@ -8,18 +8,10 @@ System.LoadFile(){
             return 0
         fi
 
-#        local inArrayPath
-#        for inArrayPath in "${__oo__importedFiles[@]}"
-#        do
-#            #Log.Debug 2 inArray Question $inArrayPath vs $file
-#            if [[ "$inArrayPath" = "$file" ]]
-#            then
-#                return 0
-#            fi
-#        done
-
         Log.Debug 2 "Importing: $libPath"
+
         __oo__importedFiles+=( "$libPath" )
+
         source "$libPath" || throw "Unable to load $libPath"
 
         # TODO: maybe only Type.Load when the filename starts with a capital?

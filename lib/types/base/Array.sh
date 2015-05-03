@@ -15,7 +15,7 @@ class:Array() {
         Array::__constructor__() {
             local _storedVariableName="__oo__array_${this//./_}"
             $this._storedVariableName = "$_storedVariableName"
-            Log.Debug 1 oo: creating array [ $_storedVariableName ]
+            Log.Debug 1 "creating array [ $_storedVariableName ]"
             declare -ga "$_storedVariableName"
         }
 

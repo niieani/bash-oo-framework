@@ -15,10 +15,6 @@ Log.Write() {
 
 Log.Debug.Write() {
     local script="${BASH_SOURCE[1]##*/}"
-#    script="${script##*/}"
-    #local script=${BASH_SOURCE[1]}
-    #local prefix='./'
-    #script="${script#$prefix}"
     local lineNo=${BASH_LINENO[1]}
     local type=${1:-DEBUG}
     local color=${2:-$'\033[0;33m'}
@@ -27,12 +23,7 @@ Log.Debug.Write() {
 
     if [[ ! -z $level ]] || [[ ! -z $__oo__debug ]] && [[ $__oo__debug -ge $level ]]
     then
-#        if Function.Exists UI.Color.Default
-#        then
-            Log.Write "$color[$type:$level] $(UI.Color.Default)$* $(UI.Color.Blue)[${script}:${lineNo}]$(UI.Color.Default)"
-#        else
-#            Log.Write "[${script}:${lineNo}] [$type] $*"
-#        fi
+        Log.Write "$color[$type:$level] $(UI.Color.Default)$* $(UI.Color.Blue)[${script}:${lineNo}]$(UI.Color.Default)"
     fi
 }
 
@@ -44,4 +35,5 @@ alias Log.Warn="Log.Debug.Write 'WARN' $'\033[0;33m'"
 Log.Debug.SetLevel() {
     declare -ig "__oo__debug=${1:-1}"
 }
+
 alias Log.Debug.Disable="unset '__oo__debug'"

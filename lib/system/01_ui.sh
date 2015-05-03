@@ -91,8 +91,8 @@ then
 
 	# colorful
 	alias UI.Powerline.Star="echo -e $'\u2b50'"
-	alias UI.Powerline.Saxophone="echo -e $'\u1F3B7'"
-	alias UI.Powerline.ThumbsUp="echo -e $'\u1F44D'"
+	alias UI.Powerline.Saxophone="echo -e $'\U1F3B7'"
+	alias UI.Powerline.ThumbsUp="echo -e $'\U1F44D'"
 else
 	alias UI.Powerline.PointingArrow="echo '~'"
 	alias UI.Powerline.ArrowLeft="echo '<'"

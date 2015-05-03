@@ -13,13 +13,12 @@ alias public="[[ \$instance = true ]] && __private__=false "
 alias private="[[ \$instance = true ]] && __private__=true "
 
 ## TODO: add implementation & use inside of class declaration
-alias oo:enable:TernaryOperator="__oo__functionsTernaryOperator+=( ${FUNCNAME[0]} )"
-
-alias Object.Exists="Function.Exists"
+#alias oo:enable:TernaryOperator="__oo__functionsTernaryOperator+=( ${FUNCNAME[0]} )"
 
 Type.GetFullName(){
     local thisName=$1
     local parentName=$fullName
+
     if [[ -z "$parentName" ]]; then
         echo $thisName;
     else
@@ -28,31 +27,30 @@ Type.GetFullName(){
 }
 
 # the creation of a new object
-Type.CreateInstance(){
+Type.CreateInstance() {
     # if we are extending, then let's save the real type
     local visibleAsType="${__oo__objects["$fullName"]}"
     local baseNow=${FUNCNAME[2]#*:}
 
     if [[ ! -z $extending ]]; then
-        Log.Debug 1 "oo: basing ($baseNow) $fullName on $objectType..."
+        Log.Debug 1 "basing ($baseNow) $fullName on $objectType..."
 
         # TODO: base cannot be set as $base because that means it cannot be called from the base
         # - the reference will always be to just that one base
+
         local baseType
         if Function.Exists "$fullName.__baseType__"
         then
             baseType="$($fullName.__baseType__)"
-            Log.Debug 2 "oo: baseType = $baseType"
+            Log.Debug 2 "baseType = $baseType"
         fi
     else
-        Log.Debug 1 "oo: initializing and constructing $fullName ($visibleAsType) of $objectType"
+        Log.Debug 1 "initializing and constructing $fullName ($visibleAsType) of $objectType"
     fi
 
     ## add methods
-    local instanceMethods=($(compgen -A 'function' $objectType::))
-    local staticMethods=($(compgen -A 'function' $objectType.))
-
-    #    local methods=( "${instanceMethods[@]}" "${staticMethods[@]}" )
+    local instanceMethods=($(compgen -A 'function' $objectType:: || true))
+    local staticMethods=($(compgen -A 'function' $objectType. || true))
 
     ## TODO: does this make sense?
     ## should we map static types?
@@ -63,12 +61,12 @@ Type.CreateInstance(){
             # leave just function name from end
             method=${method##*.}
 
-            Log.Debug 2 "oo: mapping static method: $fullName.$method ==> $method"
-
+            Log.Debug 2 "mapping static method: $fullName.$method ==> $method"
             #local parentName=${fullName%.*}
 
             # add method aliases
-#            alias $fullName.$method="self=$fullName __objectType__=$visibleAsType __parentType__=$parentType $objectType.$method"
+            #alias "$fullName.$method=self=$fullName __objectType__=$visibleAsType __parentType__=$parentType $objectType.$method "
+
             eval "$fullName.$method() {
                 self=$fullName \
                 __objectType__=$visibleAsType \
@@ -79,30 +77,21 @@ Type.CreateInstance(){
     fi
 
     ## instance methods hide static ones if the name is the same
-    if [[ ! -z "${instanceMethods[*]}" ]]; then
+    if [[ ! -z "${instanceMethods[*]}" ]]
+    then
         local method
         for method in "${instanceMethods[@]}"; do
 
             # leave just function name from end
             method=${method##*::}
 
-            Log.Debug 2 "oo: mapping instance method: $fullName.$method ==> $method"
-
+            Log.Debug 2 "mapping instance method: $fullName.$method ==> $method"
             #local parentName=${fullName%.*}
 
             local baseMethod="$baseType::$method"
 
-            #            [ ! -z $extending ] && {
-            #                Function.Exists "$fullName.__baseType__" && {
-            #                    baseType="$($fullName.__baseType__)"
-            #                    Function.Exists "$baseType::$method" && {
-            #                        base="$baseType::$method"
-            #                    }
-            #                }
-            #            }
-
             # add method aliases
-            #alias $fullName.$method="this=$fullName baseMethod=$baseMethod base=$baseType __objectType__=$visibleAsType __parentType__=$parentType $objectType::$method"
+            #alias "$fullName.$method=this=$fullName baseMethod=$baseMethod base=$baseType __objectType__=$visibleAsType __parentType__=$parentType $objectType::$method"
             eval "$fullName.$method() {
                 this=$fullName \
                 baseMethod=$baseMethod \
@@ -110,43 +99,28 @@ Type.CreateInstance(){
                 __objectType__=$visibleAsType \
                 __parentType__=$parentType \
                 $objectType::$method \"\$@\"
-                }"
-
-        #eval "
-        #    $fullName.$method() {
-        #        local this=$fullName
-        #        local baseMethod=$baseMethod
-        #        local base=$baseType
-        #        local __objectType__=$visibleAsType
-        #        local __parentType__=$parentType
-        #        $objectType::$method \"\$@\"
-        #    }
-        #    "
+            }"
         done
     fi
-
 
     # if extending:
     if [[ ! -z $extending ]]
     then
         eval "$fullName.__baseType__() {
-#           echo $objectType
             echo $baseNow
         }"
-    else
-        # if not extending
+    else # if not extending
         eval "$fullName() {
             __objectType__=$objectType \
             __parentType__=$parentType \
             fullName=$fullName \
             Type.CallInstance \"\$@\"
         }"
-    # if not extending:
-    #alias $fullName="__objectType__=$objectType __parentType__=$parentType fullName=$fullName Type.CallInstance"
     fi
 
-    # TODO: why do we need to use eval to run the constructor it's an alias not a function?
-    # first run with the arguments given only when an operator is in use
+    # TODO: why do we need to use eval to run the constructor in cases where it's an alias not a function?
+
+    # First run with the arguments given only when an operator is in use
     if [[ ! -z "$1" ]]; then
         # do we use the constructor operator? ~~
         if [[ "$1" = '~~' ]]; then
@@ -175,18 +149,9 @@ Type.CreateInstance(){
 Type.CallInstance() {
     ## TODO: access control / private, etc.
 
-    #Log.Debug 1 "oo: CALL STACK: ${FUNCNAME[@]}"
-    #            Array.Contains __oo__objects_private "${__oo__objects_private[@]}" || {
-    #                parentType=${FUNCNAME[2]}
-    #                [[ ${parentType%%:*} = 'Type' ]] && {
-    #                    throw cannot access private type
-    #                    return 1
-    #                }
-    #            }
-
     # if no arguments, use the getter:
     [[ $@ ]] || {
-        eval $fullName.__getter__;
+        $fullName.__getter__;
         return $?
     }
 
@@ -195,19 +160,19 @@ Type.CallInstance() {
     # if the parameter after the operator is empty...
     if [[ -z "${1+x}" ]]; then
         case "$operator" in
-            '++') eval $fullName.__increment__ "$@" ;;
-            '--') eval $fullName.__decrement__ "$@" ;;
+            '++') $fullName.__increment__ "$@" ;;
+            '--') $fullName.__decrement__ "$@" ;;
             *)  throw "no value given"
-            return 1 ;;
+                return 1 ;;
         esac
     else
         case "$operator" in
-            '=') eval $fullName.__setter__ "$@" ;;
-            '==') eval $fullName.__equals__ "$@" ;;
-            '+') eval $fullName.__add__ "$@" ;;
-            '-') eval $fullName.__subtract__ "$@" ;;
-            '*') eval $fullName.__multiply__ "$@" ;;
-            '/') eval $fullName.__divide__ "$@" ;;
+            '=') $fullName.__setter__ "$@" ;;
+            '==') $fullName.__equals__ "$@" ;;
+            '+') $fullName.__add__ "$@" ;;
+            '-') $fullName.__subtract__ "$@" ;;
+            '*') $fullName.__multiply__ "$@" ;;
+            '/') $fullName.__divide__ "$@" ;;
         esac
     fi
 }
@@ -218,13 +183,60 @@ Type.Exists(){
     return $?
 }
 
+Type.Initialize() {
+    : @mixed objectType
+    : @mixed fullType
+    : @mixed newObjectName
+    @@verify
+
+    # TODO: @params paramsForInitializing
+    shift; shift
+
+    Log.Debug 1 "Running the initializer for: $objectType"
+    Log.Debug 1 "Type: $fullType"
+    Log.Debug 1 "Name: $newObjectName"
+    Log.Debug 1 "Params for initializing: $*"
+
+    ## TODO: add name sanitization, like, you cannot create objects with DOTs (.)
+
+    local parentType=${FUNCNAME[2]}
+    [[ ! -z $__private__ ]] && parentType=${FUNCNAME[3]}
+    parentType=${parentType#*:}
+
+    if [[ $parentType = $objectType ]]
+    then
+        throw 'recurrent nesting types within itself is not possible'
+        return 1
+    fi
+
+    local parentName=$fullName
+    local fullName=$(Type.GetFullName $newObjectName)
+    shift
+
+    __oo__objects["$fullName"]=$objectType
+
+    if [[ ! -z $__private__ ]]; then
+        Log.Debug 1 "new private object $type, parent: $parentName"
+        __oo__objects_private["$fullName"]=$objectType
+    else
+        Log.Debug 1 "new object $type, parent: $parentName"
+    fi
+
+    Log.Debug 1 "Creating an instance of $fullType"
+    instance=true $fullType
+
+    Log.Debug 1 "Initializing the instance of $fullType"
+    Type.CreateInstance "$@"
+    # TODO: Type.CreateInstance "${paramsForInitializing[@]}"
+}
+
 Type.Load(){
     ## match Types (:) but not Methods (::) ##
-    local types=($(compgen -A function class:)) # | grep -v ::
-    types+=($(compgen -A function static:))
+    local types=($(compgen -A function class: || true))
+    types+=($(compgen -A function static: || true))
 
     if [[ ${#types[@]} -eq 0 ]]; then
-        Log.Debug 1 "oo: no types to import... : ${types[@]}"
+        Log.Debug 1 "no types to import... : ${types[@]}"
     else
         local fullType
         local type
@@ -237,81 +249,26 @@ Type.Load(){
                 # import methods if not static
                 if [[ ${fullType:0:6} != "static" ]]
                 then
-                    Log.Debug 1 "oo: enabling type [ $fullType ]"
+                    Log.Debug 1 "enabling type [ $fullType ]"
                     instance=false class:$type
                 else
-                    Log.Debug 1 "oo: enabling static type [ $fullType ]"
+                    Log.Debug 1 "enabling static type [ $fullType ]"
                 fi
 
-                typeInitializer() {
-                    : @mixed objectType
-                    : @mixed fullType
-                    : @mixed newObjectName
-                    @@verify
-                    # TODO: @params paramsForInitializing
-                    shift; shift
-
-                    Log.Debug 1 Running the initializer for: $objectType
-                    Log.Debug 1 Type: $fullType
-                    Log.Debug 1 Name: $newObjectName
-                    Log.Debug 1 Params for the initializing: $*
-
-                    ## TODO: add name sanitization, like, you cannot create objects with DOTs (.)
-
-                    local parentType=${FUNCNAME[2]}
-                    [[ ! -z $__private__ ]] && parentType=${FUNCNAME[3]}
-                    parentType=${parentType#*:}
-
-                    if [[ $parentType = $objectType ]]; then
-                        throw 'recurrent nesting types within itself is not possible'
-                        return 1
-                    fi
-
-                    local parentName=$fullName
-                    local fullName=$(Type.GetFullName $newObjectName)
-                    shift
-
-                    #echo $newObjectName s fullName is: $fullName
-                    __oo__objects["$fullName"]=$objectType
-
-                    if [[ -z $__private__ ]]; then
-                        Log.Debug 1 oo: new object $type, parent: $parentName
-                    else
-                        Log.Debug 1 oo: new private object $type, parent: $parentName
-                        __oo__objects_private["$fullName"]=$objectType
-                    fi
-
-                    #try
-                    Log.Debug 1 "Creating an instance of $fullType"
-                    instance=true $fullType
-                    #catch
-                    #throw "Unable to create the instance ($THROW_LINE)"
-
-                    #try
-                    Log.Debug 1 "Initializing the instance of $fullType"
-                    Type.CreateInstance "$@"
-                    # TODO: Type.CreateInstance "${paramsForInitializing[@]}"
-                    #catch
-                    #throw "Unable to create initialize the instance ($THROW_LINE)"
-                }
-
                 # 'new' function for creating the object
-                eval "$type() { typeInitializer $type $fullType \"\$@\"; }"
+                eval "$type() { Type.Initialize $type $fullType \"\$@\"; }"
 
                 # INFO: IF USING THE ALIAS VERSION REMEMBER TO LOWER FUNCNAME[NUM] INSIDE!
-                #alias $type="typeInitializer $type $fullType"
+                #alias $type="Type.Initialize $type $fullType"
 
-                if [[ ${fullType:0:6} == "static" ]]; then
-                    #{
+                if [[ ${fullType:0:6} == "static" ]]
+                then
                     ## static means singleton - simply replace the function with an instance ##
-                    # TODO: why do we need to eval with aliases?
                     $type $type
-                #}
                 else
-                    #{
                     ## private definition only for non-static types ##
                     # TODO: if private, don't allow public access
-                    alias private:$type="__private__=true $type"
+                    #alias private:$type="__private__=true $type"
                     #eval "
                     #private:$type() {
                     #    __private__=true $type \"\$@\"
@@ -321,24 +278,19 @@ Type.Load(){
                     ## alias enabling to define parameters ##
                     Log.Debug 4 "Aliasing @$type"
                     alias @$type="Function.StashPreviousLocal; declare -a \"__oo__param_types+=( $type )\"; local "
-                    #eval "alias @$type=\"Function.StashPreviousLocal; declare -a \\\"__oo__param_types+=( $type )\\\"; local \""
-
-                    #eval "alias \"@$type=echo I alias\""
-                    #shopt -s expand_aliases
-
-                #}
                 fi
             fi
         done
     fi
 
     ## update the list of imported types
-    __oo__importedTypes=("${types[@]}")
+    __oo__importedTypes=( "${types[@]}" )
 }
 
 Type.Extend() {
     # we can only extend when there's what to extend...
-    if [[ ! -z $fullName ]]; then
+    if [[ ! -z $fullName ]]
+    then
         local extensionType="$1"
         shift
         if Function.Exists "class:$extensionType"

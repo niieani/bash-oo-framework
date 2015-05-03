@@ -35,6 +35,8 @@ echo after $__oo__insideTryCatch
 
 throw dupa
 
+unknown
+
 
 #it 'should try-and-catch nested'
 #try {

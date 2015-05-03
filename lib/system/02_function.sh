@@ -4,6 +4,7 @@ Function.Exists(){
     echo "$typeMatch" | grep "function\|alias" &> /dev/null || return 1
     return 0
 }
+alias Object.Exists="Function.Exists"
 
 Function.AssignParamsLocally(){
     ## unset first miss
@@ -41,17 +42,15 @@ Function.AssignParamsLocally(){
         if [[ $type = 'params' ]]; then
             for _x in "${!__oo__params[@]}"
             do
-                Log.Debug 4 "oo: we are params so we shift"
+                Log.Debug 4 "we are params so we shift"
                 [[ "${__oo__param_types[$_x]}" != 'params' ]] && eval shift
             done
             eval "$variable=\"\$@\""
-        #            $variable="$@"
-        #            return
         else
             ## assign value ##
+            ## TODO: support different types
 
             Log.Debug 4 "value: ${!iparam}"
-            #           eval "$variable=\"${!iparam}\""
             eval "$variable=\"\$$iparam\""
         fi
     done
@@ -65,7 +64,3 @@ alias @@verify="Function.StashPreviousLocal; Function.AssignParamsLocally \"\$@\
 alias @params="Function.StashPreviousLocal; declare -a \"__oo__param_types+=( params )\"; local "
 alias @mixed="Function.StashPreviousLocal; declare -a \"__oo__param_types+=( mixed )\"; local "
 alias :="eval"
-
-#alias untrap="trap '' DEBUG"
-#trap="declare -i trapCount && trapCount+=1 && test \$trapCount -gt \$paramCount && trap '' DEBUG && Function.StashPreviousLocal && Function.AssignParamsLocally \"\$@\""
-#alias :="declare -i paramCount; paramCount+=1; trap \"$trap\" DEBUG; eval"

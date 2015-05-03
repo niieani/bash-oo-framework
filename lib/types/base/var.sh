@@ -17,5 +17,4 @@ class:Var() {
             return $?
         }
     ~methods
-
 }
