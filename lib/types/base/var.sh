@@ -1,3 +1,4 @@
+import ../../type-core
 import Object
 
 class:Var() {

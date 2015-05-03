@@ -11,7 +11,7 @@ File.GetAbsolutePath() {
 System.Bootstrap(){
     local file
     local path
-    for file in $__oo__path/lib/system/*.sh
+    for file in $__oo__libPath/system/*.sh
     do
         path="$(File.GetAbsolutePath "$file")"
         __oo__importedFiles+=( "$path" )
@@ -35,6 +35,7 @@ export PS4='+(${BASH_SOURCE[1]##*/}:${LINENO}): ${FUNCNAME[0]:+${FUNCNAME[0]}():
 set -o pipefail
 
 shopt -s expand_aliases
+declare -g __oo__libPath="$( cd "$( echo "${BASH_SOURCE[0]%/*}" )"; pwd )"
 declare -g __oo__path="$( cd "$( echo "${BASH_SOURCE[0]%/*}/.." )"; pwd )"
 declare -g __oo__logger=${LOGGER:-STDERR}
 declare -a __oo__importedFiles

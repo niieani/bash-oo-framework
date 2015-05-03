@@ -5,6 +5,7 @@ System.LoadFile(){
         ## if already imported let's return
         if Array.Contains "$file" "${__oo__importedFiles[@]}"
         then
+            Log.Debug 3 "File previously imported: ${libPath}"
             return 0
         fi
 
@@ -50,6 +51,7 @@ System.Import() {
             [ ! -e "$libPath" ] && libPath="${libPath}.sh"
         fi
 
+        Log.Debug 3 "Trying to load from: ${libPath}"
         [ ! -e "$libPath" ] && throw "Cannot import $libPath" && return 1
 
         libPath="$(File.GetAbsolutePath "$libPath")"

@@ -1,16 +1,11 @@
 #!/usr/bin/env bash
 
-__oo__path="${BASH_SOURCE[0]%/*}"
-[ -f "$__oo__path" ] && __oo__path=$(dirname "$__oo__path")
-source "${__oo__path}/lib/oo-framework.sh"
+## BOOTSTRAP ##
+source "$( cd "$( echo "${BASH_SOURCE[0]%/*}" )"; pwd )/lib/oo-framework.sh"
 
 import lib/types/base
-import lib/types/ui/color
-import lib/types/ui/cursor
-import lib/types/ui/powerline
-
-#import test-logging
-import tests/types/test
+import lib/types/ui
+import lib/types/util/test
 
 set -h
 #set -k
@@ -57,9 +52,9 @@ de() {
 #    # trapCount = 3 -- different, stop trap and release
 #    blabla
 
-#    : @mixed test
-#    : @mixed test2
-#    : @mixed test3
+#    @mixed test
+#    @mixed test2
+#    @mixed test3
     : echo name1
     : echo name2
     : echo name3

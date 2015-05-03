@@ -60,7 +60,7 @@ Function.AssignParamsLocally(){
 }
 
 alias Function.StashPreviousLocal="declare -a \"__oo__params+=( '\$_' )\""
-alias @@verify="Function.StashPreviousLocal; Function.AssignParamsLocally \"\$@\"" # ; for i in \${!__oo__params[@]}; do
+alias @@map="Function.StashPreviousLocal; Function.AssignParamsLocally \"\$@\"" # ; for i in \${!__oo__params[@]}; do
 alias @params="Function.StashPreviousLocal; declare -a \"__oo__param_types+=( params )\"; local "
 alias @mixed="Function.StashPreviousLocal; declare -a \"__oo__param_types+=( mixed )\"; local "
 alias :="eval"

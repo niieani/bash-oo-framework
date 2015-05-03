@@ -1,3 +1,4 @@
+import ../../type-core
 import Var
 
 class:Number() {
@@ -21,7 +22,7 @@ class:Number() {
 
         Number::__setter__() {
             @mixed newValue
-            @@verify
+            @@map
             Log.Debug 1 "Var: $($this._storedVariableName), New Value: ${newValue}"
 
             local _storedVariableName=$($this._storedVariableName)
@@ -40,7 +41,7 @@ class:Number() {
 
         Number::__add__() {
             @mixed value
-            @@verify
+            @@map
 
             expr $($this) + $value
 
@@ -51,21 +52,21 @@ class:Number() {
 
         Number::__subtract__() {
             @mixed value
-            @@verify
+            @@map
 
             expr $($this) - $value
         }
 
         Number::__multiply__() {
             @mixed value
-            @@verify
+            @@map
 
             expr $($this) \* $value
         }
 
         Number::__divide__() {
             @mixed value
-            @@verify
+            @@map
 
             expr $($this) / $value
         }

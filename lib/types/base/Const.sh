@@ -1,9 +1,10 @@
+import ../../type-core
 import Var
 
 class:Const() {
     extends Var
 
-    method Const::__constructor__(){
+    method Const::__constructor__() {
         [[ $1 = '=' ]] && shift
         Var::__setter__ "$@"
     }

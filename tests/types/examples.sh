@@ -47,7 +47,7 @@ class:Human() {
             : @Number     many
             : @params     stuff
 
-            @@verify && {
+            @@map && {
                 echo Testing \"$mergeWith\" at manyCount: $many
                 echo Stuff: "${stuff[*]}"
                 return
@@ -59,7 +59,7 @@ class:Human() {
             : @Array      mergeWith
             : @Object     overloadedType
 
-            @@verify && {
+            @@map && {
                 echo Merging \"$mergeWith\", we use the Object: $overloadedType
                 return
             }

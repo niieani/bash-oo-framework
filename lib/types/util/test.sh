@@ -1,3 +1,5 @@
+import ../ui/cursor
+
 static:Test(){
     extends Object
     
@@ -8,7 +10,7 @@ static:Test(){
     Test.Start() {
         @String verb
         @String description
-        @@verify
+        @@map
         
         Test.OnStartCursor.Capture
         echo $(UI.Color.Yellow)$(UI.Powerline.PointingArrow) $(UI.Color.Yellow)[$(UI.Color.LightGray)$(UI.Color.Bold)TEST$(UI.Color.NoBold)$(UI.Color.Yellow)] $(UI.Color.White)${verb} ${description}$(UI.Color.Default)
@@ -47,7 +49,7 @@ static:Test(){
 
     Test.NewGroup() {
         @mixed groupName
-        @@verify
+        @@map
         echo "$(UI.Powerline.ArrowRight)" $(UI.Color.Magenta)Testing [$groupName]: $(UI.Color.Default)
         Test.GroupName = "$groupName"
     }

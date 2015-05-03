@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
-
-source "$( cd "$( echo "${BASH_SOURCE[0]%/*}" )"; pwd )/lib/oo-framework.sh"
+source "$( cd "$( echo "${BASH_SOURCE[0]%/*}" )"; pwd )/../lib/oo-framework.sh"
 
 #Log.Debug.SetLevel 3
+
 import lib/types/base
 import lib/types/ui
 import lib/types/util/test
@@ -86,7 +86,7 @@ Test.DisplaySummary
 
 Test.NewGroup "System"
 
-alias cought="echo \"Cought Exception: $(UI.Color.Red)\$__EXCEPTION__$(UI.Color.Default) in \$__EXCEPTION_SOURCE__:\$__EXCEPTION_LINE__\""
+alias cought="echo \"Caught Exception: $(UI.Color.Red)\$__EXCEPTION__$(UI.Color.Default) in \$__EXCEPTION_SOURCE__:\$__EXCEPTION_LINE__\""
 
 it 'should manually throw and catch an exception'
 try

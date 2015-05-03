@@ -1,4 +1,5 @@
-alias throw="__EXCEPTION_TYPE__='UNCAUGHT EXCEPTION' command_not_found_handle"
+
+alias throw="__EXCEPTION_TYPE__=' ' command_not_found_handle"
 
 command_not_found_handle() {
     # ignore the error from the catch subshell itself
@@ -10,7 +11,13 @@ command_not_found_handle() {
     local script="${BASH_SOURCE[1]#./}"
     local lineNo=${BASH_LINENO[0]}
     local undefinedObject="$*"
-    local type="${__EXCEPTION_TYPE__:-"UNCAUGHT UNDEFINED COMMAND EXCEPTION"}"
+    local type="${__EXCEPTION_TYPE__:-"UNDEFINED COMMAND"}"
+
+    local merger=''
+    if [[ ! "$type" = " " ]]
+    then
+        merger=': '
+    fi
 
     if [[ $__oo__insideTryCatch -gt 0 ]]
     then
@@ -24,11 +31,11 @@ command_not_found_handle() {
     if [[ $BASH_SUBSHELL -ge 20 ]]
     then
         echo "ERROR: Call stack exceeded (20)."
-        Exception.ContinueOrBreak
-        return 0
+        Exception.ContinueOrBreak || exit 1
     fi
 
-    Log.Write " $(UI.Color.Red)$(UI.Powerline.Fail) ${type}$(UI.Color.Default)"
+    Log.Write
+    Log.Write " $(UI.Color.Red)$(UI.Powerline.Fail) $(UI.Color.Bold)UNCAUGHT EXCEPTION${merger}$(UI.Color.LightRed)${type}$(UI.Color.Default)"
     Log.Write "$(Exception.FormatException "$script" "$lineNo" "$undefinedObject")"
     Log.Write "$(Exception.FormatBacktrace 3)"
 
@@ -37,11 +44,10 @@ command_not_found_handle() {
 }
 
 Exception.FormatBacktrace() {
-
-    # TODO: DRY
     declare -a trace
     declare -i index=0
     declare -i traceNo=0
+
     local i
     for i in $(Exception.GetBacktrace ${1:-2})
     do
@@ -106,10 +112,22 @@ Exception.FormatException() {
 
 Exception.ContinueOrBreak()
 {
-    Log.Write "Press [CTRL+C] to exit or [Return] to continue execution."
-    read -s
-    Log.Write "Continuing..."
-    Log.Write
+    ## TODO: Exceptions that happen in commands that are piped to others do not HALT the execution
+    ## TODO: Add a workaround for this ^
+
+    # if in a terminal
+    if [ -t 0 ]
+    then
+        Log.Write
+        Log.Write " $(UI.Color.Yellow)$(UI.Powerline.Lightning)$(UI.Color.White) Press $(UI.Color.Bold)[CTRL+C]$(UI.Color.White) to exit or $(UI.Color.Bold)[Return]$(UI.Color.White) to continue execution."
+        read -s
+        Log.Write " $(UI.Color.Blue)$(UI.Powerline.Cog)$(UI.Color.White) Continuing...$(UI.Color.Default)"
+        return 0
+        Log.Write
+    else
+        Log.Write
+        exit 1
+    fi
 }
 
 Exception.GetBacktrace()

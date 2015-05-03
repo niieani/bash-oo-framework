@@ -31,12 +31,12 @@ Function.AssignParamsLocally() {
 
 alias Function.StashPreviousLocal="declare -a \"__oo__params+=( \$(declare -p | grep 'declare -- ' | tail -1 | cut -d ' ' -f 3) )\""
 alias @var="Function.StashPreviousLocal; declare -a \"__oo__param_types+=( TYPE )\"; local "
-alias @@verify="Function.StashPreviousLocal; Function.AssignParamsLocally"
+alias @@map="Function.StashPreviousLocal; Function.AssignParamsLocally"
 
 bambo() {
     : @var test1
     : @var test2
-    @@verify
+    @@map
 
     echo here is first: "$test1"
     echo here is 2nd: "$test2"

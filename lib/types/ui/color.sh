@@ -5,7 +5,7 @@ UI.Color.IsAvailable && static:UI.Color() {
     extends Object
 
 #    UI.Color.IsAvailable() {
-#        # TODO: @@verify ## adds a ternary operator
+#        # TODO: @@map ## adds a ternary operator
 #
 #        if [[ "${TERM}" != *"xterm"* ]] || [ -t 1 ]; then
 #            # Don't use colors on pipes or non-recognized terminals
@@ -17,7 +17,7 @@ UI.Color.IsAvailable && static:UI.Color() {
 
     UI.Color.Print() {
         @mixed colorCode
-        @@verify
+        @@map
 
         if UI.Color.IsAvailable
         then
@@ -30,7 +30,7 @@ UI.Color.IsAvailable && static:UI.Color() {
 
     UI.Color.256text() {
         @mixed colorNumber
-        @@verify
+        @@map
 
         if UI.Color.IsAvailable
         then
@@ -43,7 +43,7 @@ UI.Color.IsAvailable && static:UI.Color() {
 
     UI.Color.256background() {
         @mixed colorNumber
-        @@verify
+        @@map
 
         if UI.Color.IsAvailable
         then

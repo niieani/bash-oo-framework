@@ -6,25 +6,6 @@ declare -Ag __oo__objects
 declare -Ag __oo__objects_private
 declare -ag __oo__functionsTernaryOperator
 
-## KEYWORDS ##
-alias extends="Type.Extend"
-
-# it has to be reversed with ! and logical OR because otherwise we get an exception...
-alias method="! [[ -z \$instance || \$instance = false ]] ||"
-alias static="! [[ -z \$instance || \$instance = false ]] ||"
-
-alias methods="if [[ -z \$instance ]] || [[ \$instance = false ]]; then "
-alias ~methods="fi"
-
-alias statics="if [[ -z \$instance ]] || [[ \$instance = false ]]; then "
-alias ~statics="fi"
-
-alias public="[[ \$instance = true ]] && __private__=false "
-alias private="[[ \$instance = true ]] && __private__=true "
-
-## TODO: add implementation & use inside of class declaration
-#alias oo:enable:TernaryOperator="__oo__functionsTernaryOperator+=( ${FUNCNAME[0]} )"
-
 ## TYPE SYSTEM ##
 
 Type.GetFullName(){
@@ -199,7 +180,7 @@ Type.Initialize() {
     @mixed objectType
     @mixed fullType
     @mixed newObjectName
-    @@verify
+    @@map
 
     # TODO: @params paramsForInitializing
     shift; shift
