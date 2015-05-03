@@ -6,8 +6,8 @@ static:Test(){
     String GroupName
     
     Test.Start() {
-        : @String verb
-        : @String description
+        @String verb
+        @String description
         @@verify
         
         Test.OnStartCursor.Capture
@@ -46,7 +46,7 @@ static:Test(){
     }
 
     Test.NewGroup() {
-        : @mixed groupName
+        @mixed groupName
         @@verify
         echo "$(UI.Powerline.ArrowRight)" $(UI.Color.Magenta)Testing [$groupName]: $(UI.Color.Default)
         Test.GroupName = "$groupName"

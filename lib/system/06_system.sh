@@ -17,7 +17,11 @@ System.LoadFile(){
         # TODO: maybe only Type.Load when the filename starts with a capital?
         # In that case all the types would have to start with a capital letter
 
-        Type.Load && Log.Debug 3 "Loading Types..."
+        if Function.Exists Type.Load
+        then
+            Type.Load
+            Log.Debug 3 "Loading Types..."
+        fi
     else
         Log.Debug 2 "File doesn't exist when importing: $libPath"
     fi
@@ -32,13 +36,17 @@ System.Import() {
         [ ! -e "$libPath" ] && libPath="${__oo__path}/${libPath}"
         [ ! -e "$libPath" ] && libPath="${libPath}.sh"
 
+        Log.Debug 4 "Trying to load from: ${__oo__path} / ${requestedPath}"
+
         if [ ! -e "$libPath" ]
         then
             # try a relative reference
-            #local localPath="${BASH_SOURCE[1]%/*}"
+#            local localPath="${BASH_SOURCE[1]%/*}"
             local localPath="$( cd "$( echo "${BASH_SOURCE[1]%/*}" )"; pwd )"
-            #[ -f "$localPath" ] && localPath="$(dirname "$localPath")"
+#            [ -f "$localPath" ] && localPath="$(dirname "$localPath")"
             libPath="${localPath}/${requestedPath}"
+            Log.Debug 4 "Trying to load from: ${localPath} / ${requestedPath}"
+
             [ ! -e "$libPath" ] && libPath="${libPath}.sh"
         fi
 

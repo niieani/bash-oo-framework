@@ -1,19 +1,31 @@
+## STORAGE ##
+
+declare -ag __oo__importedTypes
+declare -Ag __oo__storage
+declare -Ag __oo__objects
+declare -Ag __oo__objects_private
+declare -ag __oo__functionsTernaryOperator
+
 ## KEYWORDS ##
 alias extends="Type.Extend"
 
+# it has to be reversed with ! and logical OR because otherwise we get an exception...
+alias method="! [[ -z \$instance || \$instance = false ]] ||"
+alias static="! [[ -z \$instance || \$instance = false ]] ||"
+
 alias methods="if [[ -z \$instance ]] || [[ \$instance = false ]]; then "
 alias ~methods="fi"
-alias method="[[ -z \$instance ]] || [[ \$instance = false ]] &&"
 
 alias statics="if [[ -z \$instance ]] || [[ \$instance = false ]]; then "
 alias ~statics="fi"
-alias static="[[ -z \$instance ]] || [[ \$instance = false ]] &&"
 
 alias public="[[ \$instance = true ]] && __private__=false "
 alias private="[[ \$instance = true ]] && __private__=true "
 
 ## TODO: add implementation & use inside of class declaration
 #alias oo:enable:TernaryOperator="__oo__functionsTernaryOperator+=( ${FUNCNAME[0]} )"
+
+## TYPE SYSTEM ##
 
 Type.GetFullName(){
     local thisName=$1
@@ -184,9 +196,9 @@ Type.Exists(){
 }
 
 Type.Initialize() {
-    : @mixed objectType
-    : @mixed fullType
-    : @mixed newObjectName
+    @mixed objectType
+    @mixed fullType
+    @mixed newObjectName
     @@verify
 
     # TODO: @params paramsForInitializing
@@ -213,6 +225,7 @@ Type.Initialize() {
     local fullName=$(Type.GetFullName $newObjectName)
     shift
 
+#    if test -z $fullName throw "No name? This shouldn\'t happen"
     __oo__objects["$fullName"]=$objectType
 
     if [[ ! -z $__private__ ]]; then
