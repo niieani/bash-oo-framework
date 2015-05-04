@@ -133,25 +133,54 @@ In case of Bash, that means avoiding using positional arguments in functions.
 Instead of using the unhelpful ```$1```, ```$2``` and so on within functions to accessed the passed values, you may write:
 
 ```bash
-yourGreatFunction() {
-    @var firstParam
-    @var secondParam
-    @String someString
-    l=4 @Array someArray
-    @params nameForYourParam
-    
-    ## your function goes here ##
+testPassingParams() {
+
+    @var hello
+    l=4 @array anArrayWithFourElements
+    l=2 @array anotherArrayWithTwo
+    @var anotherSingle
+    @reference table   # references only work in bash >=4.3
+    @params anArrayOfVariedSize
+
+    test "$hello" = "$1" && echo correct
+    #
+    test "${anArrayWithFourElements[0]}" = "$2" && echo correct
+    test "${anArrayWithFourElements[1]}" = "$3" && echo correct
+    test "${anArrayWithFourElements[2]}" = "$4" && echo correct
+    # etc...
+    #
+    test "${anotherArrayWithTwo[0]}" = "$6" && echo correct
+    test "${anotherArrayWithTwo[1]}" = "$7" && echo correct
+    #
+    test "$anotherSingle" = "$8" && echo correct
+    #
+    test "${table[test]}" = "works"
+    table[inside]="adding a new value"
+    #
+    # I'm using * just in this example:
+    test "${anArrayOfVariedSize[*]}" = "${*:10}" && echo correct
 }
+
+fourElements=( a1 a2 "a3 with spaces" a4 )
+twoElements=( b1 b2 )
+declare -A assocArray
+assocArray[test]="works"
+
+testPassingParams "first" "${fourElements[@]}" "${twoElements[@]}" "single with spaces" assocArray "and more... " "even more..."
+
+test "${assocArray[inside]}" = "adding a new value"
 ```
 
 The system will automatically map:
- * *$1* to *$firstParam*
- * *$2* to *$secondParam*
- * If using the Type system described below, a String object will be created from *$3* (in the future will implement passing by reference)
- * *$someArray* will be an array of params with values from $4 till $8
- * *$nameForYourParam* will be a bash array containing all the following params
+ * **$1** to **$hello**
+ * **$anArrayWithFourElements** will be an array of params with values from $2 till $5
+ * **$anotherArrayWithTwo** will be an array of params with values from $6 till $7
+ * **$8** to **$anotherSingle**
+ * **$table** will be a reference to the variable whose name was passed in as the 9th parameter
+ * **$anArrayOfVariedSize** will be a bash array containing all the following params (from $10 on)
 
-This module works in bash 3 and 4 and if you only want to use it, get the file /lib/system/02_function.sh (you may remove the first function).
+In other words, not only you can call your parameters by their names (which makes up for a more readable core), you can actually pass arrays easily (and references to variables - this feature needs bash >=4.3 though)! Plus, the mapped variables are all in the local scope. 
+This module is pretty light and works in bash 3 and bash 4 (except for references - bash >=4.3) and if you only want to use it separately from this project, get the file /lib/system/02_function.sh (you may remove the first function).
 
 Using types
 ===========
