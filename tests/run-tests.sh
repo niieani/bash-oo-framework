@@ -20,16 +20,16 @@ try
 
         test "$hello" = "$1" && echo correct
         #
-        test "${anArrayWithFourElements[0]}" = "$2" && echo correct
-        test "${anArrayWithFourElements[1]}" = "$3" && echo correct
-        test "${anArrayWithFourElements[2]}" = "$4" && echo correct
+        test "${anArrayWithFourElements[0]}" = "$2"
+        test "${anArrayWithFourElements[1]}" = "$3"
+        test "${anArrayWithFourElements[2]}" = "$4"
         # ...
-        test "${anotherArrayWithTwo[0]}" = "$6" && echo correct
-        test "${anotherArrayWithTwo[1]}" = "$7" && echo correct
+        test "${anotherArrayWithTwo[0]}" = "$6"
+        test "${anotherArrayWithTwo[1]}" = "$7"
         #
-        test "$anotherSingle" = "$8" && echo correct
+        test "$anotherSingle" = "$8"
         #
-        test "${anArrayOfVariedSize[*]}" = "${*:9}" && echo correct
+        test "${anArrayOfVariedSize[*]}" = "${*:9}"
     }
 
     fourElements=( a1 a2 a3 a4 )
@@ -37,7 +37,7 @@ try
 
     testPassingParams "first" "${fourElements[@]}" "${twoElements[@]}" "single with spaces" "and more... " "even more..."
 
-finishEchoed
+finish
 
 Test.DisplaySummary
 
@@ -55,6 +55,7 @@ it 'should make an instance of an Object'
 try
     Object anObject
     test "$(anObject)" = "[Object] anObject"
+    false
 finish
 
 it 'should make an instance of a number'
