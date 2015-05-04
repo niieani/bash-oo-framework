@@ -17,7 +17,6 @@ UI.Color.IsAvailable && static:UI.Color() {
 
     UI.Color.Print() {
         @mixed colorCode
-        @@map
 
         if UI.Color.IsAvailable
         then
@@ -30,7 +29,6 @@ UI.Color.IsAvailable && static:UI.Color() {
 
     UI.Color.256text() {
         @mixed colorNumber
-        @@map
 
         if UI.Color.IsAvailable
         then
@@ -43,7 +41,6 @@ UI.Color.IsAvailable && static:UI.Color() {
 
     UI.Color.256background() {
         @mixed colorNumber
-        @@map
 
         if UI.Color.IsAvailable
         then

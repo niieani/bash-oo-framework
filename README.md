@@ -163,18 +163,20 @@ yourGreatFunction() {
     @mixed firstParam
     @mixed secondParam
     @String someString
+    l=4 @Array someArray
     @params nameForYourParam
-    @@map
-}
+    
+    ## your function goes here ##
+    }
 ```
 
 The system will automatically map:
  * *$1* to *$firstParam*
  * *$2* to *$secondParam*
  * If using the Type system described below, a String object will be created from *$3* (in the future will implement passing by reference)
+ * *$someArray* will be an array of params with values from $4 till $8
  * *$nameForYourParam* will be a bash array containing all the following params
 
-```@@map``` is the function that actually assigns the parameters. 
 
 Using types
 ===========
@@ -257,8 +259,7 @@ class:Human() {
 
     method Human::Eat() {
         @mixed food
-        @@map
-        
+                
         $this.Eaten.Add "$food"
         
         echo "$this is eating $food, which is the same as $1"
@@ -272,8 +273,7 @@ class:Human() {
         @Array      someArray
         @Number     someNumber
         @params     arrayOfOtherParams
-        @@map
-        
+                
         echo "Testing $someArray and $someNumber"
         echo Stuff: "${arrayOfOtherParams[*]}"
     }
@@ -285,8 +285,7 @@ class:Human() {
     method Human::__constructor__() {
         @String name
         @Number height
-        @@map
-        
+                
         $this.Name = "$name"
         $this.Height = "$height"
         

@@ -180,7 +180,6 @@ Type.Initialize() {
     @mixed objectType
     @mixed fullType
     @mixed newObjectName
-    @@map
 
     # TODO: @params paramsForInitializing
     shift; shift
@@ -271,7 +270,8 @@ Type.Load(){
 
                     ## alias enabling to define parameters ##
                     Log.Debug 4 "Aliasing @$type"
-                    alias @$type="Function.StashPreviousLocal; declare -a \"__oo__param_types+=( $type )\"; local "
+                    alias @$type="_type=$type @param"
+#                    alias @$type="Function.StashPreviousLocal; declare -a \"__oo__param_types+=( $type )\"; local "
                 fi
             fi
         done

@@ -44,6 +44,7 @@ class:Array() {
         }
 
         Array::Add() {
+            # TODO: why global?
             declare -ga "$($this._storedVariableName)+=( \"\$@\" )"
         }
 
@@ -61,6 +62,9 @@ class:Array() {
             local realArray="$($this)"
             echo "${realArray[@]:0:(${#realArray[@]}-1)}"
         }
+        # is var an array? {
+        # [[ "$(declare -p $previousParamNo 2> /dev/null)" =~ "declare -a" ]]
+        #
     ~methods
 
 }

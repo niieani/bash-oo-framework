@@ -6,61 +6,87 @@ Function.Exists(){
 }
 alias Object.Exists="Function.Exists"
 
-Function.AssignParamsLocally(){
-    ## unset first miss
-    unset '__oo__params[0]'
+Function.AssignParamLocally() {
+    local commandWithArgs=( $1 )
+    local command="${commandWithArgs[0]}"
 
-    ## TODO: if no params were defined, we can add ternary operator and others
-    # __oo__functionsTernaryOperator+=( ${FUNCNAME[1]} )
+    shift
 
-    declare -i i
-    local iparam
-    local variable
-    local type
-    local optional=false
-    for i in "${!__oo__params[@]}"
-    do
-        Log.Debug 4 "i    : $i"
+    if [[ "$command" == "trap" || "$command" == "l="* || "$command" == "_type="* ]]
+    then
+        paramNo+=-1
+        return 0
+    fi
 
-        iparam=$i
+    if [[ "$command" != "local" ]]
+    then
+        assignNormalCodeStarted=true
+    fi
 
-        ### TODO: variable might be optional, in this case we test if it has '=' sign and split it
-        ### then we assign a variable optional=true and only require input for those that aren't optional
+    local varDeclaration="${commandWithArgs[1]}"
+    local varName="${varDeclaration%%=*}"
 
-        variable="${__oo__params[$i]}"
-        Log.Debug 4 "var  : ${__oo__params[$i]}"
+    # var value is only important if making an object later on from it
+    local varValue="${varDeclaration#*=}"
 
-        i+=-1
+#    echo Type \"$varType\"
+#    echo Command \"${commandWithArgs[*]}\"
+#    echo VarName \"$varName\" = $varValue
+##    echo Params \"$*\"
+#    echo Param[\"$paramNo\"] = ${!paramNo}
+#    echo -------
 
-        type="${__oo__param_types[$i]}"
-        Log.Debug 4 "type : ${__oo__param_types[$i]}"
+    if [[ ! -z $assignVarType ]]
+    then
+        local previousParamNo=$(expr $paramNo - 1)
+#        echo Executing previous $previousParamNo
+#        echo $assignVarType
 
-        ### TODO: check if type is correct
-        # test if the types are right, if not, add note and "read" to wait for user input
-        # assign correct values approprietly so they are avail later on
+        if [[ "$assignVarType" == "array" ]]
+        then
+#            local __capture_arrLength="$assignArrLength"
 
-        if [[ $type = 'params' ]]; then
-            for _x in "${!__oo__params[@]}"
-            do
-                Log.Debug 4 "we are params so we shift"
-                [[ "${__oo__param_types[$_x]}" != 'params' ]] && eval shift
-            done
-            eval "$variable=\"\$@\""
-        else
-            ## assign value ##
-            ## TODO: support different types
+#            echo length: $assignArrLength
+#            local __capture_arrLength="${assignVarType%=*}"
+            # passing array:
+            execute="$assignVarName=( \"\${@:$previousParamNo:$assignArrLength}\" )"
+#            echo "$execute"
+            eval "$execute"
+            paramNo+=$(expr $assignArrLength - 1)
 
-            Log.Debug 4 "value: ${!iparam}"
-            eval "$variable=\"\$$iparam\""
+            unset assignArrLength
+
+        elif [[ "$assignVarType" == "params" ]]
+        then
+            #echo params
+            execute="$assignVarName=( \"\${@:$previousParamNo}\" )"
+            eval "$execute"
+        #${a[@]:1}
+        elif [[ ! -z "${!previousParamNo}" ]]
+        then
+            execute="$assignVarName=\"\$$previousParamNo\""
+            #echo "$execute"
+            eval "$execute"
+#            echo -------
         fi
-    done
+    fi
 
-    unset __oo__params
-    unset __oo__param_types
+#    assignVarType="$varType"
+    assignVarType="$__capture_type"
+    assignVarName="$varName"
+    assignArrLength="$__capture_arrLength"
 }
 
-alias Function.StashPreviousLocal="declare -a \"__oo__params+=( '\$_' )\""
-alias @@map="Function.StashPreviousLocal; Function.AssignParamsLocally \"\$@\"" # ; for i in \${!__oo__params[@]}; do
-alias @params="Function.StashPreviousLocal; declare -a \"__oo__param_types+=( params )\"; local "
-alias @mixed="Function.StashPreviousLocal; declare -a \"__oo__param_types+=( mixed )\"; local "
-alias :="eval"
+Function.CaptureParams() {
+    __capture_type="$_type"
+    __capture_arrLength="$l"
+}
+
+declare assignVarType
+declare assignVarName
+declare assignNormalCodeStarted
+
+alias @param='Function.CaptureParams; trap "declare -i \"paramNo+=1\"; Function.AssignParamLocally \"\$BASH_COMMAND\" \"\$@\"; [[ \$assignNormalCodeStarted = true ]] && trap - DEBUG && unset assignVarType && unset assignVarName && unset assignNormalCodeStarted && unset paramNo" DEBUG; local '
+alias @mixed='_type=mixed @param'
+alias @params='_type=params @param'
+alias @array='_type=array @param'

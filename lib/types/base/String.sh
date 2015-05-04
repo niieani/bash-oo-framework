@@ -6,7 +6,6 @@ class:String() {
 
     static String.GetSanitizedVariableName() {
         @mixed input
-        @@map
 
         local clean="${input//[^a-zA-Z0-9]/_}"
         echo "${clean^^}"
@@ -15,7 +14,6 @@ class:String() {
     static String.TabsForSpaces() {
         @mixed input
         # TODO: @mixed spaceCount=4
-        @@map
 
         # hardcoded 1 tab = 4 spaces
         echo "${input//[	]/    }"
@@ -23,7 +21,6 @@ class:String() {
 
     static String.RegexMatch() {
         @mixed text; @mixed regex; @mixed param
-        @@map
 
         if [[ "$text" =~ $regex ]]; then
             if [[ ! -z $param ]]; then
@@ -38,7 +35,6 @@ class:String() {
 
     static String.SpaceCount() {
         @mixed text
-        @@map
 
         # note: you shouldn't mix tabs and spaces, we explicitly don't count tabs here
         local spaces="$(String.RegexMatch "$text" "^[	]*([ ]*)[.]*" 1)"
@@ -47,7 +43,6 @@ class:String() {
 
     static String.Trim() {
         @mixed text
-        @@map
 
         echo "$(String.RegexMatch "$text" "^[ 	]*(.*)" 1)"
         #text="${text#"${text%%[![:space:]]*}"}"   # remove leading whitespace characters
@@ -85,7 +80,6 @@ class:String() {
 
     method String::RegexMatch() {
         @mixed regex; @mixed param
-        @@map
 
         String.RegexMatch "$($this)" "$regex" "$param"
     }

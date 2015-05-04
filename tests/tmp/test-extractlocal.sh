@@ -36,7 +36,6 @@ alias @@map="Function.StashPreviousLocal; Function.AssignParamsLocally"
 bambo() {
     : @var test1
     : @var test2
-    @@map
 
     echo here is first: "$test1"
     echo here is 2nd: "$test2"
