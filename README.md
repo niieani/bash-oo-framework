@@ -128,6 +128,8 @@ Can you believe this is bash?! ;-)
 Named parameters in functions
 =============================
 
+In any programing language, it makes sense to use meaningful names for variables for greater readability.
+In case of Bash, that means avoiding using positional arguments in functions.
 Instead of using the unhelpful ```$1```, ```$2``` and so on within functions to accessed the passed values, you may write:
 
 ```bash
@@ -139,7 +141,7 @@ yourGreatFunction() {
     @params nameForYourParam
     
     ## your function goes here ##
-    }
+}
 ```
 
 The system will automatically map:
@@ -149,6 +151,7 @@ The system will automatically map:
  * *$someArray* will be an array of params with values from $4 till $8
  * *$nameForYourParam* will be a bash array containing all the following params
 
+This module works in bash 3 and 4 and if you only want to use it, get the file /lib/system/02_function.sh (you may remove the first function).
 
 Using types
 ===========
