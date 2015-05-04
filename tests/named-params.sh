@@ -56,7 +56,7 @@
 #alias Function.StashPreviousLocal="declare -a \"__oo__params+=( '\$_' )\""
 #alias @@map="Function.StashPreviousLocal; Function.AssignParamsLocally \"\$@\"" # ; for i in \${!__oo__params[@]}; do
 #alias @params="Function.StashPreviousLocal; declare -a \"__oo__param_types+=( params )\"; local "
-#alias @mixed="Function.StashPreviousLocal; declare -a \"__oo__param_types+=( mixed )\"; local "
+#alias @var="Function.StashPreviousLocal; declare -a \"__oo__param_types+=( mixed )\"; local "
 
 set -o errtrace
 shopt -s expand_aliases
@@ -64,21 +64,21 @@ set -o pipefail
 
 #[[ "$finito" = true ]] && echo FINITO || [[ "$finito" != true ]] &&
 
-# with a post trap: alias @mixed='trap "declare -i \"paramNo+=1\"; assignNamedParam \"mixed\" \"\$BASH_COMMAND\" \"\$@\"; trap \"echo postTrap; trap - DEBUG\" DEBUG" DEBUG; local '
+# with a post trap: alias @var='trap "declare -i \"paramNo+=1\"; assignNamedParam \"mixed\" \"\$BASH_COMMAND\" \"\$@\"; trap \"echo postTrap; trap - DEBUG\" DEBUG" DEBUG; local '
 
 #declare assignVarType
 #declare assignVarName
 #declare assignNormalCodeStarted
-#alias @mixed='trap "declare -i \"paramNo+=1\"; assignNamedParam \"mixed\" \"\$BASH_COMMAND\" \"\$@\"; [[ \$assignNormalCodeStarted = true ]] && trap - DEBUG && unset assignVarType && unset assignVarName && unset assignNormalCodeStarted && unset paramNo" DEBUG; local '
+#alias @var='trap "declare -i \"paramNo+=1\"; assignNamedParam \"mixed\" \"\$BASH_COMMAND\" \"\$@\"; [[ \$assignNormalCodeStarted = true ]] && trap - DEBUG && unset assignVarType && unset assignVarName && unset assignNormalCodeStarted && unset paramNo" DEBUG; local '
 #alias @params='trap "declare -i \"paramNo+=1\"; assignNamedParam \"params\" \"\$BASH_COMMAND\" \"\$@\"; [[ \$assignNormalCodeStarted = true ]] && trap - DEBUG && unset assignVarType && unset assignVarName && unset assignNormalCodeStarted && unset paramNo" DEBUG; local '
 #alias @array='capture__capture_arrLength; trap "declare -i \"paramNo+=1\"; assignNamedParam \"array\" \"\$BASH_COMMAND\" \"\$@\"; [[ \$assignNormalCodeStarted = true ]] && trap - DEBUG && unset assignVarType && unset assignVarName && unset assignNormalCodeStarted && unset paramNo" DEBUG; local '
 
 alias @param='capture; trap "declare -i \"paramNo+=1\"; assignNamedParam \"\$BASH_COMMAND\" \"\$@\"; [[ \$assignNormalCodeStarted = true ]] && trap - DEBUG && unset assignVarType && unset assignVarName && unset assignNormalCodeStarted && unset paramNo" DEBUG; local '
-alias @mixed='_type=mixed @param'
+alias @var='_type=mixed @param'
 alias @params='_type=params @param'
 alias @array='_type=array @param'
 
-#alias @mixed='@array'
+#alias @var='@array'
 #alias @params='@array'
 #alias @array[3]='trap "declare -i \"paramNo+=1\"; assignNamedParam \"array 2\" \"\$BASH_COMMAND\" \"\$@\"; [[ \$assignNormalCodeStarted = true ]] && trap - DEBUG && unset assignVarType && unset assignVarName && unset assignNormalCodeStarted && unset paramNo" DEBUG; local '
 #alias @array[4]='trap "declare -i \"paramNo+=1\"; assignNamedParam \"array 2\" \"\$BASH_COMMAND\" \"\$@\"; [[ \$assignNormalCodeStarted = true ]] && trap - DEBUG && unset assignVarType && unset assignVarName && unset assignNormalCodeStarted && unset paramNo" DEBUG; local '
@@ -86,8 +86,8 @@ alias @array='_type=array @param'
 #alias @array[6]='trap "declare -i \"paramNo+=1\"; assignNamedParam \"array 2\" \"\$BASH_COMMAND\" \"\$@\"; [[ \$assignNormalCodeStarted = true ]] && trap - DEBUG && unset assignVarType && unset assignVarName && unset assignNormalCodeStarted && unset paramNo" DEBUG; local '
 
 
-#alias @mixed='trap "declare -i \"paramNo+=1\"; assignNamedParam \"mixed\" \"\$BASH_COMMAND\" \"\$@\"; [[ \$doubleTrapExecuted = true ]] && trap - DEBUG; doubleTrapExecuted=true" DEBUG; local '
-#alias @mixed='trap "trap - DEBUG" DEBUG; local'
+#alias @var='trap "declare -i \"paramNo+=1\"; assignNamedParam \"mixed\" \"\$BASH_COMMAND\" \"\$@\"; [[ \$doubleTrapExecuted = true ]] && trap - DEBUG; doubleTrapExecuted=true" DEBUG; local '
+#alias @var='trap "trap - DEBUG" DEBUG; local'
 #assignedName() {
 #    assignedName="$*"
 #}
@@ -102,9 +102,9 @@ capture() {
 }
 
 testHere() {
-    @mixed hello
-    @mixed opiciarka
-    @mixed nothing=default
+    @var hello
+    @var opiciarka
+    @var nothing=default
     l=4 @array theArr
     l=2 @array anotherArray
     @params theparams
@@ -124,9 +124,9 @@ testHere() {
 }
 
 another() {
-    @mixed hello
-    @mixed wtf=wtf
-    @mixed hill=default
+    @var hello
+    @var wtf=wtf
+    @var hill=default
 
     echo Final result: $hello $wtf $hill
     echo

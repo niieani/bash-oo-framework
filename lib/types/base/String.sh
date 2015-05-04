@@ -5,22 +5,22 @@ class:String() {
     extends Var
 
     static String.GetSanitizedVariableName() {
-        @mixed input
+        @var input
 
         local clean="${input//[^a-zA-Z0-9]/_}"
         echo "${clean^^}"
     }
 
     static String.TabsForSpaces() {
-        @mixed input
-        # TODO: @mixed spaceCount=4
+        @var input
+        # TODO: @var spaceCount=4
 
         # hardcoded 1 tab = 4 spaces
         echo "${input//[	]/    }"
     }
 
     static String.RegexMatch() {
-        @mixed text; @mixed regex; @mixed param
+        @var text; @var regex; @var param
 
         if [[ "$text" =~ $regex ]]; then
             if [[ ! -z $param ]]; then
@@ -34,7 +34,7 @@ class:String() {
     }
 
     static String.SpaceCount() {
-        @mixed text
+        @var text
 
         # note: you shouldn't mix tabs and spaces, we explicitly don't count tabs here
         local spaces="$(String.RegexMatch "$text" "^[	]*([ ]*)[.]*" 1)"
@@ -42,7 +42,7 @@ class:String() {
     }
 
     static String.Trim() {
-        @mixed text
+        @var text
 
         echo "$(String.RegexMatch "$text" "^[ 	]*(.*)" 1)"
         #text="${text#"${text%%[![:space:]]*}"}"   # remove leading whitespace characters
@@ -51,24 +51,24 @@ class:String() {
     }
 
     static String.Contains() {
-        @mixed string
-        @mixed match
+        @var string
+        @var match
 
         [[ "$string" == *"$match"* ]]
         return $?
     }
 
     static String.StartsWith() {
-        @mixed string
-        @mixed match
+        @var string
+        @var match
 
         [[ "$string" == "$match"* ]]
         return $?
     }
 
     static String.EndsWith() {
-        @mixed string
-        @mixed match
+        @var string
+        @var match
 
         [[ "$string" == *"$match" ]]
         return $?
@@ -79,7 +79,7 @@ class:String() {
     }
 
     method String::RegexMatch() {
-        @mixed regex; @mixed param
+        @var regex; @var param
 
         String.RegexMatch "$($this)" "$regex" "$param"
     }

@@ -177,9 +177,9 @@ Type.Exists(){
 }
 
 Type.Initialize() {
-    @mixed objectType
-    @mixed fullType
-    @mixed newObjectName
+    @var objectType
+    @var fullType
+    @var newObjectName
 
     # TODO: @params paramsForInitializing
     shift; shift

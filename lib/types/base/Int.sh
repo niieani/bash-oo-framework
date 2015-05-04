@@ -21,7 +21,7 @@ class:Number() {
         }
 
         Number::__setter__() {
-            @mixed newValue
+            @var newValue
                         Log.Debug 1 "Var: $($this._storedVariableName), New Value: ${newValue}"
 
             local _storedVariableName=$($this._storedVariableName)
@@ -39,7 +39,7 @@ class:Number() {
         }
 
         Number::__add__() {
-            @mixed value
+            @var value
 
             expr $($this) + $value
 
@@ -49,19 +49,19 @@ class:Number() {
         }
 
         Number::__subtract__() {
-            @mixed value
+            @var value
 
             expr $($this) - $value
         }
 
         Number::__multiply__() {
-            @mixed value
+            @var value
 
             expr $($this) \* $value
         }
 
         Number::__divide__() {
-            @mixed value
+            @var value
 
             expr $($this) / $value
         }

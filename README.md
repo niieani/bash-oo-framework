@@ -132,8 +132,8 @@ Instead of using the unhelpful ```$1```, ```$2``` and so on within functions to 
 
 ```bash
 yourGreatFunction() {
-    @mixed firstParam
-    @mixed secondParam
+    @var firstParam
+    @var secondParam
     @String someString
     l=4 @Array someArray
     @params nameForYourParam
@@ -230,7 +230,7 @@ class:Human() {
     }
 
     method Human::Eat() {
-        @mixed food
+        @var food
                 
         $this.Eaten.Add "$food"
         

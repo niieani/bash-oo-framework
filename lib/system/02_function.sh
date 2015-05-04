@@ -63,6 +63,6 @@ Function.CaptureParams() {
 }
 
 alias @param='Function.CaptureParams; trap "declare -i \"paramNo+=1\"; Function.AssignParamLocally \"\$BASH_COMMAND\" \"\$@\"; [[ \$assignNormalCodeStarted = true ]] && trap - DEBUG && unset assignVarType && unset assignVarName && unset assignNormalCodeStarted && unset paramNo" DEBUG; local '
-alias @mixed='_type=mixed @param'
+alias @var='_type=mixed @param'
 alias @params='_type=params @param'
 alias @array='_type=array @param'
