@@ -1,12 +1,14 @@
-bash-oo-framework
-=================
+Bash Infinity Framework
+=======================
 
-Bash Infinity Framework for Bash 4. 
-This is a boilerplate framework for writing tools using **bash 4**.
-It's highly modular and lightweight, while managing to implement some concepts from C#, Java or JavaScript into bash.  
+This is a boilerplate framework for writing tools using **bash**.
+It's highly modular and lightweight, while managing to implement some concepts from C#, Java or JavaScript into bash. 
 The Infinity Framework is also plug & play: include it at the beginning of your existing script to get the error handling benefits, and start using other features gradually.
 
-Main features include:
+Disclaimer: Tested only with **bash 4.3**, but should be easy to port to earlier versions.
+
+Main features
+=============
 
 * automatic error handling with exceptions
 * throwing custom **Exceptions**
@@ -18,51 +20,10 @@ Main features include:
 * basic types, such as **Array** or **String** with many useful functions (*optional* module)
 * unit test library (*optional* module)
 
-*Exceptions* combined with *try & catch* give you safety without having to run with **-o errexit**.
-If you do something wrong, you'll get a detailed exception, highlighting the command where it went wrong in the line from the source, along with a backtrace the script will be halted with the option to continue of break.
-On the other hand if you expect a part of block to fail, you can wrap it in a try block, and handle the error inside a catch block. 
-
-Disclaimer: Tested only with **bash 4.3**.
-
-How to use?
-===========
-
-1. Clone or download this repository. You'll only need the **/lib/** directory.
-2. Make a new script just outside of that directory and at the top place this:
-
-    ```shell
-    #!/usr/bin/env bash
-    source "$( cd "$( echo "${BASH_SOURCE[0]%/*}" )"; pwd )/lib/oo-framework.sh"
-    ```
-
-3. You may of course change the name of the **/lib/** directory to your liking, just change it in the script too.
-4. Out-of-box you'll get the core functionality described above, such as exceptions, try&catch, and so on.
-   However, if you wish to add more features, like enable the typing system, you'll need to import those modules:
-   
-   ```shell
-   # load the type system
-   import lib/type-core
-   
-   # load some basic types, such as Var, Array or String
-   import lib/types/base
-   ```
-
-5. To import the unit test library you'll need to ```import lib/types/util/test```.
-   The first error inside of the test will make the whole test fail.
-   
-6. Don't use ```set -o errexit``` or ```set -e``` - it's not necessary, because error handling is done by the framework itself.  
-   
-Using ```import```
-==================
-
-You may use ```import``` to load your own files. 
-It will ensure they're only loaded once. You may either use a relative path from the file you're importing, a path relative to the file that first included the framework, or an absolute path. ```.sh``` suffix is optional.
-You can also load all the files inside of a directory by simply including the path to that directory instead of the file.
-
-Error handling with Exceptions and ```throw```
+Error handling with exceptions and ```throw```
 ==============================================
 
-Error handling should work out of the box. If the script generates an error it will break and display a call stack:
+One of the highlight features is error handling that should work out of the box. If the script generates an error it will break and display a call stack:
 
 ![example call stack](https://raw.githubusercontent.com/niieani/bash-oo-framework/master/docs/exception.png "Example Call Stack")
 
@@ -73,6 +34,17 @@ throw "The hard disk is not connected properly!"
 ```
 
 It's useful for debugging, as you'll also get the call stack if you're not sure where the call is coming from.
+
+*Exceptions* combined with *try & catch* give you safety without having to run with **-o errexit**.
+If you do something wrong, you'll get a detailed exception, highlighting the command where it went wrong in the line from the source, along with a backtrace the script will be halted with the option to continue of break.
+On the other hand if you expect a part of block to fail, you can wrap it in a try block, and handle the error inside a catch block. 
+   
+Using ```import```
+==================
+
+You may use ```import``` to load your own files. 
+It will ensure they're only loaded once. You may either use a relative path from the file you're importing, a path relative to the file that first included the framework, or an absolute path. ```.sh``` suffix is optional.
+You can also load all the files inside of a directory by simply including the path to that directory instead of the file.
 
 Using ```try & catch```
 =======================
@@ -98,7 +70,7 @@ Using Logging, Colors and Powerline Emoji
 =========================================
 
 ```bash
-echo "$(UI.Color.Blue)I'm blue...$($UI.Color.Default)"
+echo "$(UI.Color.Blue)I'm blue...$(UI.Color.Default)"
 # show all debug messages below log level 2
 Debug.Log.Enable 2
 # write to debug log at level 1
@@ -209,16 +181,16 @@ It's really simple and straight-forward, like with most object-oriented language
 
 Keywords for definition:
 
-* class:YourName() - defining a class
-* static:YourName() - defining a static class (singleton types)
+* **class:YourName()** - defining a class
+* **static:YourName()** - defining a static class (singleton types)
 
 Keywords to use inside of the class definition:
 
-* **extends *SomeClass*** - As the name suggests - inherit from a base class
-* **method *ClassName::FunctionName()*** - Use for defining methods that have access to *$this*
-* **static *ClassName.StaticFunctionName()*** - static methods inside of non-static classes
-* **public *Type yourProperty*** - define public properties (works in all types of classes)
-* **private *Type yourProperty*** - as above, but accessible only for internal methods
+* **extends SomeClass** - As the name suggests - inherit from a base class
+* **method ClassName::FunctionName()** - Use for defining methods that have access to *$this*
+* **static ClassName.StaticFunctionName()** - static methods inside of non-static classes
+* **public Type yourProperty** - define public properties (works in all types of classes)
+* **private Type yourProperty** - as above, but accessible only for internal methods
 * **$this** - Contains the name of the instance and makes it possible to call it's own methods or access it's own properties
 
 If you want to call a base method that you overrode, just call it with the name of the base instead of **$this** and with ```::``` before method's name, instead of ```.```.
@@ -314,6 +286,34 @@ static:SingletonExample() {
     }
 }
 ```
+
+How to use?
+===========
+
+1. Clone or download this repository. You'll only need the **/lib/** directory.
+2. Make a new script just outside of that directory and at the top place this:
+
+    ```shell
+    #!/usr/bin/env bash
+    source "$( cd "$( echo "${BASH_SOURCE[0]%/*}" )"; pwd )/lib/oo-framework.sh"
+    ```
+
+3. You may of course change the name of the **/lib/** directory to your liking, just change it in the script too.
+4. Out-of-box you'll get the core functionality described above, such as exceptions, try&catch, and so on.
+   However, if you wish to add more features, like enable the typing system, you'll need to import those modules:
+   
+   ```shell
+   # load the type system
+   import lib/type-core
+   
+   # load some basic types, such as Var, Array or String
+   import lib/types/base
+   ```
+
+5. To import the unit test library you'll need to ```import lib/types/util/test```.
+   The first error inside of the test will make the whole test fail.
+   
+6. Don't use ```set -o errexit``` or ```set -e``` - it's not necessary, because error handling is done by the framework itself.  
 
 Acknowledgments
 ===============
