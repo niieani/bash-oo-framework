@@ -1,5 +1,4 @@
-
-alias throw="__EXCEPTION_TYPE__=' ' command_not_found_handle"
+alias throw="__EXCEPTION_TYPE__=\"\$_\" command_not_found_handle"
 
 command_not_found_handle() {
     # ignore the error from the catch subshell itself
