@@ -7,6 +7,41 @@ import lib/types/base
 import lib/types/ui
 import lib/types/util/test
 
+
+Test.NewGroup "Exceptions"
+it 'should try to assign map the params locally'
+try
+    testPassingParams() {
+        @var hello
+        l=4 @array anArrayWithFourElements
+        l=2 @array anotherArrayWithTwo
+        @var anotherSingle
+        @params anArrayOfVariedSize
+
+        test "$hello" = "$1" && echo correct
+        #
+        test "${anArrayWithFourElements[0]}" = "$2" && echo correct
+        test "${anArrayWithFourElements[1]}" = "$3" && echo correct
+        test "${anArrayWithFourElements[2]}" = "$4" && echo correct
+        # ...
+        test "${anotherArrayWithTwo[0]}" = "$6" && echo correct
+        test "${anotherArrayWithTwo[1]}" = "$7" && echo correct
+        #
+        test "$anotherSingle" = "$8" && echo correct
+        #
+        test "${anArrayOfVariedSize[*]}" = "${*:9}" && echo correct
+    }
+
+    fourElements=( a1 a2 a3 a4 )
+    twoElements=( b1 b2 )
+
+    testPassingParams "first" "${fourElements[@]}" "${twoElements[@]}" "single with spaces" "and more... " "even more..."
+
+finishEchoed
+
+Test.DisplaySummary
+
+
 Test.NewGroup "Objects"
 
 it 'should print a colorful message'
@@ -84,7 +119,7 @@ finish
 
 Test.DisplaySummary
 
-Test.NewGroup "System"
+Test.NewGroup "Exceptions"
 
 alias cought="echo \"Caught Exception: $(UI.Color.Red)\$__EXCEPTION__$(UI.Color.Default) in \$__EXCEPTION_SOURCE__:\$__EXCEPTION_LINE__\""
 
@@ -124,4 +159,5 @@ try {
 finishEchoed
 
 Test.DisplaySummary
+
 
