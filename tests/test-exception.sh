@@ -8,6 +8,14 @@ import lib/types/base
 import lib/types/ui
 import lib/types/util/test
 
+
+try
+    echo something
+    false dupa
+catch
+    echo cought Dupa
+
+
 echo before $__oo__insideTryCatch
 try
     echo inside $__oo__insideTryCatch

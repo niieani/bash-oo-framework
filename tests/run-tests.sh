@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+
 source "$( cd "$( echo "${BASH_SOURCE[0]%/*}" )"; pwd )/../lib/oo-framework.sh"
 
 #Log.Debug.SetLevel 3
@@ -6,7 +7,6 @@ source "$( cd "$( echo "${BASH_SOURCE[0]%/*}" )"; pwd )/../lib/oo-framework.sh"
 import lib/types/base
 import lib/types/ui
 import lib/types/util/test
-
 
 Test.NewGroup "Exceptions"
 it 'should try to assign map the params locally'
@@ -16,27 +16,35 @@ try
         l=4 @array anArrayWithFourElements
         l=2 @array anotherArrayWithTwo
         @var anotherSingle
+        @reference table
         @params anArrayOfVariedSize
 
-        test "$hello" = "$1" && echo correct
+        test "$hello" = "$1"
         #
         test "${anArrayWithFourElements[0]}" = "$2"
         test "${anArrayWithFourElements[1]}" = "$3"
         test "${anArrayWithFourElements[2]}" = "$4"
-        # ...
+        test "${anArrayWithFourElements[3]}" = "$5"
+        #
         test "${anotherArrayWithTwo[0]}" = "$6"
         test "${anotherArrayWithTwo[1]}" = "$7"
         #
         test "$anotherSingle" = "$8"
         #
-        test "${anArrayOfVariedSize[*]}" = "${*:9}"
+        test "${table[test]}" = "works"
+        table[inside]="adding a new value"
+        #
+        test "${anArrayOfVariedSize[*]}" = "${*:10}"
     }
 
-    fourElements=( a1 a2 a3 a4 )
+    fourElements=( a1 a2 "a3 with spaces" a4 )
     twoElements=( b1 b2 )
+    declare -A assocArray
+    assocArray[test]="works"
 
-    testPassingParams "first" "${fourElements[@]}" "${twoElements[@]}" "single with spaces" "and more... " "even more..."
+    testPassingParams "first" "${fourElements[@]}" "${twoElements[@]}" "single with spaces" assocArray "and more... " "even more..."
 
+    test "${assocArray[inside]}" = "adding a new value"
 finish
 
 Test.DisplaySummary
@@ -55,7 +63,6 @@ it 'should make an instance of an Object'
 try
     Object anObject
     test "$(anObject)" = "[Object] anObject"
-    false
 finish
 
 it 'should make an instance of a number'

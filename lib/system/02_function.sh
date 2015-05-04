@@ -24,6 +24,10 @@ Function.AssignParamLocally() {
     fi
 
     local varDeclaration="${commandWithArgs[1]}"
+    if [[ $varDeclaration == '-n' ]]
+    then
+        varDeclaration="${commandWithArgs[2]}"
+    fi
     local varName="${varDeclaration%%=*}"
 
     # var value is only important if making an object later on from it
@@ -45,6 +49,10 @@ Function.AssignParamLocally() {
         then
             execute="$assignVarName=( \"\${@:$previousParamNo}\" )"
             eval "$execute"
+        elif [[ "$assignVarType" == "reference" ]]
+        then
+            execute="$assignVarName=\"\$$previousParamNo\""
+            eval "$execute"
         elif [[ ! -z "${!previousParamNo}" ]]
         then
             execute="$assignVarName=\"\$$previousParamNo\""
@@ -62,7 +70,9 @@ Function.CaptureParams() {
     __capture_arrLength="$l"
 }
 
-alias @param='Function.CaptureParams; trap "declare -i \"paramNo+=1\"; Function.AssignParamLocally \"\$BASH_COMMAND\" \"\$@\"; [[ \$assignNormalCodeStarted = true ]] && trap - DEBUG && unset assignVarType && unset assignVarName && unset assignNormalCodeStarted && unset paramNo" DEBUG; local '
-alias @var='_type=mixed @param'
+alias @trapAssign='Function.CaptureParams; trap "declare -i \"paramNo+=1\"; Function.AssignParamLocally \"\$BASH_COMMAND\" \"\$@\"; [[ \$assignNormalCodeStarted = true ]] && trap - DEBUG && unset assignVarType && unset assignVarName && unset assignNormalCodeStarted && unset paramNo" DEBUG; '
+alias @param='@trapAssign local'
+alias @reference='_type=reference @trapAssign local -n'
+alias @var='_type=var @param'
 alias @params='_type=params @param'
 alias @array='_type=array @param'
