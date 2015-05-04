@@ -31,7 +31,7 @@ static:Test(){
     Test.Fail() {
         #Test.OnStartCursor.Restore
         echo $(UI.Color.Red)$(UI.Powerline.Fail) $(UI.Color.Yellow)[$(UI.Color.Red)$(UI.Color.Bold)FAIL$(UI.Color.NoBold)$(UI.Color.Yellow)]$(UI.Color.Default)
-        return 1
+#        return 1
     }
 
     Test.DisplaySummary() {
@@ -39,7 +39,7 @@ static:Test(){
         then
             echo "$(UI.Powerline.ArrowLeft) $(UI.Color.Magenta)Completed [$(Test.GroupName)]: $(UI.Color.Default)$(UI.Color.Red)There were errors $(UI.Color.Default)$(UI.Powerline.Lightning)"
             Test.Errors = false
-            return 1
+            #return 1
         else
             echo "$(UI.Powerline.ArrowLeft) $(UI.Color.Magenta)Completed [$(Test.GroupName)]: $(UI.Color.Default)$(UI.Color.Yellow)Test group completed succesfully $(UI.Color.Default)$(UI.Powerline.ThumbsUp)"
             return 0
