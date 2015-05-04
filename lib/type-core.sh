@@ -9,7 +9,7 @@ declare -ag __oo__functionsTernaryOperator
 ## TYPE SYSTEM ##
 
 Type.GetFullName(){
-    local thisName=$1
+    @var thisName
     local parentName=$fullName
 
     if [[ -z "$parentName" ]]; then
@@ -140,6 +140,9 @@ Type.CreateInstance() {
 }
 
 Type.CallInstance() {
+    @var operator
+    shift
+
     ## TODO: access control / private, etc.
 
     # if no arguments, use the getter:
@@ -147,8 +150,6 @@ Type.CallInstance() {
         $fullName.__getter__;
         return $?
     }
-
-    local operator="$1"; shift
 
     # if the parameter after the operator is empty...
     if [[ -z "${1+x}" ]]; then
@@ -171,7 +172,9 @@ Type.CallInstance() {
 }
 
 Type.Exists(){
-    local type=${1#*:}
+    @var type
+
+    type=${type#*:}
     Array.Contains "static:$type" "${__oo__importedTypes[@]}" || Array.Contains "class:$type" "${__oo__importedTypes[@]}"
     return $?
 }

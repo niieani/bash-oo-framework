@@ -5,7 +5,7 @@ Array.Contains() {
 }
 
 String.GetXSpaces() {
-    local howMany="$1"
+    @var howMany
 
     if [[ "$howMany" -gt 0 ]]
     then

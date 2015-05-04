@@ -1,5 +1,6 @@
 System.LoadFile(){
-    local libPath="$1"
+    @var libPath
+
     if [ -f "$libPath" ]
     then
         ## if already imported let's return

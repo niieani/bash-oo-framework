@@ -10,13 +10,22 @@ import lib/types/util/test
 
 reftest() {
     @reference table
+    @reference retval
 
     echo ${table[test]}
     table[ok]=added
+
+    retval="boom"
 }
 
 declare -A assoc
 assoc[test]="hi"
 
-reftest assoc
+declare outerKlops
+reftest assoc outerKlops
+
+
 echo ${assoc[ok]}
+
+#declare -n refToLocal="klops"
+#echo ${refToLocal[tat]}
