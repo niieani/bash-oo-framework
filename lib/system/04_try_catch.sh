@@ -1,9 +1,7 @@
 declare -ig __oo__insideTryCatch=0
 
 # in case try-catch is nested, we set +e before so the parent handler doesn't catch us instead
-alias try="[[ \$__oo__insideTryCatch -gt 0 ]] && set +e;
-           __oo__insideTryCatch+=1; ( set -e;
-		   trap \"Exception.Capture \${LINENO}; \" ERR;"
+alias try="[[ \$__oo__insideTryCatch -gt 0 ]] && set +e; __oo__insideTryCatch+=1; ( set -e; trap \"Exception.Capture \${LINENO}; \" ERR;"
 alias catch=" ); Exception.Extract \$? || "
 
 Exception.Capture() {
