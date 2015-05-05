@@ -141,8 +141,7 @@ Type.CreateInstance() {
 
 Type.CallInstance() {
     @var operator
-    shift
-
+    
     ## TODO: access control / private, etc.
 
     # if no arguments, use the getter:
@@ -150,6 +149,8 @@ Type.CallInstance() {
         $fullName.__getter__;
         return $?
     }
+
+    shift
 
     # if the parameter after the operator is empty...
     if [[ -z "${1+x}" ]]; then
@@ -173,10 +174,12 @@ Type.CallInstance() {
 
 Type.Exists(){
     @var type
-
-    type=${type#*:}
-    Array.Contains "static:$type" "${__oo__importedTypes[@]}" || Array.Contains "class:$type" "${__oo__importedTypes[@]}"
-    return $?
+    if ! Array.Contains "$type" "${__oo__importedTypes[@]}"
+    then
+        # type=${type#*:}
+        Array.Contains "static:$type" "${__oo__importedTypes[@]}" || Array.Contains "class:$type" "${__oo__importedTypes[@]}" || return 1
+    fi
+    return 0
 }
 
 Type.Initialize() {

@@ -16,6 +16,3 @@ alias ~statics="fi"
 
 alias public="[[ \$instance = true ]] && __private__=false "
 alias private="[[ \$instance = true ]] && __private__=true "
-
-## TODO: add implementation & use inside of class declaration
-#alias oo:enable:TernaryOperator="__oo__functionsTernaryOperator+=( ${FUNCNAME[0]} )"

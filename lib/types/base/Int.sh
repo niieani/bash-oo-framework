@@ -22,7 +22,8 @@ class:Number() {
 
         Number::__setter__() {
             @var newValue
-                        Log.Debug 1 "Var: $($this._storedVariableName), New Value: ${newValue}"
+            
+            Log.Debug 1 "Var: $($this._storedVariableName), New Value: ${newValue}"
 
             local _storedVariableName=$($this._storedVariableName)
             declare -gi "$_storedVariableName=$newValue"

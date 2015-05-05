@@ -79,7 +79,8 @@ class:String() {
     }
 
     method String::RegexMatch() {
-        @var regex; @var param
+        @var regex
+        @var param
 
         String.RegexMatch "$($this)" "$regex" "$param"
     }
