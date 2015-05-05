@@ -1,8 +1,6 @@
 #!/usr/bin/env bash
 
-__oo__path="${BASH_SOURCE[0]%/*}"
-[ -f "$__oo__path" ] && __oo__path=$(dirname "$__oo__path")
-source "${__oo__path}/lib/oo-framework.sh"
+source "$( cd "${BASH_SOURCE[0]%/*}" && pwd )/../lib/oo-framework.sh"
 
 #trap "previous_command=\$this_command; this_command=\$BASH_COMMAND" DEBUG
 #trap "throw \$previous_command" ERR
@@ -26,5 +24,7 @@ laom(){
     throw THIS IS UNACCEPTABLE
 }
 
+
 laom
+
 #throw Some-error

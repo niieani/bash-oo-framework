@@ -55,5 +55,5 @@ System.Bootstrap
 ### HANDLE EXCEPTIONS ###
 #########################
 
-trap "throw \$BASH_COMMAND" ERR
+trap "__EXCEPTION_TYPE__=\"\$_\" command_not_found_handle \$BASH_COMMAND" ERR
 set -o errtrace  # trace ERR through 'time command' and other functions

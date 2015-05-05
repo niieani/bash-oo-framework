@@ -9,7 +9,7 @@ import lib/types/base
 import lib/types/ui
 import lib/types/util/test
 
-Test.NewGroup "Exceptions"
+Test.NewGroup "Named Parameters"
 it 'should try to assign map the params locally'
 try
     testPassingParams() {
@@ -19,6 +19,7 @@ try
         @var anotherSingle
         @reference table
         @params anArrayOfVariedSize
+        local thisShouldWork="correct"
 
         test "$hello" = "$1"
         #
@@ -36,6 +37,8 @@ try
         table[inside]="adding a new value"
         #
         test "${anArrayOfVariedSize[*]}" = "${*:10}"
+        #
+        test "$thisShouldWork" = "correct"
     }
 
     fourElements=( a1 a2 "a3 with spaces" a4 )
@@ -46,6 +49,10 @@ try
     testPassingParams "first" "${fourElements[@]}" "${twoElements[@]}" "single with spaces" assocArray "and more... " "even more..."
 
     test "${assocArray[inside]}" = "adding a new value"
+
+    # run twice, just to be sure we don't leave behind anythinh
+    testPassingParams "first" "${fourElements[@]}" "${twoElements[@]}" "single with spaces" assocArray "and more... " "even more..."
+
 finish
 
 Test.DisplaySummary

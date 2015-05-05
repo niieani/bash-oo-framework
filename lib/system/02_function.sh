@@ -14,13 +14,14 @@ Function.AssignParamLocally() {
 
     if [[ "$command" == "trap" || "$command" == "l="* || "$command" == "_type="* ]]
     then
-        paramNo+=-1
         return 0
     fi
 
-    if [[ "$command" != "local" ]]
+    if [[ "${commandWithArgs[*]}" == "true" ]]
     then
-        assignNormalCodeStarted=true
+        __assign_next=true
+        # Log.Write "Will assign next one"
+        return 0
     fi
 
     local varDeclaration="${commandWithArgs[1]}"
@@ -33,44 +34,68 @@ Function.AssignParamLocally() {
     # var value is only important if making an object later on from it
     local varValue="${varDeclaration#*=}"
 
-    if [[ ! -z $assignVarType ]]
+    if [[ ! -z $__assign_varType ]]
     then
-        local previousParamNo=$(($paramNo - 1))
+        # Log.Write "SETTING $__assign_varName = \$$__assign_paramNo"
+        # Log.Write --
 
-        if [[ "$assignVarType" == "array" ]]
+        if [[ "$__assign_varType" == "array" ]]
         then
             # passing array:
-            execute="$assignVarName=( \"\${@:$previousParamNo:$assignArrLength}\" )"
+            execute="$__assign_varName=( \"\${@:$__assign_paramNo:$__assign_arrLength}\" )"
             eval "$execute"
-            paramNo+=$(($assignArrLength - 1))
+            __assign_paramNo+=$(($__assign_arrLength - 1))
 
-            unset assignArrLength
-        elif [[ "$assignVarType" == "params" ]]
+            unset __assign_arrLength
+        elif [[ "$__assign_varType" == "params" ]]
         then
-            execute="$assignVarName=( \"\${@:$previousParamNo}\" )"
+            execute="$__assign_varName=( \"\${@:$__assign_paramNo}\" )"
             eval "$execute"
-        elif [[ "$assignVarType" == "reference" ]]
+        elif [[ "$__assign_varType" == "reference" ]]
         then
-            execute="$assignVarName=\"\$$previousParamNo\""
+            execute="$__assign_varName=\"\$$__assign_paramNo\""
             eval "$execute"
-        elif [[ ! -z "${!previousParamNo}" ]]
+        elif [[ ! -z "${!__assign_paramNo}" ]]
         then
-            execute="$assignVarName=\"\$$previousParamNo\""
+            execute="$__assign_varName=\"\$$__assign_paramNo\""
+            # Log.Write "EXECUTE $execute"
             eval "$execute"
         fi
+        unset __assign_varType
     fi
 
-    assignVarType="$__capture_type"
-    assignVarName="$varName"
-    assignArrLength="$__capture_arrLength"
+    if [[ "$command" != "local" || "$__assign_next" != "true" ]]
+    then
+        __assign_normalCodeStarted+=1
+
+        # Log.Write "NOPASS ${commandWithArgs[*]}"
+        # Log.Write "normal code count ($__assign_normalCodeStarted)"
+        # Log.Write --
+    else
+        unset __assign_next
+
+        __assign_normalCodeStarted=0
+        __assign_varName="$varName"
+        __assign_varType="$__capture_type"
+        __assign_arrLength="$__capture_arrLength"
+
+        # Log.Write "PASS ${commandWithArgs[*]}"
+        # Log.Write --
+
+        __assign_paramNo+=1
+    fi
 }
 
 Function.CaptureParams() {
+    # Log.Write "Capturing Type $_type"
+    # Log.Write --
+
     __capture_type="$_type"
     __capture_arrLength="$l"
 }
 
-alias @trapAssign='Function.CaptureParams; trap "declare -i \"paramNo+=1\"; Function.AssignParamLocally \"\$BASH_COMMAND\" \"\$@\"; [[ \$assignNormalCodeStarted = true ]] && trap - DEBUG && unset assignVarType && unset assignVarName && unset assignNormalCodeStarted && unset paramNo" DEBUG; '
+# NOTE: true; true; at the end is required to workaround an edge case where TRAP doesn't behave properly
+alias @trapAssign='Function.CaptureParams; declare -i __assign_normalCodeStarted=0; trap "declare -i __assign_paramNo; Function.AssignParamLocally \"\$BASH_COMMAND\" \"\$@\"; [[ \$__assign_normalCodeStarted -ge 2 ]] && trap - DEBUG && unset __assign_varType && unset __assign_varName && unset __assign_paramNo" DEBUG; true; true; '
 alias @param='@trapAssign local'
 alias @reference='_type=reference @trapAssign local -n'
 alias @var='_type=var @param'

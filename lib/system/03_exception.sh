@@ -1,4 +1,4 @@
-alias throw="__EXCEPTION_TYPE__=\"\$_\" command_not_found_handle"
+alias throw="__EXCEPTION_TYPE__='MANUALLY INVOKED' command_not_found_handle"
 
 command_not_found_handle() {
     # ignore the error from the catch subshell itself
@@ -27,42 +27,63 @@ command_not_found_handle() {
         return 1
     fi
 
-    if [[ $BASH_SUBSHELL -ge 20 ]]
+    if [[ $BASH_SUBSHELL -ge 25 ]]
     then
-        echo "ERROR: Call stack exceeded (20)."
+        echo "ERROR: Call stack exceeded (25)."
         Exception.ContinueOrBreak || exit 1
     fi
 
     Log.Write
     Log.Write " $(UI.Color.Red)$(UI.Powerline.Fail) $(UI.Color.Bold)UNCAUGHT EXCEPTION${merger}$(UI.Color.LightRed)${type}$(UI.Color.Default)"
     Log.Write "$(Exception.FormatException "$script" "$lineNo" "$undefinedObject")"
-    Log.Write "$(Exception.FormatBacktrace 3)"
+    Log.Write "$(Exception.FormatBacktrace 3 "$script" "$lineNo" "$undefinedObject")"
 
     Exception.ContinueOrBreak
 }
 
 Exception.FormatBacktrace() {
     @int backtraceLevel=2
+    @var exceptionFile
+    @var exceptionLine
+    @var exceptionCommand
 
-    declare -a traceLine
-    declare -a traceCommand
-    declare -a traceFile
-    declare -i traceCount
+    local -a traceLine
+    local -a traceCommand
+    local -a traceFile
+    local -i traceCount
 
     Exception.GetBacktrace ${backtraceLevel} traceLine traceCommand traceFile traceCount
 
-    local index=1
+    # (
+    #     IFS=$'\n'
+    #     Log.Write "${traceLine[@]}"
+    #     Log.Write -
+    #     Log.Write "${traceCommand[@]}"
+    #     Log.Write -
+    #     Log.Write "${traceFile[@]}"
+    #     Log.Write -
+    # )
 
-    while [[ $traceCount -ge $index ]]
+    local -i index=1
+
+    if [[ "$exceptionFile" != "${traceFile[0]}" || "$exceptionLine" != "${traceLine[0]}" ]]
+    then
+        echo "$(Exception.FormatException "${traceFile[0]}" "${traceLine[0]}" "$exceptionCommand" 0)"
+    fi
+
+    while [[ $index -lt $traceCount ]]
     do
+        # Log.Write "${traceFile[$index]}" \| "${traceLine[$index]}" \| "${traceCommand[($index - 1)]}" \| $(($index + 1))
+
         echo "$(Exception.FormatException "${traceFile[$index]}" "${traceLine[$index]}" "${traceCommand[($index - 1)]}" $(($index + 1)) )"
         index+=1
     done
+    # echo "$(Exception.FormatException "${traceFile[($index - 1)]}" "${traceLine[($index - 1)]}" "${traceCommand[($index - 1)]}" $(($index)) )"
 }
 
 Exception.FormatException() {
     @var script
-    @var lineNo
+    @int lineNo
     @var stringToMark
     @int callPosition=1
 
@@ -84,7 +105,7 @@ Exception.FormatException() {
     # Cut out the path, leave the script name
     script="${script##*/}"
 
-    local prefix="   $(UI.Powerline.Branch)$(String.GetXSpaces $(($callPosition * 3 - 3)) || true)) "
+    local prefix="   $(UI.Powerline.Branch)$(String.GetXSpaces $(($callPosition * 3 - 3)) || true) "
     if [[ ! "$errLine" == *"$stringToMarkWithoutSlash"* ]]
     then
         echo "${prefix}$(UI.Color.White)${underlinedObject}$(UI.Color.Default) [$(UI.Color.Blue)${script}:${lineNo}$(UI.Color.Default)]"
@@ -138,8 +159,6 @@ Exception.GetBacktrace()
             filename[$element]="${trace[@]:2}"
 
             element+=1
-
-            # caller $i
         fi
 
         i+=1
