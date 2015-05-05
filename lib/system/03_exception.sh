@@ -55,7 +55,7 @@ Exception.FormatBacktrace() {
 
     while [[ $traceCount -ge $index ]]
     do
-        echo "$(Exception.FormatException "${traceFile[$index]}" "${traceLine[$index]}" "${traceCommand[($index - 1)]}" $(expr $index + 1) )"
+        echo "$(Exception.FormatException "${traceFile[$index]}" "${traceLine[$index]}" "${traceCommand[($index - 1)]}" $(($index + 1)) )"
         index+=1
     done
 }
@@ -84,7 +84,7 @@ Exception.FormatException() {
     # Cut out the path, leave the script name
     script="${script##*/}"
 
-    local prefix="   $(UI.Powerline.Branch)$(String.GetXSpaces $(expr $callPosition \* 3 - 3 || true)) "
+    local prefix="   $(UI.Powerline.Branch)$(String.GetXSpaces $(($callPosition * 3 - 3)) || true)) "
     if [[ ! "$errLine" == *"$stringToMarkWithoutSlash"* ]]
     then
         echo "${prefix}$(UI.Color.White)${underlinedObject}$(UI.Color.Default) [$(UI.Color.Blue)${script}:${lineNo}$(UI.Color.Default)]"

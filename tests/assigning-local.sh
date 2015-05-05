@@ -14,7 +14,7 @@ kapusta
 
 ignore() { printf ""; }
 
-#trap="local argument+=( \\\"\\\$_\\\" ); printf \"[\\\$argument]\"; trapCount+=1; echo trap [\\\$trapCount / \\\$(expr \\\$trapCount / 6 + 1)] last "
+#trap="local argument+=( \\\"\\\$_\\\" ); printf \"[\\\$argument]\"; trapCount+=1; echo trap [\\\$trapCount / \\\$((\\\$trapCount / 6 + 1))] last "
 trap="argument+=( \\\"\\\$_\\\" ); trapCount+=1; echo trap [\\\$trapCount]; ignore last"
 alias :="declare -a argument; declare -i trapCount=0; trap \"$trap\" DEBUG; eval"
 #alias :="declare -i trapCount=0; declare -i paramCount; paramCount+=1; trap \"$trap\" DEBUG; eval"

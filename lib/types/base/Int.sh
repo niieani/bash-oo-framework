@@ -42,7 +42,7 @@ class:Number() {
         Number::__add__() {
             @var value
 
-            expr $($this) + $value
+            echo $(( $($this) + $value ))
 
             #local _storedVariableName=$($this._storedVariableName)
             #echo $_storedVariableName+=$value
@@ -52,19 +52,19 @@ class:Number() {
         Number::__subtract__() {
             @var value
 
-            expr $($this) - $value
+            echo $(( $($this) - $value ))
         }
 
         Number::__multiply__() {
             @var value
 
-            expr $($this) \* $value
+            echo $(( $($this) * $value ))
         }
 
         Number::__divide__() {
             @var value
 
-            expr $($this) / $value
+            echo $(( $($this) / $value ))
         }
     ~methods
 

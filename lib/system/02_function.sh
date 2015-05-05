@@ -35,14 +35,14 @@ Function.AssignParamLocally() {
 
     if [[ ! -z $assignVarType ]]
     then
-        local previousParamNo=$(expr $paramNo - 1)
+        local previousParamNo=$(($paramNo - 1))
 
         if [[ "$assignVarType" == "array" ]]
         then
             # passing array:
             execute="$assignVarName=( \"\${@:$previousParamNo:$assignArrLength}\" )"
             eval "$execute"
-            paramNo+=$(expr $assignArrLength - 1)
+            paramNo+=$(($assignArrLength - 1))
 
             unset assignArrLength
         elif [[ "$assignVarType" == "params" ]]

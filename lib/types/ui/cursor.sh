@@ -17,8 +17,8 @@ class:UI.Cursor() {
 		    stty $oldstty
 			local x=${pos[0]:2}
 			local y=${pos[1]}
-			$this.X = $(expr $x - 2)
-			$this.Y = $(expr $y - 1)
+			$this.X = $(($x - 2))
+			$this.Y = $(($y - 1))
 			#$this.X = $(this.X - 2)
 			#$this.Y = $(this.Y - 1)
 		    #eval "$1[0]=$((${pos[0]:2} - 2))"

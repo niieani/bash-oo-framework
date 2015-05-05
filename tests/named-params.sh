@@ -177,7 +177,7 @@ assignNamedParam() {
 
     if [[ ! -z $assignVarType ]]
     then
-        local previousParamNo=$(expr $paramNo - 1)
+        local previousParamNo=$(($paramNo - 1))
 #        echo Executing previous $previousParamNo
 
 #        echo $assignVarType
@@ -193,7 +193,7 @@ assignNamedParam() {
             execute="$assignVarName=( \"\${@:$previousParamNo:$assign__capture_arrLength}\" )"
 #            echo "$execute"
             eval "$execute"
-            paramNo+=$(expr $assign__capture_arrLength - 1)
+            paramNo+=$(($assign__capture_arrLength - 1))
 
             unset assign__capture_arrLength
 
