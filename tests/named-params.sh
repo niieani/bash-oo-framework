@@ -7,7 +7,7 @@ Log.Write() {
     echo "${@}"
 }
 
-source "$( cd "${BASH_SOURCE[0]%/*}" && pwd )/../lib/system/02_function.sh"
+source "$( cd "${BASH_SOURCE[0]%/*}" && pwd )/../lib/system/02_named_parameters.sh"
 
 testPassingParams() {
     @var hello

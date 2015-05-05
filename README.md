@@ -180,7 +180,7 @@ The system will automatically map:
  * **$anArrayOfVariedSize** will be a bash array containing all the following params (from $10 on)
 
 In other words, not only you can call your parameters by their names (which makes up for a more readable core), you can actually pass arrays easily (and references to variables - this feature needs bash >=4.3 though)! Plus, the mapped variables are all in the local scope. 
-This module is pretty light and works in bash 3 and bash 4 (except for references - bash >=4.3) and if you only want to use it separately from this project, get the file /lib/system/02_function.sh (you may remove the first function).
+This module is pretty light and works in bash 3 and bash 4 (except for references - bash >=4.3) and if you only want to use it separately from this project, get the file /lib/system/02_named_parameters.sh.
 
 Using types
 ===========
