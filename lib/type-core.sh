@@ -10,12 +10,12 @@ declare -ag __oo__functionsTernaryOperator
 
 Type.GetFullName(){
     @var thisName
-    local parentName=$fullName
+    # $fullName should be the name of the parent
 
-    if [[ -z "$parentName" ]]; then
+    if [[ -z "$fullName" ]]; then
         echo $thisName;
     else
-        echo $parentName.$thisName;
+        echo $fullName.$thisName;
     fi
 }
 

@@ -136,7 +136,7 @@ Instead of using the unhelpful ```$1```, ```$2``` and so on within functions to 
 testPassingParams() {
 
     @var hello
-    l=4 @array anArrayWithFourElements
+    @array[4] anArrayWithFourElements
     l=2 @array anotherArrayWithTwo
     @var anotherSingle
     @reference table   # references only work in bash >=4.3
@@ -181,6 +181,8 @@ The system will automatically map:
 
 In other words, not only you can call your parameters by their names (which makes up for a more readable core), you can actually pass arrays easily (and references to variables - this feature needs bash >=4.3 though)! Plus, the mapped variables are all in the local scope. 
 This module is pretty light and works in bash 3 and bash 4 (except for references - bash >=4.3) and if you only want to use it separately from this project, get the file /lib/system/02_named_parameters.sh.
+
+Note: Between 2-10 there are aliases for arrays like ```@array[4]```, after 10 you need to write ```l=LENGTH @array```, like shown in the example. Or, make your own aliases :).
 
 Using types
 ===========
