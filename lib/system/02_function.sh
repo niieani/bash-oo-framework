@@ -24,7 +24,7 @@ Function.AssignParamLocally() {
     fi
 
     local varDeclaration="${commandWithArgs[1]}"
-    if [[ $varDeclaration == '-n' ]]
+    if [[ $varDeclaration == '-'* ]]
     then
         varDeclaration="${commandWithArgs[2]}"
     fi
@@ -74,5 +74,6 @@ alias @trapAssign='Function.CaptureParams; trap "declare -i \"paramNo+=1\"; Func
 alias @param='@trapAssign local'
 alias @reference='_type=reference @trapAssign local -n'
 alias @var='_type=var @param'
+alias @int='_type=int @trapAssign local -i'
 alias @params='_type=params @param'
 alias @array='_type=array @param'
