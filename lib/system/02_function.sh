@@ -1,11 +1,3 @@
-Function.Exists(){
-    local name="$1"
-    local typeMatch=$(type "$name" 2> /dev/null) || return 1
-    echo "$typeMatch" | grep "function\|alias" &> /dev/null || return 1
-    return 0
-}
-alias Object.Exists="Function.Exists"
-
 Function.AssignParamLocally() {
     local commandWithArgs=( $1 )
     local command="${commandWithArgs[0]}"
