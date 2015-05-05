@@ -24,6 +24,7 @@ Exception.Extract() {
 
     __oo__insideTryCatch+=-1
 
+    local IFS=$'\n'
     __EXCEPTION_CATCH__=( $(Exception.GetLastException) )
 
     local retVal=$1

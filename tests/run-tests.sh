@@ -1,9 +1,10 @@
 #!/usr/bin/env bash
 
-source "$( cd "$( echo "${BASH_SOURCE[0]%/*}" )"; pwd )/../lib/oo-framework.sh"
+source "$( cd "${BASH_SOURCE[0]%/*}" && pwd )/../lib/oo-framework.sh"
 
-#Log.Debug.SetLevel 3
+# Log.Debug.SetLevel 4
 
+import lib/type-core
 import lib/types/base
 import lib/types/ui
 import lib/types/util/test

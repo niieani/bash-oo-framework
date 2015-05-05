@@ -44,7 +44,7 @@ System.Import() {
         then
             # try a relative reference
 #            local localPath="${BASH_SOURCE[1]%/*}"
-            local localPath="$( cd "$( echo "${BASH_SOURCE[1]%/*}" )"; pwd )"
+            local localPath="$( cd "${BASH_SOURCE[1]%/*}" && pwd )"
 #            [ -f "$localPath" ] && localPath="$(dirname "$localPath")"
             libPath="${localPath}/${requestedPath}"
             Log.Debug 4 "Trying to load from: ${localPath} / ${requestedPath}"
@@ -59,7 +59,7 @@ System.Import() {
 
         if [ -d "$libPath" ]; then
             local file
-            for file in $libPath/*.sh
+            for file in "$libPath"/*.sh
             do
                 System.LoadFile "$file"
             done

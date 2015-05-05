@@ -327,7 +327,7 @@ How to use?
 
     ```shell
     #!/usr/bin/env bash
-    source "$( cd "$( echo "${BASH_SOURCE[0]%/*}" )"; pwd )/lib/oo-framework.sh"
+    source "$( cd "${BASH_SOURCE[0]%/*}" && pwd )/lib/oo-framework.sh"
     ```
 
 3. You may of course change the name of the **/lib/** directory to your liking, just change it in the script too.

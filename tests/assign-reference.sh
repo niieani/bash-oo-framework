@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-source "$( cd "$( echo "${BASH_SOURCE[0]%/*}" )"; pwd )/../lib/oo-framework.sh"
+source "$( cd "${BASH_SOURCE[0]%/*}" && pwd )/../lib/oo-framework.sh"
 
 #Log.Debug.SetLevel 3
 

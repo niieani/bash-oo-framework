@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 ## BOOTSTRAP ##
-source "$( cd "$( echo "${BASH_SOURCE[0]%/*}" )"; pwd )/lib/oo-framework.sh"
+source "$( cd "${BASH_SOURCE[0]%/*}" && pwd )/lib/oo-framework.sh"
 
 import lib/types/base
 import lib/types/ui
