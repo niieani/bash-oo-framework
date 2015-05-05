@@ -100,7 +100,7 @@ Exception.FormatException() {
 
     # Bring back the slash:
     underlinedObjectInLine="${underlinedObjectInLine/$slashReplacement/$slash}"
-    underlinedObjectInLine="${underlinedObjectInLine#"${underlinedObjectInLine%%[![:space:]]*}"}" # trimming
+    underlinedObjectInLine="${underlinedObjectInLine#"${underlinedObjectInLine%%[![:space:]]*}"}" # trimming "
 
     # Cut out the path, leave the script name
     script="${script##*/}"
