@@ -8,16 +8,19 @@ declare -ag __oo__functionsTernaryOperator
 
 ## TYPE SYSTEM ##
 
-Type.GetFullName(){
-    @var thisName
-    # $fullName should be the name of the parent
-
-    if [[ -z "$fullName" ]]; then
-        echo $thisName;
-    else
-        echo $fullName.$thisName;
-    fi
-}
+#Type.GetFullName(){
+#    @var thisName
+#    # $fullName should be the name of the parent
+#
+#    if [[ -z "$fullName" ]]
+#    then
+#        Log.Write RET $thisName
+#        echo $thisName;
+#    else
+#        Log.Write RET $fullName.$thisName
+#        echo $fullName.$thisName
+#    fi
+#}
 
 # the creation of a new object
 Type.CreateInstance() {
@@ -190,16 +193,22 @@ Type.Initialize() {
     # TODO: @params paramsForInitializing
     shift; shift
 
-    Log.Debug 1 "Running the initializer for: $objectType"
-    Log.Debug 1 "Type: $fullType"
-    Log.Debug 1 "Name: $newObjectName"
-    Log.Debug 1 "Params for initializing: $*"
-
     ## TODO: add name sanitization, like, you cannot create objects with DOTs (.)
 
     local parentType=${FUNCNAME[2]}
     [[ ! -z $__private__ ]] && parentType=${FUNCNAME[3]}
     parentType=${parentType#*:}
+    
+    local parentName="$fullName"
+
+    Log.Debug 1 "Running the initializer for: $objectType"
+    Log.Debug 1 "Type: $fullType"
+    Log.Debug 1 "Name: $newObjectName"
+    Log.Debug 1 "Params for initializing: $*"
+    Log.Debug 1 "Parent Type: $parentType"
+    Log.Debug 1 "Parent Name: $fullName"
+
+    # TODO: add a check if parent is an object
 
     if [[ $parentType = $objectType ]]
     then
@@ -207,18 +216,26 @@ Type.Initialize() {
         return 1
     fi
 
-    local parentName=$fullName
-    local fullName=$(Type.GetFullName $newObjectName)
+    if [[ -z "$parentName" ]]
+    then
+        local fullName=$newObjectName;
+    else
+        local fullName=$parentName.$newObjectName
+    fi
+    
+    #local fullName="$(Type.GetFullName $newObjectName)"
+    Log.Debug 1 "Full Name: $fullName"
     shift
 
-#    if test -z $fullName throw "No name? This shouldn\'t happen"
+    test ! -z "$fullName" || throw "No name ($newObjectName)? This shouldn\'t happen"
+    
     __oo__objects["$fullName"]=$objectType
 
     if [[ ! -z $__private__ ]]; then
-        Log.Debug 1 "new private object $type, parent: $parentName"
+        Log.Debug 1 "new private object $fullType, parent: $parentName"
         __oo__objects_private["$fullName"]=$objectType
-    else
-        Log.Debug 1 "new object $type, parent: $parentName"
+    #else
+    #    Log.Debug 1 "new object $fullType, parent: $parentName"
     fi
 
     Log.Debug 1 "Creating an instance of $fullType"

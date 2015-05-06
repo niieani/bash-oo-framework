@@ -84,10 +84,13 @@ Function.CaptureParams() {
 
     __capture_type="$_type"
     __capture_arrLength="$l"
+    
+    __assign_OLDIFS="$IFS"
+    IFS=$' \t\n'
 }
-
+    
 # NOTE: true; true; at the end is required to workaround an edge case where TRAP doesn't behave properly
-alias @trapAssign='Function.CaptureParams; declare -i __assign_normalCodeStarted=0; trap "declare -i __assign_paramNo; Function.AssignParamLocally \"\$BASH_COMMAND\" \"\$@\"; [[ \$__assign_normalCodeStarted -ge 2 ]] && trap - DEBUG && unset __assign_varType && unset __assign_varName && unset __assign_paramNo" DEBUG; true; true; '
+alias @trapAssign='Function.CaptureParams; declare -i __assign_normalCodeStarted=0; trap "declare -i __assign_paramNo; Function.AssignParamLocally \"\$BASH_COMMAND\" \"\$@\"; [[ \$__assign_normalCodeStarted -ge 2 ]] && trap - DEBUG && unset __assign_varType && unset __assign_varName && unset __assign_paramNo && IFS=$__assign_OLDIFS" DEBUG; true; true; '
 alias @param='@trapAssign local'
 alias @reference='_type=reference @trapAssign local -n'
 alias @var='_type=var @param'
