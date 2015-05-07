@@ -5,20 +5,23 @@ This is a boilerplate framework for writing tools using **bash**.
 It's highly modular and lightweight, while managing to implement some concepts from C#, Java or JavaScript into bash. 
 The Infinity Framework is also plug & play: include it at the beginning of your existing script to get the error handling benefits, and start using other features gradually.
 
-Disclaimer: Tested only with **bash 4.3**, but should be easy to port to earlier versions.
+Disclaimer: Tested only with **bash 4**, but it should be easy to port to earlier versions.
 
 Main features
 =============
 
 * automatic error handling with exceptions
-* throwing custom **Exceptions**
+* named parameters in functions (instead of $1, $2...)
 * **try-catch** implementation
-* *import* keyword for clever sourcing of scripts à la *require-js*
+* throwing custom **exceptions**
+* **import** keyword for clever sourcing of scripts à la *require-js*
 * handy aliases for **colors** and **powerline** characters to increase readability in the output of your scripts
-* well-formatted, colorful **error logging** to *stderr*
-* type system for *object-oriented* scripting (*optional* module)
-* basic types, such as **Array** or **String** with many useful functions (*optional* module)
-* unit test library (*optional* module)
+* well-formatted, colorful **debug logging** to *stderr*
+* *optional*: **unit test** library
+* *optional*: **type system** for object-oriented scripting
+* *optional*: basic classes for the type system, such as *Array* or *String* with useful functions
+
+Most of the features are modular and it's easy to simply use one of the features, e.g. the named parameters module is self-containeed in one file.
 
 Error handling with exceptions and ```throw```
 ==============================================
