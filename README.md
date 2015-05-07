@@ -56,11 +56,14 @@ Simple usage:
 
 ```bash
 try {
+    # something...
     cp ~/test ~/test2
+    # something more...
 } catch {
     echo "The hard disk is not connected properly!"
-    echo "Caught Exception:$(UI.Color.Red) $__EXCEPTION__ $(UI.Color.Default)"
-    echo "File: $__EXCEPTION_SOURCE__, Line: $__EXCEPTION_LINE__"
+    echo "Caught Exception:$(UI.Color.Red) $__BACKTRACE_COMMAND__ $(UI.Color.Default)"
+    echo "File: $__BACKTRACE_SOURCE__, Line: $__BACKTRACE_LINE__"
+    Exception.PrintException "${__EXCEPTION__[@]}"
 }
 ```
 
@@ -94,6 +97,13 @@ Writing Unit Tests
 ==================
 
 ![unit tests](https://raw.githubusercontent.com/niieani/bash-oo-framework/master/docs/unit.png "Unit tests for the framework itself")
+
+Similarly to [Bats](https://github.com/sstephenson/bats), you can use the unit test module to test Bash scripts or any UNIX program.
+Test cases consist of standard shell commands. Like Bats, Infinity Framework uses Bash's errexit (set -e) option when running test cases. Each test is run in a subshell, and is independent from one another. To quote from Bats:
+
+> If every command in the test case exits with a 0 status code (success), the test passes. In this way, each line is an assertion of truth.
+
+If you need to do more advanced testing, or need to be able to run your tests on shells other than bash 4, I'd still recommend Bats.
 
 Example usage (taken from tests/run-tests.sh):
    
