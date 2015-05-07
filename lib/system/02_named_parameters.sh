@@ -1,4 +1,7 @@
 Function.AssignParamLocally() {
+    # USE DEFAULT IFS IN CASE IT WAS CHANGED - important!
+    local IFS=$' \t\n'
+    
     local commandWithArgs=( $1 )
     local command="${commandWithArgs[0]}"
 
@@ -84,8 +87,11 @@ Function.CaptureParams() {
 
     __capture_type="$_type"
     __capture_arrLength="$l"
+    
+    #__assign_OLDIFS=$IFS
+    #IFS=$__oo__originalIFS
 }
-
+    
 # NOTE: true; true; at the end is required to workaround an edge case where TRAP doesn't behave properly
 alias @trapAssign='Function.CaptureParams; declare -i __assign_normalCodeStarted=0; trap "declare -i __assign_paramNo; Function.AssignParamLocally \"\$BASH_COMMAND\" \"\$@\"; [[ \$__assign_normalCodeStarted -ge 2 ]] && trap - DEBUG && unset __assign_varType && unset __assign_varName && unset __assign_paramNo" DEBUG; true; true; '
 alias @param='@trapAssign local'

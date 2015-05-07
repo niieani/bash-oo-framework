@@ -142,7 +142,7 @@ Test.DisplaySummary
 
 Test.NewGroup "Exceptions"
 
-alias cought="echo \"Caught Exception: $(UI.Color.Red)\$__EXCEPTION__$(UI.Color.Default) in \$__EXCEPTION_SOURCE__:\$__EXCEPTION_LINE__\""
+alias cought="echo \"Caught Exception: $(UI.Color.Red)\$__BACKTRACE_COMMAND__$(UI.Color.Default) in \$__BACKTRACE_SOURCE__:\$__BACKTRACE_LINE__\""
 
 it 'should manually throw and catch an exception'
 try

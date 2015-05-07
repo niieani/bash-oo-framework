@@ -14,6 +14,24 @@ String.GetXSpaces() {
     return 0
 }
 
+String.ReplaceSlashes() {
+    @var stringToMark
+    
+    # Workaround for a Bash bug that causes string replacement to fail when a \ is in the string
+    local slash="\\"
+    local slashReplacement='_%SLASH%_'
+    echo "${stringToMark/$slash$slash/$slashReplacement}"
+}
+
+String.BringBackSlashes() {
+    @var stringToMark
+    
+    # Workaround for a Bash bug that causes string replacement to fail when a \ is in the string
+    local slash="\\"
+    local slashReplacement='_%SLASH%_'
+    echo "${stringToMark/$slashReplacement/$slash}"
+}
+
 Function.Exists(){
     local name="$1"
     local typeMatch=$(type "$name" 2> /dev/null) || return 1
