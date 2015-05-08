@@ -1,11 +1,11 @@
 Bash Infinity Framework
 =======================
 
-This is a boilerplate framework for writing tools using **bash**.
+This is a boilerplate framework for writing tools using **bash**. 
 It's highly modular and lightweight, while managing to implement some concepts from C#, Java or JavaScript into bash. 
-The Infinity Framework is also plug & play: include it at the beginning of your existing script to get the error handling benefits, and start using other features gradually.
+The Infinity Framework is also plug & play: include it at the beginning of your existing script to get error handling benefits, and start using other features gradually.
 
-Disclaimer: Tested only with **bash 4**, but it should be easy to port to earlier versions.
+Disclaimer: Not all of the modules work with earlier versions of bash, as I test primarily with **bash 4**. However, it should be possible (and relatively easy) to port non-working parts to earlier versions.
 
 Main features
 =============
@@ -21,7 +21,7 @@ Main features
 * *optional*: **type system** for object-oriented scripting
 * *optional*: basic classes for the type system, such as *Array* or *String* with useful functions
 
-Most of the features are modular and it's easy to simply use one of the features, e.g. the named parameters module is self-containeed in one file.
+Most of the features are modular and it's easy to extract them for use without the rest of the framework. For example, the named parameters module is self-contained in one file.
 
 Error handling with exceptions and ```throw```
 ==============================================
@@ -41,7 +41,66 @@ It's useful for debugging, as you'll also get the call stack if you're not sure 
 *Exceptions* combined with *try & catch* give you safety without having to run with **-o errexit**.
 If you do something wrong, you'll get a detailed exception, highlighting the command where it went wrong in the line from the source, along with a backtrace the script will be halted with the option to continue of break.
 On the other hand if you expect a part of block to fail, you can wrap it in a try block, and handle the error inside a catch block. 
-   
+
+Named parameters in functions
+=============================
+
+In any programing language, it makes sense to use meaningful names for variables for greater readability.
+In case of Bash, that means avoiding using positional arguments in functions.
+Instead of using the unhelpful ```$1```, ```$2``` and so on within functions to accessed the passed values, you may write:
+
+```bash
+testPassingParams() {
+
+    @var hello
+    @array[4] anArrayWithFourElements
+    l=2 @array anotherArrayWithTwo
+    @var anotherSingle
+    @reference table   # references only work in bash >=4.3
+    @params anArrayOfVariedSize
+
+    test "$hello" = "$1" && echo correct
+    #
+    test "${anArrayWithFourElements[0]}" = "$2" && echo correct
+    test "${anArrayWithFourElements[1]}" = "$3" && echo correct
+    test "${anArrayWithFourElements[2]}" = "$4" && echo correct
+    # etc...
+    #
+    test "${anotherArrayWithTwo[0]}" = "$6" && echo correct
+    test "${anotherArrayWithTwo[1]}" = "$7" && echo correct
+    #
+    test "$anotherSingle" = "$8" && echo correct
+    #
+    test "${table[test]}" = "works"
+    table[inside]="adding a new value"
+    #
+    # I'm using * just in this example:
+    test "${anArrayOfVariedSize[*]}" = "${*:10}" && echo correct
+}
+
+fourElements=( a1 a2 "a3 with spaces" a4 )
+twoElements=( b1 b2 )
+declare -A assocArray
+assocArray[test]="works"
+
+testPassingParams "first" "${fourElements[@]}" "${twoElements[@]}" "single with spaces" assocArray "and more... " "even more..."
+
+test "${assocArray[inside]}" = "adding a new value"
+```
+
+The system will automatically map:
+ * **$1** to **$hello**
+ * **$anArrayWithFourElements** will be an array of params with values from $2 till $5
+ * **$anotherArrayWithTwo** will be an array of params with values from $6 till $7
+ * **$8** to **$anotherSingle**
+ * **$table** will be a reference to the variable whose name was passed in as the 9th parameter
+ * **$anArrayOfVariedSize** will be a bash array containing all the following params (from $10 on)
+
+In other words, not only you can call your parameters by their names (which makes up for a more readable core), you can actually pass arrays easily (and references to variables - this feature needs bash >=4.3 though)! Plus, the mapped variables are all in the local scope. 
+This module is pretty light and works in bash 3 and bash 4 (except for references - bash >=4.3) and if you only want to use it separately from this project, get the file /lib/system/02_named_parameters.sh.
+
+Note: Between 2-10 there are aliases for arrays like ```@array[4]```, after 10 you need to write ```l=LENGTH @array```, like shown in the example. Or, make your own aliases :).
+
 Using ```import```
 ==================
 
@@ -63,6 +122,8 @@ try {
     echo "The hard disk is not connected properly!"
     echo "Caught Exception:$(UI.Color.Red) $__BACKTRACE_COMMAND__ $(UI.Color.Default)"
     echo "File: $__BACKTRACE_SOURCE__, Line: $__BACKTRACE_LINE__"
+    
+    ## printing a caught exception couldn't be simpler, as it's stored in "${__EXCEPTION__[@]}"
     Exception.PrintException "${__EXCEPTION__[@]}"
 }
 ```
@@ -138,67 +199,8 @@ finish
 
 Can you believe this is bash?! ;-)
 
-Named parameters in functions
-=============================
-
-In any programing language, it makes sense to use meaningful names for variables for greater readability.
-In case of Bash, that means avoiding using positional arguments in functions.
-Instead of using the unhelpful ```$1```, ```$2``` and so on within functions to accessed the passed values, you may write:
-
-```bash
-testPassingParams() {
-
-    @var hello
-    @array[4] anArrayWithFourElements
-    l=2 @array anotherArrayWithTwo
-    @var anotherSingle
-    @reference table   # references only work in bash >=4.3
-    @params anArrayOfVariedSize
-
-    test "$hello" = "$1" && echo correct
-    #
-    test "${anArrayWithFourElements[0]}" = "$2" && echo correct
-    test "${anArrayWithFourElements[1]}" = "$3" && echo correct
-    test "${anArrayWithFourElements[2]}" = "$4" && echo correct
-    # etc...
-    #
-    test "${anotherArrayWithTwo[0]}" = "$6" && echo correct
-    test "${anotherArrayWithTwo[1]}" = "$7" && echo correct
-    #
-    test "$anotherSingle" = "$8" && echo correct
-    #
-    test "${table[test]}" = "works"
-    table[inside]="adding a new value"
-    #
-    # I'm using * just in this example:
-    test "${anArrayOfVariedSize[*]}" = "${*:10}" && echo correct
-}
-
-fourElements=( a1 a2 "a3 with spaces" a4 )
-twoElements=( b1 b2 )
-declare -A assocArray
-assocArray[test]="works"
-
-testPassingParams "first" "${fourElements[@]}" "${twoElements[@]}" "single with spaces" assocArray "and more... " "even more..."
-
-test "${assocArray[inside]}" = "adding a new value"
-```
-
-The system will automatically map:
- * **$1** to **$hello**
- * **$anArrayWithFourElements** will be an array of params with values from $2 till $5
- * **$anotherArrayWithTwo** will be an array of params with values from $6 till $7
- * **$8** to **$anotherSingle**
- * **$table** will be a reference to the variable whose name was passed in as the 9th parameter
- * **$anArrayOfVariedSize** will be a bash array containing all the following params (from $10 on)
-
-In other words, not only you can call your parameters by their names (which makes up for a more readable core), you can actually pass arrays easily (and references to variables - this feature needs bash >=4.3 though)! Plus, the mapped variables are all in the local scope. 
-This module is pretty light and works in bash 3 and bash 4 (except for references - bash >=4.3) and if you only want to use it separately from this project, get the file /lib/system/02_named_parameters.sh.
-
-Note: Between 2-10 there are aliases for arrays like ```@array[4]```, after 10 you need to write ```l=LENGTH @array```, like shown in the example. Or, make your own aliases :).
-
-Using types
-===========
+Using types (Object-Oriented module)
+====================================
 
 ```bash
 (
@@ -219,7 +221,6 @@ Using types
 
 If you don't want the objects to fall through or collide, use them in a subshell.
 For more, take a look at the examples inside of the unit tests above.
-
 
 Writing your own classes
 ========================
@@ -360,7 +361,17 @@ How to use?
 5. To import the unit test library you'll need to ```import lib/types/util/test```.
    The first error inside of the test will make the whole test fail.
    
-6. Don't use ```set -o errexit``` or ```set -e``` - it's not necessary, because error handling is done by the framework itself.  
+6. Don't use ```set -o errexit``` or ```set -e``` - it's not necessary, because error handling is done by the framework itself.
+
+Contributing
+============
+
+Feel free to fork, suggest changes or new modules and file a pull request.
+The two features that I'd love to add are:
+* port to bash 3 (preferably a dynamic one, that imports the right file for the right version)
+* a web generator for a single file version of the boilerplate (with an option to select modules of your choice)
+
+More functions for simple types (arrays, strings, numbers) and more types in general, are very welcome too.
 
 Acknowledgments
 ===============
