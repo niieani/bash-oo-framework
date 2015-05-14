@@ -244,7 +244,7 @@ If you won't do it, it'll be the filename, minus the extension.
 It's better to name though, as filenames can conflict.
 Thanks to scopes, you can specify exactly what and how you want to log.
 
-```
+```bash
 Log.NameScope myApp
 
 ## ADD OUTPUT OF "myApp" TO DELEGATE STDERR
@@ -257,7 +257,7 @@ Log "logging to stderr"
 The above will simply print "logging to stderr" to STDERR.
 As you saw we used the logger output called "STDERR". It is possible to create and register your own loggers:
 
-```
+```bash
 ## LET'S MAKE A CUSTOM LOGGER:
 myLoggingDelegate() {
     echo "Hurray: $*"
@@ -269,7 +269,7 @@ Log.RegisterLogger MYLOGGER myLoggingDelegate
 
 Now, we can set it up so that it direct only logs from a specific function to the our custom logger output:
 
-```
+```bash
 ## WE WANT TO DIRECT ALL LOGGING WITHIN FUNCTION myFunction OF myApp TO MYLOGGER
 Log.AddOutput myApp/myFunction MYLOGGER
 
@@ -293,7 +293,7 @@ Hurray: logging from myFunction
 As you can see, logging automatically redirected the logger from our function from our previously registered STDERR to our more specifically defined MYLOGGER
 If you wish to keep logging to both loggers, you can disable the specificity filter:
 
-```
+```bash
 Log.DisableFilter myApp 
 ```
 
@@ -309,7 +309,7 @@ logging from myFunction
 
 We can be even more specific and redirect messages with specific *subjects* to other loggers, or mute them altogether:
 
-```
+```bash
 ## Assuming we're in the same file, let's reset first
 Log.ResetAllOutputsAndFilters
 
@@ -324,7 +324,7 @@ myFunction() {
 
 And let's change our custom logger a little, to support the subject:
 
-```
+```bash
 myLoggingDelegate() {
     echo "Hurray: $subject $*"
 }
@@ -340,19 +340,19 @@ Hurray: unimportant message from myFunction
 
 To filter (or redirect) messages with subject ```unimportant``` within ```myFunction``` of ```myApp```'s file:
 
-```
+```bash
 Log.AddOutput myApp/myFunction/unimportant VOID
 ```
 
 To filter any messages with subject ```unimportant``` within ```myApp```'s file:
 
-```
+```bash
 Log.AddOutput myApp/unimportant VOID
 ```
 
 Or any messages with subject ```unimportant``` anywhere:
 
-```
+```bash
 Log.AddOutput unimportant VOID
 ```
 
