@@ -1,3 +1,5 @@
+Log.NameScope oo/try-catch
+
 declare -ig __oo__insideTryCatch=0
 
 # in case try-catch is nested, we set +e before so the parent handler doesn't catch us instead

@@ -46,7 +46,8 @@ static:Test(){
 
     Test.NewGroup() {
         @var groupName
-                echo "$(UI.Powerline.ArrowRight)" $(UI.Color.Magenta)Testing [$groupName]: $(UI.Color.Default)
+        
+        echo "$(UI.Powerline.ArrowRight)" $(UI.Color.Magenta)Testing [$groupName]: $(UI.Color.Default)
         Test.GroupName = "$groupName"
     }
 }

@@ -1,3 +1,5 @@
+Log.NameScope oo/system
+
 System.LoadFile(){
     @var libPath
 
@@ -6,11 +8,11 @@ System.LoadFile(){
         ## if already imported let's return
         if Array.Contains "$file" "${__oo__importedFiles[@]}"
         then
-            Log.Debug 3 "File previously imported: ${libPath}"
+            subject=level3 Log "File previously imported: ${libPath}"
             return 0
         fi
 
-        Log.Debug 2 "Importing: $libPath"
+        subject=level2 Log "Importing: $libPath"
 
         __oo__importedFiles+=( "$libPath" )
 
@@ -22,10 +24,10 @@ System.LoadFile(){
         if Function.Exists Type.Load
         then
             Type.Load
-            Log.Debug 3 "Loading Types..."
+            subject=level3 Log "Loading Types..."
         fi
     else
-        Log.Debug 2 "File doesn't exist when importing: $libPath"
+        subject=level2 Log "File doesn't exist when importing: $libPath"
     fi
 }
 
@@ -38,7 +40,7 @@ System.Import() {
         [ ! -e "$libPath" ] && libPath="${__oo__path}/${libPath}"
         [ ! -e "$libPath" ] && libPath="${libPath}.sh"
 
-        Log.Debug 4 "Trying to load from: ${__oo__path} / ${requestedPath}"
+        subject=level4 Log "Trying to load from: ${__oo__path} / ${requestedPath}"
 
         if [ ! -e "$libPath" ]
         then
@@ -47,12 +49,12 @@ System.Import() {
             local localPath="$( cd "${BASH_SOURCE[1]%/*}" && pwd )"
 #            [ -f "$localPath" ] && localPath="$(dirname "$localPath")"
             libPath="${localPath}/${requestedPath}"
-            Log.Debug 4 "Trying to load from: ${localPath} / ${requestedPath}"
+            subject=level4 Log "Trying to load from: ${localPath} / ${requestedPath}"
 
             [ ! -e "$libPath" ] && libPath="${libPath}.sh"
         fi
 
-        Log.Debug 3 "Trying to load from: ${libPath}"
+        subject=level3 Log "Trying to load from: ${libPath}"
         [ ! -e "$libPath" ] && throw "Cannot import $libPath" && return 1
 
         libPath="$(File.GetAbsolutePath "$libPath")"

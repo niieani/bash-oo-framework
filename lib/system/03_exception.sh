@@ -1,3 +1,5 @@
+Log.NameScope oo/exception
+
 alias throw="__EXCEPTION_TYPE__='MANUALLY INVOKED' command_not_found_handle"
 
 command_not_found_handle() {
@@ -23,7 +25,7 @@ command_not_found_handle() {
 
     if [[ $__oo__insideTryCatch -gt 0 ]]
     then
-        Log.Debug 3 "inside Try No.: $__oo__insideTryCatch"
+        subject=level3 Log "inside Try No.: $__oo__insideTryCatch"
 
         if [[ ! -s $__oo__storedExceptionLineFile ]]; then
             echo "$lineNo" > $__oo__storedExceptionLineFile
@@ -56,8 +58,8 @@ command_not_found_handle() {
     done
     IFS=$' \t\n'
 
-    Log.Write
-    Log.Write " $(UI.Color.Red)$(UI.Powerline.Fail) $(UI.Color.Bold)UNCAUGHT EXCEPTION${merger}$(UI.Color.LightRed)${type}$(UI.Color.Default)"
+    Console.WriteStdErr
+    Console.WriteStdErr " $(UI.Color.Red)$(UI.Powerline.Fail) $(UI.Color.Bold)UNCAUGHT EXCEPTION${merger}$(UI.Color.LightRed)${type}$(UI.Color.Default)"
     Exception.PrintException "${exception[@]}"
 
     Exception.ContinueOrBreak
@@ -128,7 +130,7 @@ Exception.PrintException() {
     
     while [[ $index -lt $backtraceNo ]]
     do
-        Log.Write "$(Exception.FormatExceptionSegment "${backtraceFile[$index]}" "${backtraceLine[$index]}" "${backtraceCommand[($index - 1)]}" $(( $index + $backtraceIndentationLevel )) )"
+        Console.WriteStdErr "$(Exception.FormatExceptionSegment "${backtraceFile[$index]}" "${backtraceLine[$index]}" "${backtraceCommand[($index - 1)]}" $(( $index + $backtraceIndentationLevel )) )"
         index+=1
     done
 }
@@ -221,14 +223,14 @@ Exception.ContinueOrBreak()
     # if in a terminal
     if [ -t 0 ]
     then
-        Log.Write
-        Log.Write " $(UI.Color.Yellow)$(UI.Powerline.Lightning)$(UI.Color.White) Press $(UI.Color.Bold)[CTRL+C]$(UI.Color.White) to exit or $(UI.Color.Bold)[Return]$(UI.Color.White) to continue execution."
+        Console.WriteStdErr
+        Console.WriteStdErr " $(UI.Color.Yellow)$(UI.Powerline.Lightning)$(UI.Color.White) Press $(UI.Color.Bold)[CTRL+C]$(UI.Color.White) to exit or $(UI.Color.Bold)[Return]$(UI.Color.White) to continue execution."
         read -s
-        Log.Write " $(UI.Color.Blue)$(UI.Powerline.Cog)$(UI.Color.White) Continuing...$(UI.Color.Default)"
+        Console.WriteStdErr " $(UI.Color.Blue)$(UI.Powerline.Cog)$(UI.Color.White) Continuing...$(UI.Color.Default)"
         return 0
-        Log.Write
+        Console.WriteStdErr
     else
-        Log.Write
+        Console.WriteStdErr
         exit 1
     fi
 }

@@ -72,7 +72,7 @@ class:Human() {
 
 
         Human::__constructor__() {
-            Log.Debug 1 "Hello, I am the constructor! You have passed these arguments [ $@ ]"
+            subject=level1 Log "Hello, I am the constructor! You have passed these arguments [ $@ ]"
         }
 
     ~methods

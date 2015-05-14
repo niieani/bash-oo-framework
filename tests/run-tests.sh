@@ -2,12 +2,14 @@
 
 source "$( cd "${BASH_SOURCE[0]%/*}" && pwd )/../lib/oo-framework.sh"
 
-# Log.Debug.SetLevel 4
-
 import lib/type-core
 import lib/types/base
 import lib/types/ui
 import lib/types/util/test
+
+# Log.AddOutput level1 CUSTOM
+# Log.AddOutput level2 CUSTOM
+# Log.AddOutput level3 CUSTOM
 
 Test.NewGroup "Named Parameters"
 it 'should try to assign map the params locally'

@@ -1,3 +1,5 @@
+Log.NameScope oo/named-parameters
+
 Function.AssignParamLocally() {
     # USE DEFAULT IFS IN CASE IT WAS CHANGED - important!
     local IFS=$' \t\n'
@@ -15,7 +17,7 @@ Function.AssignParamLocally() {
     if [[ "${commandWithArgs[*]}" == "true" ]]
     then
         __assign_next=true
-        # Log.Write "Will assign next one"
+        # Console.WriteStdErr "Will assign next one"
         return 0
     fi
 
@@ -31,8 +33,8 @@ Function.AssignParamLocally() {
 
     if [[ ! -z $__assign_varType ]]
     then
-        # Log.Write "SETTING $__assign_varName = \$$__assign_paramNo"
-        # Log.Write --
+        # Console.WriteStdErr "SETTING $__assign_varName = \$$__assign_paramNo"
+        # Console.WriteStdErr --
 
         if [[ "$__assign_varType" == "array" ]]
         then
@@ -53,7 +55,7 @@ Function.AssignParamLocally() {
         elif [[ ! -z "${!__assign_paramNo}" ]]
         then
             execute="$__assign_varName=\"\$$__assign_paramNo\""
-            # Log.Write "EXECUTE $execute"
+            # Console.WriteStdErr "EXECUTE $execute"
             eval "$execute"
         fi
         unset __assign_varType
@@ -63,9 +65,9 @@ Function.AssignParamLocally() {
     then
         __assign_normalCodeStarted+=1
 
-        # Log.Write "NOPASS ${commandWithArgs[*]}"
-        # Log.Write "normal code count ($__assign_normalCodeStarted)"
-        # Log.Write --
+        # Console.WriteStdErr "NOPASS ${commandWithArgs[*]}"
+        # Console.WriteStdErr "normal code count ($__assign_normalCodeStarted)"
+        # Console.WriteStdErr --
     else
         unset __assign_next
 
@@ -74,16 +76,16 @@ Function.AssignParamLocally() {
         __assign_varType="$__capture_type"
         __assign_arrLength="$__capture_arrLength"
 
-        # Log.Write "PASS ${commandWithArgs[*]}"
-        # Log.Write --
+        # Console.WriteStdErr "PASS ${commandWithArgs[*]}"
+        # Console.WriteStdErr --
 
         __assign_paramNo+=1
     fi
 }
 
 Function.CaptureParams() {
-    # Log.Write "Capturing Type $_type"
-    # Log.Write --
+    # Console.WriteStdErr "Capturing Type $_type"
+    # Console.WriteStdErr --
 
     __capture_type="$_type"
     __capture_arrLength="$l"
