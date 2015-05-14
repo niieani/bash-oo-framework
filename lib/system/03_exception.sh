@@ -64,10 +64,10 @@ command_not_found_handle() {
 }
 
 Exception.SetupTemp() {
-    declare -g __oo__storedExceptionLineFile=$(mktemp /tmp/stored_exception_line.$$.XXXXXXXXXX)
-    declare -g __oo__storedExceptionSourceFile=$(mktemp /tmp/stored_exception_source.$$.XXXXXXXXXX)
-    declare -g __oo__storedExceptionBacktraceFile=$(mktemp /tmp/stored_exception_backtrace.$$.XXXXXXXXXX)
-    declare -g __oo__storedExceptionFile=$(mktemp /tmp/stored_exception.$$.XXXXXXXXXX)
+    declare -g __oo__storedExceptionLineFile="$(mktemp -t stored_exception_line.$$.XXXXXXXXXX)"
+    declare -g __oo__storedExceptionSourceFile="$(mktemp -t stored_exception_source.$$.XXXXXXXXXX)"
+    declare -g __oo__storedExceptionBacktraceFile="$(mktemp -t stored_exception_backtrace.$$.XXXXXXXXXX)"
+    declare -g __oo__storedExceptionFile="$(mktemp -t stored_exception.$$.XXXXXXXXXX)"
 }
 
 Exception.SetupTemp
