@@ -1,4 +1,4 @@
-Log.NameScope oo/try-catch
+namespace oo
 
 declare -ig __oo__insideTryCatch=0
 

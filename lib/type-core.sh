@@ -1,4 +1,4 @@
-Log.NameScope oo/type-core
+namespace oo
 
 ## STORAGE ##
 

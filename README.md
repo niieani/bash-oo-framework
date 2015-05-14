@@ -141,7 +141,7 @@ Using Basic Logging, Colors and Powerline Emoji
 echo "$(UI.Color.Blue)I'm blue...$(UI.Color.Default)"
 
 # enable basic logging for this file
-Log.NameScope myApp
+namespace myApp
 Log.AddOutput myApp DEBUG
 
 # now we can write with the DEBUG output set
@@ -241,13 +241,13 @@ Advanced Logging
 
 Here's an example of how to use the power of advanced logging provided by the Infinity Framework.
 
-In every file you are logging from, you may name the logging scope.
+In every file you are logging from, you may name the logging scope (namespace).
 If you won't do it, it'll be the filename, minus the extension.
 It's better to name though, as filenames can conflict.
 Thanks to scopes, you can specify exactly what and how you want to log.
 
 ```bash
-Log.NameScope myApp
+namespace myApp
 
 ## ADD OUTPUT OF "myApp" TO DELEGATE STDERR
 Log.AddOutput myApp STDERR

@@ -1,4 +1,4 @@
-Log.NameScope oo/exception
+namespace oo
 
 alias throw="__EXCEPTION_TYPE__='MANUALLY INVOKED' command_not_found_handle"
 

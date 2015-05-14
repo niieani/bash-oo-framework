@@ -15,7 +15,7 @@ import lib/types/ui
 ## (if you won't do it it'll be the filename without the extension)
 ## DO THIS IN EVERY FILE YOU WANT TO USE LOGGING FROM
 ## TO BE ABLE TO SPECIFY EXACTLY WHAT AND HOW YOU WANT TO LOG
-Log.NameScope myApp
+namespace myApp
 
 ## ADD OUTPUT OF "myApp" TO STDERR
 Log.AddOutput myApp STDERR

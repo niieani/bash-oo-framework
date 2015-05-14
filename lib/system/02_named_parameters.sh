@@ -1,4 +1,4 @@
-Log.NameScope oo/named-parameters
+namespace oo
 
 Function.AssignParamLocally() {
     # USE DEFAULT IFS IN CASE IT WAS CHANGED - important!

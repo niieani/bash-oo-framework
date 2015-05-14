@@ -1,4 +1,3 @@
-import ../../type-core
 import Var
 
 class:Boolean() {

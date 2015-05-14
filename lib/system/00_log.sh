@@ -8,6 +8,7 @@ Log.NameScope() {
     local script="${BASH_SOURCE[1]}"
     __oo__logScopes["$script"]="$scopeName"
 }
+alias namespace="Log.NameScope"
 
 Log.AddOutput() {
     local scopeName="$1"
@@ -125,7 +126,7 @@ Console.WriteStdErrAnnotated() {
     local type=$4
     shift; shift; shift; shift
 
-    Console.WriteStdErr "$color[$type] $(UI.Color.Default)$* $(UI.Color.Blue)[${script}:${lineNo}]$(UI.Color.Default)"
+    Console.WriteStdErr "$color[$type] $(UI.Color.Blue)[${script}:${lineNo}]$(UI.Color.Default) $* "
 }
 
 Logger.DEBUG() {
@@ -153,4 +154,4 @@ Log.RegisterLogger CUSTOM Logger.CUSTOM
 
 alias Error="subject=error Log"
 
-Log.NameScope oo/log
+namespace oo/log

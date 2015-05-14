@@ -1,5 +1,3 @@
-import ../../type-core
-
 class:Object() {
     methods
         Object::__getter__() {

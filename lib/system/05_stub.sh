@@ -1,4 +1,4 @@
-Log.NameScope oo/stub
+namespace oo
 
 Array.Contains() {
     local e

@@ -1,4 +1,4 @@
-Log.NameScope oo/system
+namespace oo
 
 System.LoadFile(){
     @var libPath
