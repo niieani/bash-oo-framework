@@ -25,17 +25,17 @@ command_not_found_handle() {
     then
         Log.Debug 3 "inside Try No.: $__oo__insideTryCatch"
 
-        if [[ ! -f /tmp/stored_exception_line ]]; then
-            echo "$lineNo" > /tmp/stored_exception_line
+        if [[ ! -s $__oo__storedExceptionLineFile ]]; then
+            echo "$lineNo" > $__oo__storedExceptionLineFile
         fi
-        if [[ ! -f /tmp/stored_exception ]]; then
-            echo "$undefinedObject" > /tmp/stored_exception
+        if [[ ! -s $__oo__storedExceptionFile ]]; then
+            echo "$undefinedObject" > $__oo__storedExceptionFile
         fi
-        if [[ ! -f /tmp/stored_exception_source ]]; then
-            echo "$script" > /tmp/stored_exception_source
+        if [[ ! -s $__oo__storedExceptionSourceFile ]]; then
+            echo "$script" > $__oo__storedExceptionSourceFile
         fi
-        if [[ ! -f /tmp/stored_exception_backtrace ]]; then
-            Exception.DumpBacktrace 2 > /tmp/stored_exception_backtrace
+        if [[ ! -s $__oo__storedExceptionBacktraceFile ]]; then
+            Exception.DumpBacktrace 2 > $__oo__storedExceptionBacktraceFile
         fi
         
         return 1 # needs to be return 1
@@ -61,6 +61,42 @@ command_not_found_handle() {
     Exception.PrintException "${exception[@]}"
 
     Exception.ContinueOrBreak
+}
+
+Exception.SetupTemp() {
+    declare -g __oo__storedExceptionLineFile=$(mktemp /tmp/stored_exception_line.$$.XXXXXXXXXX)
+    declare -g __oo__storedExceptionSourceFile=$(mktemp /tmp/stored_exception_source.$$.XXXXXXXXXX)
+    declare -g __oo__storedExceptionBacktraceFile=$(mktemp /tmp/stored_exception_backtrace.$$.XXXXXXXXXX)
+    declare -g __oo__storedExceptionFile=$(mktemp /tmp/stored_exception.$$.XXXXXXXXXX)
+}
+
+Exception.SetupTemp
+
+Exception.CleanUp() {
+    rm -f $__oo__storedExceptionLineFile $__oo__storedExceptionSourceFile $__oo__storedExceptionBacktraceFile $__oo__storedExceptionFile 
+}
+
+Exception.ResetStore() {
+    > $__oo__storedExceptionLineFile
+    > $__oo__storedExceptionFile
+    > $__oo__storedExceptionSourceFile
+    > $__oo__storedExceptionBacktraceFile
+}
+
+trap Exception.CleanUp EXIT INT TERM
+
+Exception.GetLastException() {
+    if [[ -s $__oo__storedExceptionFile ]]
+    then
+        cat $__oo__storedExceptionLineFile
+        cat $__oo__storedExceptionFile
+        cat $__oo__storedExceptionSourceFile
+        cat $__oo__storedExceptionBacktraceFile
+        
+        Exception.ResetStore
+    else
+        echo -e "${BASH_LINENO[1]}\n \n${BASH_SOURCE[2]#./}"
+    fi
 }
 
 Exception.PrintException() {
