@@ -101,7 +101,8 @@ it 'should make a number and change its value'
 try
     Number aNumber = 10
     aNumber = 12
-    aNumber.Equals 12
+    # it's possible to compare with '==' operator too
+    aNumber == 12
 finish
 
 it "should make basic operations on two arrays"

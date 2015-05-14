@@ -13,5 +13,9 @@ class:Object() {
         Object::__type__() {
             echo "$__objectType__"
         }
+
+        Object::Equals() {
+            $this.__equals__ "$@"
+        }
     ~methods
 }

@@ -13,9 +13,8 @@ class:Var() {
             [[ ! -z $this ]] && __oo__storage["$this"]="$1"
         }
         
-        Var::Equals() {
+        Var::__equals__() {
             [[ "$($this)" = "$1" ]]
-            return $?
         }
     ~methods
 }
