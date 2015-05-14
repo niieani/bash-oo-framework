@@ -133,19 +133,29 @@ Braces are optional for the ```try``` block, but required for ```catch``` if it'
 
 Note: ```try``` is executed in a subshell, therefore you cannot assign any variables inside of it.
 
-Using Logging, Colors and Powerline Emoji
-=========================================
+Using Basic Logging, Colors and Powerline Emoji
+===============================================
 
 ```bash
+# using colors:
 echo "$(UI.Color.Blue)I'm blue...$(UI.Color.Default)"
-# show all debug messages below log level 2
-Debug.Log.Enable 2
-# write to debug log at level 1
-Debug.Log 1 "Play me some Jazz, will ya? $(UI.Powerline.Saxophone)"
-# disable visible logging
-Debug.Log.Disable
 
-Debug.Write "This will be printed to STDERR, no matter what logging level we're at."
+# enable basic logging for this file
+Log.NameScope myApp
+Log.AddOutput myApp DEBUG
+
+# now we can write with the DEBUG output set
+Log "Play me some Jazz, will ya? $(UI.Powerline.Saxophone)"
+
+# redirect error messages to STDERR
+Log.AddOutput error STDERR
+subject=error Log "Something bad happened."
+
+# reset outputs
+Log.ResetAllOutputsAndFilters
+
+# You may also hardcode the use for the StdErr output directly:
+Console.WriteStdErr "This will be printed to STDERR, no matter what."
 ```
 
 Both the colors and the powerline characters fallback gracefully on systems that don't support them.
@@ -153,6 +163,8 @@ To see powerline, you'll need to use a powerline-patched font though.
 
 For the list of available colors and emoji's take a look into [lib/system/ui.sh](https://github.com/niieani/bash-oo-framework/blob/master/lib/system/01_ui.sh).
 Fork and contribute more!
+
+See [Advanced Logging](#advanced-logging) below to learn more about logging capabilities.
 
 Writing Unit Tests
 ==================
@@ -221,6 +233,135 @@ Using types (Object-Oriented module)
 
 If you don't want the objects to fall through or collide, use them in a subshell.
 For more, take a look at the examples inside of the unit tests above.
+
+Advanced Logging
+================
+
+Here's an example of how to use the power of advanced logging provided by the Infinity Framework.
+
+In every file you are logging from, you may name the logging scope.
+If you won't do it, it'll be the filename, minus the extension.
+It's better to name though, as filenames can conflict.
+Thanks to scopes, you can specify exactly what and how you want to log.
+
+```
+Log.NameScope myApp
+
+## ADD OUTPUT OF "myApp" TO DELEGATE STDERR
+Log.AddOutput myApp STDERR
+
+## LET'S TRY LOGGING SOMETHING:
+Log "logging to stderr"
+```
+
+The above will simply print "logging to stderr" to STDERR.
+As you saw we used the logger output called "STDERR". It is possible to create and register your own loggers:
+
+```
+## LET'S MAKE A CUSTOM LOGGER:
+myLoggingDelegate() {
+    echo "Hurray: $*"
+}
+
+## WE NEED TO REGISTER IT:
+Log.RegisterLogger MYLOGGER myLoggingDelegate
+```
+
+Now, we can set it up so that it direct only logs from a specific function to the our custom logger output:
+
+```
+## WE WANT TO DIRECT ALL LOGGING WITHIN FUNCTION myFunction OF myApp TO MYLOGGER
+Log.AddOutput myApp/myFunction MYLOGGER
+
+## LET'S DECLARE THAT FUNCTION:
+myFunction() {
+    echo "Hey, I am a function!"
+    Log "logging from myFunction"
+}
+
+## AND RUN:
+myFunction
+```
+
+The above code should print:
+
+```
+Hey, I am a function!
+Hurray: logging from myFunction
+```
+
+As you can see, logging automatically redirected the logger from our function from our previously registered STDERR to our more specifically defined MYLOGGER
+If you wish to keep logging to both loggers, you can disable the specificity filter:
+
+```
+Log.DisableFilter myApp 
+```
+
+Now if we run the function ```myFunction```:
+
+The output will be:
+
+```
+Hey, I am a function!
+Hurray: logging from myFunction
+logging from myFunction
+```
+
+We can be even more specific and redirect messages with specific *subjects* to other loggers, or mute them altogether:
+
+```
+## Assuming we're in the same file, let's reset first
+Log.ResetAllOutputsAndFilters
+
+Log.AddOutput myApp/myFunction MYLOGGER
+
+myFunction() {
+    echo "Hey, I am a function!"
+    Log "logging from myFunction"
+    subject="unimportant" Log "message from myFunction"
+}
+```
+
+And let's change our custom logger a little, to support the subject:
+
+```
+myLoggingDelegate() {
+    echo "Hurray: $subject $*"
+}
+```
+
+Now when we run ```myFunction```, we should get:
+
+```
+Hey, I am a function!
+Hurray:  logging from myFunction
+Hurray: unimportant message from myFunction
+```
+
+To filter (or redirect) messages with subject ```unimportant``` within ```myFunction``` of ```myApp```'s file:
+
+```
+Log.AddOutput myApp/myFunction/unimportant VOID
+```
+
+To filter any messages with subject ```unimportant``` within ```myApp```'s file:
+
+```
+Log.AddOutput myApp/unimportant VOID
+```
+
+Or any messages with subject ```unimportant``` anywhere:
+
+```
+Log.AddOutput unimportant VOID
+```
+
+Now, running ```myFunction``` will print:
+
+```
+Hey, I am a function!
+Hurray: logging from myFunction
+```
 
 Writing your own classes
 ========================
@@ -309,7 +450,7 @@ class:Human() {
         $this.Name = "$name"
         $this.Height = "$height"
         
-        Log.Write "Hello, I am the constructor! You have passed these arguments [ $@ ]"
+        Console.WriteStdErr "Hello, I am the constructor! You have passed these arguments [ $@ ]"
     }
         
     static Human.PlaySomeJazz() {

@@ -46,7 +46,6 @@ set -o pipefail
 shopt -s expand_aliases
 declare -g __oo__libPath="$( cd "${BASH_SOURCE[0]%/*}" && pwd )"
 declare -g __oo__path="${__oo__libPath}/.."
-declare -g __oo__logger=${LOGGER:-STDERR}
 declare -a __oo__importedFiles
 
 System.Bootstrap
