@@ -64,6 +64,19 @@ class:Array() {
         # is var an array? {
         # [[ "$(declare -p $previousParamNo 2> /dev/null)" =~ "declare -a" ]]
         #
+
+        Array::Serialize() {
+            echo -n "["
+            (
+                local IFS=$'\UFFFFF'
+                local indirectAccess="$($this._storedVariableName)[*]"
+                local list="\"${!indirectAccess}\""
+                local separator='", "'
+                echo -n "${list/$'\UFFFFF'/$separator}"
+            )
+            echo -n "]"
+        }
+
     ~methods
 
 }

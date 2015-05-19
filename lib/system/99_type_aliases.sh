@@ -14,5 +14,6 @@ alias ~methods="fi"
 alias statics="if [[ -z \$instance ]] || [[ \$instance = false ]]; then "
 alias ~statics="fi"
 
-alias public="[[ \$instance = true ]] && __private__=false "
-alias private="[[ \$instance = true ]] && __private__=true "
+# it has to be reversed with ! and logical OR because otherwise we get an exception...
+alias public="[[ \$instance != true ]] || __private__=false "
+alias private="[[ \$instance != true ]] || __private__=true "

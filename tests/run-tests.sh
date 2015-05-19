@@ -64,7 +64,7 @@ try
     # run twice, just to be sure we don't leave behind anythinh
     testPassingParams "first" "${fourElements[@]}" "${twoElements[@]}" "single with spaces" assocArray "and more... " "even more..."
 
-finish
+expectPass
 
 Test.DisplaySummary
 
@@ -76,30 +76,30 @@ try
     hexDump="0000000 1b 5b 30 3b 33 32 6d 48 65 6c 6c 6f 21 1b 5b 30"
     message=$(echo $(UI.Color.Green)Hello!$(UI.Color.Default) | hexdump | head -1)
     [[ "$hexDump" = "$message" ]]
-finish
+expectPass
 
 it 'should make an instance of an Object'
 try
     Object anObject
     test "$(anObject)" = "[Object] anObject"
-finish
+expectPass
 
 it 'should make an instance of a number'
 try
     Number aNumber
     Object.Exists aNumber
-finish
+expectPass
 
 it 'should have destroyed the previous instance'
 try
     ! Object.Exists aNumber
-finish
+expectPass
 
 it 'should make an instance of a number and initialize with 5'
 try
     Number aNumber = 5
     aNumber.Equals 5
-finish
+expectPass
 
 it 'should make a number and change its value'
 try
@@ -107,7 +107,7 @@ try
     aNumber = 12
     # it's possible to compare with '==' operator too
     aNumber == 12
-finish
+expectPass
 
 it "should make basic operations on two arrays"
 try
@@ -126,48 +126,38 @@ try
     Letters2.Merge "${!lettersRef}"
 
     Letters2.Contains "Hello Bobby"
-finish
+expectPass
 
 it 'should make a boolean and assign false to it'
 try
     Boolean aBool = false
     ! $(aBool)
-finish
+expectPass
 
 it 'should make a boolean and assign true to it'
 try
     Boolean aBool = true
     $(aBool)
-finish
+expectPass
 
 it "is playing der saxomophone! $(UI.Powerline.Saxophone)"
     try
     sleep 0
-finish
+expectPass
 
 Test.DisplaySummary
 
 Test.NewGroup "Exceptions"
 
-alias cought="echo \"Caught Exception: $(UI.Color.Red)\$__BACKTRACE_COMMAND__$(UI.Color.Default) in \$__BACKTRACE_SOURCE__:\$__BACKTRACE_LINE__\""
-
 it 'should manually throw and catch an exception'
 try
     throw 'I like to fail!'
-catch {
-    cought
-    Test.EchoedOK
-}
-test $? -eq 1 && Test.Errors = false
+expectFail
 
 it 'should throw and catch an unknown reference exception'
 try
     unknown_reference # This will throw
-catch {
-    cought
-    Test.EchoedOK
-}
-test $? -eq 1 && Test.Errors = false
+expectFail
 
 it 'should nest try-and-catch'
 try {
@@ -184,7 +174,7 @@ try {
         cought
     }
 }
-finishEchoed
+expectOutputPass
 
 Test.DisplaySummary
 

@@ -61,7 +61,7 @@ unknown
 #        echo "$__EXCEPTION_SOURCE__: Outer Cought $__EXCEPTION__ at $__EXCEPTION_LINE__"
 #    }
 #}
-#finishEchoed
+#expectOutputPass
 #
 ##set -x
 #it 'should make an instance of an Object'

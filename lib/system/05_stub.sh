@@ -6,6 +6,17 @@ Array.Contains() {
     return 1
 }
 
+String.IsNumber() {
+    @var input
+
+    local regex='^-?[0-9]+([.][0-9]+)?$'
+    if ! [[ "$input" =~ $regex ]]
+    then
+        return 1
+    fi
+    return 0
+}
+
 String.GetXSpaces() {
     @var howMany
 

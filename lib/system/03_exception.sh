@@ -1,6 +1,6 @@
 namespace oo
 
-alias throw="__EXCEPTION_TYPE__='MANUALLY INVOKED' command_not_found_handle"
+alias throw="__EXCEPTION_TYPE__=\${e:-Manually invoked} command_not_found_handle"
 
 command_not_found_handle() {
     # USE DEFAULT IFS IN CASE IT WAS CHANGED - important!
@@ -15,12 +15,16 @@ command_not_found_handle() {
     local script="${BASH_SOURCE[1]#./}"
     local lineNo="${BASH_LINENO[0]}"
     local undefinedObject="$*"
-    local type="${__EXCEPTION_TYPE__:-"UNDEFINED COMMAND"}"
+    local type="${__EXCEPTION_TYPE__:-"Undefined command"}"
 
-    local merger=''
-    if [[ ! "$type" = " " ]]
+    if [[ "$undefinedObject" == "("*")" ]]
     then
-        merger=': '
+        type="Subshell returned a non-zero value"
+    fi
+
+    if [[ -z "$undefinedObject" ]]
+    then
+        undefinedObject="$type"
     fi
 
     if [[ $__oo__insideTryCatch -gt 0 ]]
@@ -59,7 +63,7 @@ command_not_found_handle() {
     IFS=$' \t\n'
 
     Console.WriteStdErr
-    Console.WriteStdErr " $(UI.Color.Red)$(UI.Powerline.Fail) $(UI.Color.Bold)UNCAUGHT EXCEPTION${merger}$(UI.Color.LightRed)${type}$(UI.Color.Default)"
+    Console.WriteStdErr " $(UI.Color.Red)$(UI.Powerline.Fail) $(UI.Color.Bold)UNCAUGHT EXCEPTION: $(UI.Color.LightRed)${type}$(UI.Color.Default)"
     Exception.PrintException "${exception[@]}"
 
     Exception.ContinueOrBreak

@@ -52,6 +52,8 @@ static:Test(){
     }
 }
 
+alias cought="echo \"COUGHT: $(UI.Color.Red)\$__BACKTRACE_COMMAND__$(UI.Color.Default) in \$__BACKTRACE_SOURCE__:\$__BACKTRACE_LINE__\""
 alias it="Test.Start it"
-alias finish="Test.OK; catch { Test.Errors = true; Test.Fail; }"
-alias finishEchoed="Test.EchoedOK; catch { Test.Errors = true; Test.Fail; }"
+alias expectPass="Test.OK; catch { Test.Errors = true; Test.Fail; }"
+alias expectOutputPass="Test.EchoedOK; catch { Test.Errors = true; Test.Fail; }"
+alias expectFail='catch { cought; Test.EchoedOK; }; test $? -eq 1 && Test.Errors = false; '

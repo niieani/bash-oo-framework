@@ -10,20 +10,6 @@ declare -ag __oo__functionsTernaryOperator
 
 ## TYPE SYSTEM ##
 
-#Type.GetFullName(){
-#    @var thisName
-#    # $fullName should be the name of the parent
-#
-#    if [[ -z "$fullName" ]]
-#    then
-#        Console.WriteStdErr RET $thisName
-#        echo $thisName;
-#    else
-#        Console.WriteStdErr RET $fullName.$thisName
-#        echo $fullName.$thisName
-#    fi
-#}
-
 # the creation of a new object
 Type.CreateInstance() {
     # if we are extending, then let's save the real type
@@ -147,7 +133,19 @@ Type.CreateInstance() {
 Type.CallInstance() {
     @var operator
     
-    ## TODO: access control / private, etc.
+    local caller="${FUNCNAME[3]%.*}"
+    local parent="${fullName%.*}"
+
+    ## TODO: access control 
+    if [[ ${FUNCNAME[3]} != "Type.Initialize" && ! -z "${__oo__objects_private[$fullName]}" && "$caller" != "$parent" ]]
+    then
+        # echo private ${__oo__objects_private[$fullName]}
+        #echo ${FUNCNAME[3]} - $caller / $parent
+        # echo obj: $__objectType__ / $fullName
+        # echo funcname: ${FUNCNAME[3]} / ${FUNCNAME[4]}
+        e="Trying to access a private object" throw
+        return 1
+    fi
 
     # if no arguments, use the getter:
     [[ $@ ]] || {
@@ -198,7 +196,7 @@ Type.Initialize() {
     ## TODO: add name sanitization, like, you cannot create objects with DOTs (.)
 
     local parentType=${FUNCNAME[2]}
-    [[ ! -z $__private__ ]] && parentType=${FUNCNAME[3]}
+    [[ ! -z $__private__ && $__private__ == "true" ]] && parentType=${FUNCNAME[3]}
     parentType=${parentType#*:}
     
     local parentName="$fullName"
@@ -225,7 +223,6 @@ Type.Initialize() {
         local fullName=$parentName.$newObjectName
     fi
     
-    #local fullName="$(Type.GetFullName $newObjectName)"
     subject=level1 Log "Full Name: $fullName"
     shift
 
@@ -233,7 +230,7 @@ Type.Initialize() {
     
     __oo__objects["$fullName"]=$objectType
 
-    if [[ ! -z $__private__ ]]; then
+    if [[ ! -z $__private__ && $__private__ == "true" ]]; then
         subject=level1 Log "new private object $fullType, parent: $parentName"
         __oo__objects_private["$fullName"]=$objectType
     #else
@@ -250,14 +247,15 @@ Type.Initialize() {
 
 Type.Load(){
     ## match Types (:) but not Methods (::) ##
-    local types=($(compgen -A function class: || true))
-    types+=($(compgen -A function static: || true))
+    local types=($(compgen -A 'function' class: || true))
+    types+=($(compgen -A 'function' static: || true))
 
     if [[ ${#types[@]} -eq 0 ]]; then
         subject=level1 Log "no types to import... : ${types[@]}"
     else
         local fullType
         local type
+
         for fullType in "${types[@]}"; do
             if ! Array.Contains "$fullType" "${__oo__importedTypes[@]}"; then
 
@@ -276,9 +274,6 @@ Type.Load(){
                 # 'new' function for creating the object
                 eval "$type() { Type.Initialize $type $fullType \"\$@\"; }"
 
-                # INFO: IF USING THE ALIAS VERSION REMEMBER TO LOWER FUNCNAME[NUM] INSIDE!
-                #alias $type="Type.Initialize $type $fullType"
-
                 if [[ ${fullType:0:6} == "static" ]]
                 then
                     ## static means singleton - simply replace the function with an instance ##
@@ -296,7 +291,6 @@ Type.Load(){
                     ## alias enabling to define parameters ##
                     subject=level4 Log "Aliasing @$type"
                     alias @$type="_type=$type @param"
-#                    alias @$type="Function.StashPreviousLocal; declare -a \"__oo__param_types+=( $type )\"; local "
                 fi
             fi
         done
