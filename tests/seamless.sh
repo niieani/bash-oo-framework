@@ -4,6 +4,20 @@ source "$( cd "${BASH_SOURCE[0]%/*}" && pwd )/../lib/oo-framework.sh"
 
 namespace seamless
 
+Log.AddOutput seamless INFO
+
+String.GetRandomAlphanumeric() {
+    # http://stackoverflow.com/a/23837814/595157
+    local chars=( {a..z} {A..Z} {0..9} )
+    local length=$1
+    local ret=
+    while ((length--))
+    do
+        ret+=${chars[$((RANDOM%${#chars[@]}))]}
+    done
+    printf '%s\n' "$ret"
+}
+
 Type.CreateVar() {
     # USE DEFAULT IFS IN CASE IT WAS CHANGED - important!
     local IFS=$' \t\n'
@@ -41,23 +55,9 @@ Type.CreateVar() {
         # Console.WriteStdErr --
         #Console.WriteStdErr $tempName
 
-    	Console.WriteStdErr "$__typeCreate_varName ($__typeCreate_varType)"
+    	Console.WriteStdErr "creating $__typeCreate_varName ($__typeCreate_varType)"
     	
-    	eval "$__typeCreate_varName(){
-    		#GC.Run
-    		#__oo__garbageCollector+=( ${FUNCNAME[*]:1}/$__typeCreate_varName )
-
-    		if [[ \" \${FUNCNAME[*]} \" != *' ${FUNCNAME[1]} '* ]]
-			then
-				# lazy garbage collecting
-				echo collecting garbage
-				unset $__typeCreate_varName
-				# TODO: unset everything under $__typeCreate_varName.*
-				throw 'Object \"$__typeCreate_varName\" is out of scope'
-    		fi
-	    	echo I am $__typeCreate_varType with value: \$$__typeCreate_varName
-	    	$__typeCreate_varName+=_suffix
-	    }"
+    	# __oo__objects+=( $__typeCreate_varName )
 
         unset __typeCreate_varType
     fi
@@ -120,24 +120,159 @@ declare -Ag __oo__garbageCollector
 # it also means we can PIPE to a variable/object
 # echo dupa | someArray.Add
 
+Command.StripOperator() {
+	local varName="$1"
+	local operator
+	local parameter
+	varName="${varName%%+*}" #strip plus
+	[[ "$varName" == "$1" ]] || { operator=+; parameter=${1#*+}; echo ${varName} ${operator} "${parameter}"; return; }
+	varName="${varName%%-*}" #strip minus
+	[[ "$varName" == "$1" ]] || { operator=-; parameter=${1#*-}; echo ${varName} ${operator} "${parameter}"; return; }
+	varName="${varName%%\**}" #strip asterisk
+	[[ "$varName" == "$1" ]] || { operator='asterisk'; parameter=${1#*\*}; echo "${varName}" "${operator}" "${parameter}"; return; }
+	varName="${varName%%/*}" #strip slash
+	[[ "$varName" == "$1" ]] || { operator=/; parameter=${1#*/}; echo ${varName} ${operator} "${parameter}"; return; }
+	varName="${varName%%~*}" #strip ~
+	[[ "$varName" == "$1" ]] || { operator=~; parameter=${1#*+}; echo ${varName} ${operator} "${parameter}"; return; }
+	varName="${varName%%:*}" #strip :
+	[[ "$varName" == "$1" ]] || { operator=:; parameter=${1#*+}; echo ${varName} ${operator} "${parameter}"; return; }
+	echo "$varName" "default" ""
+}
+
+Command.StripBrackets() {
+	local varName=$1
+	local operator
+	local parameter
+	varName="${varName%%[*}" #strip [
+	[[ "$varName" == "$1" ]] || { operator=[]; parameter=${1#*[}; parameter=${parameter%*]}; echo ${varName} ${operator} "${parameter}"; return; }
+	varName="${varName%%{*}" #strip {
+	[[ "$varName" == "$1" ]] || { operator={}; parameter=${1#*{}; parameter=${parameter%*\}}; echo ${varName} ${operator} "${parameter}"; return; }
+
+	echo "$varName" "" ""
+}
+
+obj=OBJECT
+
+Object.New() {
+	local ObjectUUID=$obj:$(String.GetRandomAlphanumeric 12)
+}
+
+Object.IsObject() {
+	:
+}
+
+string.length() {
+	echo ${#this}
+}
+
+string.sanitized() {
+    local sanitized="${this//[^a-zA-Z0-9]/_}"
+    echo "${sanitized^^}"
+}
+
+string.match() {
+	@var regex
+	@int capturingGroup #bracketParam
+
+	local string="$this"
+	# \[([^\]]*)\]
+	while [[ "$string" =~ $regex ]]
+	do
+		subject="regex" Log "${BASH_REMATCH[*]} @ ${capturingGroup}"
+		echo "${BASH_REMATCH[$capturingGroup]}"
+		string="${string/"${BASH_REMATCH[0]}"}" # "
+	done
+}
 
 Exception.CustomCommandHandler() {
-    :
+	subject="builtin" Log "Invoking $1"
+	# if is resolvable immediately
+	if [[ ! "$1" =~ \. ]] && [[ -n ${!1+isSet} ]]
+	then
+		# check if an object UUID
+		# else print var
+		subject="builtin" Log "Invoke builtin getter"
+		# echo "var $1=${!1}"
+		echo "${!1}"
+	else
+		local varDetails=( $(Command.StripOperator $1) )
+		local varName="${varDetails[0]}"
+		local operator="${varDetails[1]}"
+		local parameter="${varDetails[*]:2}"
+
+		local varBrackets=( $(Command.StripBrackets $varName) )
+		varName="${varBrackets[0]}"
+		local bracketOperator="${varBrackets[1]}"
+		local bracketParam="${varBrackets[*]:2}" # TODO: support multiple spaces in parameters
+
+    	local rootObject=${varName%%.*} #strip .
+    	[[ $rootObject == $varName ]] || child=${varName#*.}
+		
+		# if is resolvable immediately
+		#declare -p ${rootObject}
+		local rootObjectResolvable=$rootObject[@]
+    	if [[ -n ${!rootObjectResolvable+isSet} ]]
+		then
+			local typeInfo="$(declare -p $rootObject)"
+
+			# first dereferrence
+			if [[ "$typeInfo" =~ "declare -n" ]] && [[ "$typeInfo" =~ \"([a-zA-Z0-9_]*)\" ]]
+			then
+				rootObject=${BASH_REMATCH[1]}
+				typeInfo="$(declare -p $rootObject)"
+			fi
+
+			if [[ "$typeInfo" == "declare -a"* ]]
+			then
+				local type=array
+			elif [[ "$typeInfo" == "declare -A"* ]]
+			then
+				local type=dictionary
+			elif [[ "$typeInfo" == "declare -i"* ]]
+			then
+				local type=integer
+			else
+				local type=string
+			fi
+
+			subject="complex" Log "Invoke type: $type, object: $rootObject, ${child:+child: $child, }${bracketOperator:+"$bracketOperator: $bracketParam, "}operator: $operator${parameter:+, param $parameter}"
+			local -n this="$rootObject"
+			#self="$rootObject" ${child:+"child=$child"} ${bracketOperator:+"bracketOperator=$bracketOperator"} ${bracketParam:+"bracketParam=$bracketParam"} operator="$operator" ${parameter:+"parameter=$parameter"} 
+			$type.$child "${@:2}"
+		else
+			return 1
+		fi
+	fi
 }
 
 testFunc() {
 	var hello=somevalue
 	var makownik=makownikowiec
+	local normalVar="yo yoo yoo1"
+	local -i normalInt=1
+	local -A object=( [abc]=$obj:dupa )
+
 	#Advanced kopsik # initialize string kopsik with a unique ID refering to the object
 	#dictionary somedic=([one]=something [two]=somethingElse)
 
-	echo Inside Test Func
-	hello
-	makownik
+	normalVar
+	normalVar.length
+	normalVar.sanitized
+	normalVar.match "(y[o1]*)" 1
+	# object[abc].length
 
-	echo $hello _ $makownik
-	# echo functions "${FUNCNAME[@]}"
-	declare -n
+	# hello
+	# makownik
+	# normalVar
+	# normalInt++
+	# object
+	# object.subObject.tralala
+	# object.subObject.tralalaInt[something]
+	# object.subObject.tralalaInt[something]--
+	# object[abc]
+	# normalInt*dupa
+	#someError.blabla
+
 }
 
 testFunc
@@ -159,14 +294,3 @@ testFunc
 # shopt -s lastpipe
 # echo "hello world" | readPipe
 # echo $it
-
-String.GetRandomAlphanumeric() {
-    # http://stackoverflow.com/a/23837814/595157
-    local chars=( {a..z} {A..Z} {0..9} )
-    local length=$1
-    local ret=
-    while((length--)); do
-        ret+=${chars[$((RANDOM%${#chars[@]}))]}
-    done
-    printf '%s\n' "$ret"
-}
