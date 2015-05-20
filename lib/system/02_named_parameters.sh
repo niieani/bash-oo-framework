@@ -39,6 +39,7 @@ Function.AssignParamLocally() {
 
     # var value is only important if making an object later on from it
     local varValue="${varDeclaration#*=}"
+    # TODO: checking for parameter existance or default value
 
     if [[ ! -z $__assign_varType ]]
     then
