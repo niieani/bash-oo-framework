@@ -4,7 +4,7 @@ source "$( cd "${BASH_SOURCE[0]%/*}" && pwd )/../lib/oo-framework.sh"
 
 namespace seamless
 
-Log.AddOutput seamless INFO
+Log.AddOutput seamless CUSTOM
 
 String.GetRandomAlphanumeric() {
     # http://stackoverflow.com/a/23837814/595157
@@ -120,6 +120,23 @@ declare -Ag __oo__garbageCollector
 # it also means we can PIPE to a variable/object
 # echo dupa | someArray.Add
 
+alias @modifiesLocals="[[ \"\${FUNCNAME[2]}\" != \"command_not_found_handle\" ]] || subject=warn Log \"Method \$FUNCNAME modifies locals and needs to be run prefixed by '@'\""
+
+writeln() ( # forking for local scope for $IFS
+	local IFS=" " # needed for "$*"
+	printf '%s\n' "$*"
+)
+
+write() (
+	local IFS=" "
+	printf %s "$*"
+)
+
+writelne() (
+	local IFS=" "
+	printf '%b\n' "$*"
+)
+
 Command.StripOperator() {
 	local varName="$1"
 	local operator
@@ -140,13 +157,16 @@ Command.StripOperator() {
 }
 
 Command.StripBrackets() {
-	local varName=$1
+	local varName="$1"
 	local operator
 	local parameter
+	local fullName="$1"
+
+
 	varName="${varName%%[*}" #strip [
-	[[ "$varName" == "$1" ]] || { operator=[]; parameter=${1#*[}; parameter=${parameter%*]}; echo ${varName} ${operator} "${parameter}"; return; }
+	[[ "$varName" == "$1" ]] || { operator=[]; parameter="$(fullName.match '\[([^]]*)\]' 1 0)"; echo ${varName} ${operator} "${parameter}"; return; }
 	varName="${varName%%{*}" #strip {
-	[[ "$varName" == "$1" ]] || { operator={}; parameter=${1#*{}; parameter=${parameter%*\}}; echo ${varName} ${operator} "${parameter}"; return; }
+	[[ "$varName" == "$1" ]] || { operator={}; parameter="$(fullName.match '{([^}]*)}' 1 0)"; echo ${varName} ${operator} "${parameter}"; return; }
 
 	echo "$varName" "" ""
 }
@@ -170,20 +190,125 @@ string.sanitized() {
     echo "${sanitized^^}"
 }
 
-string.match() {
-	@var regex
-	@int capturingGroup #bracketParam
+string.toArray() {
+	@reference array
+	@modifiesLocals
 
-	local string="$this"
-	# \[([^\]]*)\]
-	while [[ "$string" =~ $regex ]]
+	local newLine=$'\n'
+	local separationCharacter=$'\UFAFAF'
+	local string="${this//"$newLine"/"$separationCharacter"}"
+	local IFS=$separationCharacter
+	local element
+	for element in $string
 	do
-		subject="regex" Log "${BASH_REMATCH[*]} @ ${capturingGroup}"
-		echo "${BASH_REMATCH[$capturingGroup]}"
-		string="${string/"${BASH_REMATCH[0]}"}" # "
+		array+=( "$element" )
+	done
+
+	local newLines=${string//[^$separationCharacter]}
+	local -i trailingNewLines=$(( ${#newLines} - ${#array[@]} + 1 ))
+	while (( trailingNewLines-- ))
+	do
+		array+=( "" )
 	done
 }
 
+array.print() {
+	local index
+	for index in "${!this[@]}"
+	do
+		echo "$index: ${this[$index]}"
+	done
+}
+
+string.change() {
+	## EXAMPLE
+	@modifiesLocals
+	# [[ "${FUNCNAME[2]}" != "command_not_found_handle" ]] || s=warn Log "Method $FUNCNAME modifies locals and needs to be run prefixed by '@'."
+	this="somethingElse"
+}
+
+string.match() {
+	@var regex
+	@int capturingGroup=${bracketParam[0]} #bracketParam
+	@var returnMatch="${bracketParam[1]}"
+
+	local -i matchNo=0
+	local string="$this"
+	while [[ "$string" =~ $regex ]]
+	do
+		subject="regex" Log "group ${capturingGroup}, match $matchNo: ${BASH_REMATCH[0]}"
+		if [[ "$returnMatch" == "@" || $matchNo -eq "$returnMatch" ]]
+		then
+			echo "${BASH_REMATCH[$capturingGroup]}"
+			[[ "$returnMatch" == "@" ]] || return 0
+		fi
+		# cut out the match so we may continue
+		string="${string/"${BASH_REMATCH[0]}"}" # "
+		matchNo+=1
+	done
+}
+
+string.matchGroups() {
+	@var regex
+	@reference matchGroups
+	@var returnMatch="${bracketParam[0]}"
+
+	subject="regex" Log "Try regexing a string $returnMatch"
+	local -i matchNo=0
+	local string="$this"
+	while [[ "$string" =~ $regex ]]
+	do
+		subject="regex" Log "match $matchNo: ${BASH_REMATCH[*]}"
+
+		if [[ "$returnMatch" == "@" || $matchNo -eq "$returnMatch" ]]
+		then
+			matchGroups+=( "${BASH_REMATCH[@]}" )
+			[[ "$returnMatch" == "@" ]] || return 0
+		fi
+		# cut out the match so we may continue
+		string="${string/"${BASH_REMATCH[0]}"}" # "
+		matchNo+=1
+	done
+}
+
+array.takeEvery() {
+	@int every
+	@int startingIndex
+	@reference outputArray
+
+	local -i count=0
+
+	local index
+	for index in "${!this[@]}"
+	do
+		if [[ $index -eq $(( $every * $count + $startingIndex )) ]]
+		then
+			#echo "$index: ${this[$index]}"
+			outputArray+=( "${this[$index]}" )
+			count+=1
+		fi
+	done
+}
+
+array.last() {
+	local count="${#this[@]}"
+	echo "${this[($count-1)]}"
+}
+
+array.forEach() {
+	@var elementName
+	@var do
+
+	local index
+	for index in "${!this[@]}"
+	do
+		local $elementName="${this[$index]}"
+		eval "$do"
+	done
+}
+
+alias @="Exception.CustomCommandHandler"
+# command_not_found_handle() {
 Exception.CustomCommandHandler() {
 	subject="builtin" Log "Invoking $1"
 	# if is resolvable immediately
@@ -195,21 +320,54 @@ Exception.CustomCommandHandler() {
 		# echo "var $1=${!1}"
 		echo "${!1}"
 	else
-		local varDetails=( $(Command.StripOperator $1) )
-		local varName="${varDetails[0]}"
-		local operator="${varDetails[1]}"
-		local parameter="${varDetails[*]:2}"
+		local splitParamRegex='([^=+/\\\*~:-]+)([=+/\\\*~:-])?(.*)'
+		local -a varDetails
+		this="$1" bracketParam=0 string.matchGroups "$splitParamRegex" varDetails
 
-		local varBrackets=( $(Command.StripBrackets $varName) )
-		varName="${varBrackets[0]}"
-		local bracketOperator="${varBrackets[1]}"
-		local bracketParam="${varBrackets[*]:2}" # TODO: support multiple spaces in parameters
+		local varName="${varDetails[1]}"
+		local operator="${varDetails[2]}"
+		local parameter="${varDetails[3]}"
+
+		local -a varDetails=( )
+		local splitBracketRegex='([a-zA-Z0-9_]+)+([[{][^.]*[]}])*' #([a-zA-Z0-9_]+)+
+		this="$1" bracketParam=@ string.matchGroups "$splitBracketRegex" varDetails
+
+		subject="complex" Log "Matching an object: ${varDetails[*]}"
+
+		local -a methodList
+		local -a methodParamsToParse
+
+		local -n this="varDetails" 
+			array.takeEvery 3 1 methodList
+			array.takeEvery 3 2 methodParamsToParse
+		unset -n this
+
+		if [[ "${methodParamsToParse[*]}" == *'['* || "${methodParamsToParse[*]}" == *'{'* ]]
+		then
+
+			local -n this="methodParamsToParse" 
+				#array.forEach param 'echo test: $method'
+				local paramsList=$(array.last)
+			unset -n this
+
+			local -a bracketDetails
+			local bracketDetailsRegex='[[]([^]]*)[]]'
+			this="$paramsList" bracketParam=@ string.matchGroups "$bracketDetailsRegex" bracketDetails
+
+			local -a bracketParam
+
+			local -n this="bracketDetails" 
+				array.takeEvery 2 1 bracketParam
+			unset -n this
+
+			subject="complex" Log "Last Object Params: ${bracketParam[*]}"
+
+		fi
 
     	local rootObject=${varName%%.*} #strip .
-    	[[ $rootObject == $varName ]] || child=${varName#*.}
+    	[[ $rootObject == $varName ]] || child=${methodList[1]}
 		
 		# if is resolvable immediately
-		#declare -p ${rootObject}
 		local rootObjectResolvable=$rootObject[@]
     	if [[ -n ${!rootObjectResolvable+isSet} ]]
 		then
@@ -238,7 +396,8 @@ Exception.CustomCommandHandler() {
 			subject="complex" Log "Invoke type: $type, object: $rootObject, ${child:+child: $child, }${bracketOperator:+"$bracketOperator: $bracketParam, "}operator: $operator${parameter:+, param $parameter}"
 			local -n this="$rootObject"
 			#self="$rootObject" ${child:+"child=$child"} ${bracketOperator:+"bracketOperator=$bracketOperator"} ${bracketParam:+"bracketParam=$bracketParam"} operator="$operator" ${parameter:+"parameter=$parameter"} 
-			$type.$child "${@:2}"
+			$type${child:+".$child"} "${@:2}"
+			#trap "$type.$child '$2' '$3' '$4' '$5'; trap - DEBUG" DEBUG
 		else
 			return 1
 		fi
@@ -256,9 +415,27 @@ testFunc() {
 	#dictionary somedic=([one]=something [two]=somethingElse)
 
 	normalVar
+	normalVar.match[1][1] "(y[o1]*)"
+	normalVar.match "(y[o1]*)" 1 0
 	normalVar.length
 	normalVar.sanitized
-	normalVar.match "(y[o1]*)" 1
+	normalVar.change
+	normalVar
+
+	local testing="onething.object['abc def'].length[123].something"
+	# testing.match "([a-zA-Z0-9_]+)\[['\"]*([^]'\"]+)['\"]*\]" 0 @ #"\[([^\]]*)\]"
+	#local output="$(testing.match "([a-zA-Z0-9_]+)+(\[['\"]*([^]'\"]+)['\"]*\])*" 3 @)"
+	local output #="$(echo -e "\ntwo\n\nfour\nfive\n\n")"
+	printf -v output "\n\ntwo\n\nfour\nfive\n\n"
+	local -a matches
+	@ output.toArray matches
+
+	matches.print
+
+	# this="$output" string.toArray
+	# echo 0: ${matches[0]}
+	# echo 1: ${matches[1]}
+
 	# object[abc].length
 
 	# hello
