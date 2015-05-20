@@ -79,7 +79,8 @@ Exception.SetupTemp() {
 Exception.SetupTemp
 
 Exception.CleanUp() {
-    rm -f $__oo__storedExceptionLineFile $__oo__storedExceptionSourceFile $__oo__storedExceptionBacktraceFile $__oo__storedExceptionFile 
+    rm -f $__oo__storedExceptionLineFile $__oo__storedExceptionSourceFile $__oo__storedExceptionBacktraceFile $__oo__storedExceptionFile || exit 1
+    exit 0
 }
 
 Exception.ResetStore() {
