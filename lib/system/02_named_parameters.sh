@@ -18,11 +18,20 @@ Function.AssignParamLocally() {
     then
         __assign_next=true
         # Console.WriteStdErr "Will assign next one"
+
+        local nextAssignment=$(( ${__assign_paramNo:-0} + 1 ))
+        if [[ "${!nextAssignment}" == "$ref:"* ]]
+        then
+            # Console.WriteStdErr param is a reference: $nextAssignment
+            __assign_isReference="-n"
+        else
+            __assign_isReference=""
+        fi
         return 0
     fi
 
     local varDeclaration="${commandWithArgs[1]}"
-    if [[ $varDeclaration == '-'* ]]
+    if [[ $varDeclaration == '-'* || $varDeclaration == '${'* ]]
     then
         varDeclaration="${commandWithArgs[2]}"
     fi
@@ -35,6 +44,8 @@ Function.AssignParamLocally() {
     then
         # Console.WriteStdErr "SETTING $__assign_varName = \$$__assign_paramNo"
         # Console.WriteStdErr --
+
+        local execute
 
         if [[ "$__assign_varType" == "array" ]]
         then
@@ -54,11 +65,19 @@ Function.AssignParamLocally() {
             eval "$execute"
         elif [[ ! -z "${!__assign_paramNo}" ]]
         then
-            execute="$__assign_varName=\"\$$__assign_paramNo\""
+            if [[ "${!__assign_paramNo}" == "$ref:"* ]]
+            then
+                local refVarName="${!__assign_paramNo#$ref:}"
+                execute="$__assign_varName=$refVarName"
+            else
+                execute="$__assign_varName=\"\$$__assign_paramNo\""
+            fi
+
             # Console.WriteStdErr "EXECUTE $execute"
             eval "$execute"
         fi
         unset __assign_varType
+        unset __assign_isReference
     fi
 
     if [[ "$command" != "local" || "$__assign_next" != "true" ]]
@@ -98,7 +117,7 @@ Function.CaptureParams() {
 alias @trapAssign='Function.CaptureParams; declare -i __assign_normalCodeStarted=0; trap "declare -i __assign_paramNo; Function.AssignParamLocally \"\$BASH_COMMAND\" \"\$@\"; [[ \$__assign_normalCodeStarted -ge 2 ]] && trap - DEBUG && unset __assign_varType && unset __assign_varName && unset __assign_paramNo" DEBUG; true; true; '
 alias @param='@trapAssign local'
 alias @reference='_type=reference @trapAssign local -n'
-alias @var='_type=var @param'
+alias @var="_type=var @trapAssign local \${__assign_isReference}"
 alias @int='_type=int @trapAssign local -i'
 alias @params='_type=params @param'
 alias @array='_type=array @param'
@@ -111,3 +130,5 @@ alias @array[7]='l=7 _type=array @param'
 alias @array[8]='l=8 _type=array @param'
 alias @array[9]='l=9 _type=array @param'
 alias @array[10]='l=10 _type=array @param'
+
+declare -g ref=$'\UEFF1A'$'\UEFF1A'
