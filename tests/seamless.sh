@@ -137,40 +137,6 @@ writelne() (
 	printf '%b\n' "$*"
 )
 
-Command.StripOperator() {
-	local varName="$1"
-	local operator
-	local parameter
-	varName="${varName%%+*}" #strip plus
-	[[ "$varName" == "$1" ]] || { operator=+; parameter=${1#*+}; echo ${varName} ${operator} "${parameter}"; return; }
-	varName="${varName%%-*}" #strip minus
-	[[ "$varName" == "$1" ]] || { operator=-; parameter=${1#*-}; echo ${varName} ${operator} "${parameter}"; return; }
-	varName="${varName%%\**}" #strip asterisk
-	[[ "$varName" == "$1" ]] || { operator='asterisk'; parameter=${1#*\*}; echo "${varName}" "${operator}" "${parameter}"; return; }
-	varName="${varName%%/*}" #strip slash
-	[[ "$varName" == "$1" ]] || { operator=/; parameter=${1#*/}; echo ${varName} ${operator} "${parameter}"; return; }
-	varName="${varName%%~*}" #strip ~
-	[[ "$varName" == "$1" ]] || { operator=~; parameter=${1#*+}; echo ${varName} ${operator} "${parameter}"; return; }
-	varName="${varName%%:*}" #strip :
-	[[ "$varName" == "$1" ]] || { operator=:; parameter=${1#*+}; echo ${varName} ${operator} "${parameter}"; return; }
-	echo "$varName" "default" ""
-}
-
-Command.StripBrackets() {
-	local varName="$1"
-	local operator
-	local parameter
-	local fullName="$1"
-
-
-	varName="${varName%%[*}" #strip [
-	[[ "$varName" == "$1" ]] || { operator=[]; parameter="$(fullName.match '\[([^]]*)\]' 1 0)"; echo ${varName} ${operator} "${parameter}"; return; }
-	varName="${varName%%{*}" #strip {
-	[[ "$varName" == "$1" ]] || { operator={}; parameter="$(fullName.match '{([^}]*)}' 1 0)"; echo ${varName} ${operator} "${parameter}"; return; }
-
-	echo "$varName" "" ""
-}
-
 obj=OBJECT
 
 Object.New() {
@@ -232,20 +198,9 @@ string.match() {
 	@int capturingGroup=${bracketParam[0]} #bracketParam
 	@var returnMatch="${bracketParam[1]}"
 
-	local -i matchNo=0
-	local string="$this"
-	while [[ "$string" =~ $regex ]]
-	do
-		subject="regex" Log "group ${capturingGroup}, match $matchNo: ${BASH_REMATCH[0]}"
-		if [[ "$returnMatch" == "@" || $matchNo -eq "$returnMatch" ]]
-		then
-			echo "${BASH_REMATCH[$capturingGroup]}"
-			[[ "$returnMatch" == "@" ]] || return 0
-		fi
-		# cut out the match so we may continue
-		string="${string/"${BASH_REMATCH[0]}"}" # "
-		matchNo+=1
-	done
+	local -a matches
+	string.matchGroups "$regex" matches "$returnMatch"
+	echo "${matches[$capturingGroup]}"
 }
 
 string.matchGroups() {
@@ -253,7 +208,6 @@ string.matchGroups() {
 	@reference matchGroups
 	@var returnMatch="${bracketParam[0]}"
 
-	subject="regex" Log "Try regexing a string $returnMatch"
 	local -i matchNo=0
 	local string="$this"
 	while [[ "$string" =~ $regex ]]
@@ -299,18 +253,28 @@ array.forEach() {
 	@var elementName
 	@var do
 
+	# first dereferrence
+	local typeInfo="$(declare -p this)"
+	if [[ "$typeInfo" =~ "declare -n" ]] && [[ "$typeInfo" =~ \"([a-zA-Z0-9_]*)\" ]]
+	then
+		local realName=${BASH_REMATCH[1]}
+	fi
+
 	local index
 	for index in "${!this[@]}"
 	do
 		local $elementName="${this[$index]}"
+		# local -n $elementName="$realName[$index]"
+		# local -n $elementName="this[$index]"
 		eval "$do"
+		# unset -n $elementName
 	done
 }
 
 alias @="Exception.CustomCommandHandler"
 # command_not_found_handle() {
 Exception.CustomCommandHandler() {
-	subject="builtin" Log "Invoking $1"
+	subject="command" Log "Invoking $1"
 	# if is resolvable immediately
 	if [[ ! "$1" =~ \. ]] && [[ -n ${!1+isSet} ]]
 	then
@@ -332,8 +296,6 @@ Exception.CustomCommandHandler() {
 		local splitBracketRegex='([a-zA-Z0-9_]+)+([[{][^.]*[]}])*' #([a-zA-Z0-9_]+)+
 		this="$1" bracketParam=@ string.matchGroups "$splitBracketRegex" varDetails
 
-		subject="complex" Log "Matching an object: ${varDetails[*]}"
-
 		local -a methodList
 		local -a methodParamsToParse
 
@@ -341,6 +303,8 @@ Exception.CustomCommandHandler() {
 			array.takeEvery 3 1 methodList
 			array.takeEvery 3 2 methodParamsToParse
 		unset -n this
+
+		subject="complex" Log "Will make an object call: ${methodList[*]}"
 
 		if [[ "${methodParamsToParse[*]}" == *'['* || "${methodParamsToParse[*]}" == *'{'* ]]
 		then
@@ -364,7 +328,7 @@ Exception.CustomCommandHandler() {
 
 		fi
 
-    	local rootObject=${varName%%.*} #strip .
+    	local rootObject=${varName%%.*} # strip . maybe better to use methodList[0] ?
     	[[ $rootObject == $varName ]] || child=${methodList[1]}
 		
 		# if is resolvable immediately
@@ -395,9 +359,7 @@ Exception.CustomCommandHandler() {
 
 			subject="complex" Log "Invoke type: $type, object: $rootObject, ${child:+child: $child, }${bracketOperator:+"$bracketOperator: $bracketParam, "}operator: $operator${parameter:+, param $parameter}"
 			local -n this="$rootObject"
-			#self="$rootObject" ${child:+"child=$child"} ${bracketOperator:+"bracketOperator=$bracketOperator"} ${bracketParam:+"bracketParam=$bracketParam"} operator="$operator" ${parameter:+"parameter=$parameter"} 
 			$type${child:+".$child"} "${@:2}"
-			#trap "$type.$child '$2' '$3' '$4' '$5'; trap - DEBUG" DEBUG
 		else
 			return 1
 		fi
@@ -415,11 +377,14 @@ testFunc() {
 	#dictionary somedic=([one]=something [two]=somethingElse)
 
 	normalVar
-	normalVar.match[1][1] "(y[o1]*)"
-	normalVar.match "(y[o1]*)" 1 0
+	local group=1
+	local match=1
+	normalVar.match[$group][$match] "(y[o1]*)"
+	# normalVar.match "(y[o1]*)" 1 0
 	normalVar.length
-	normalVar.sanitized
-	normalVar.change
+	normalVar.match[$group][$match]{"(y[o1]*)"}.length
+	normalVar.sanitized.length
+	@ normalVar.change
 	normalVar
 
 	local testing="onething.object['abc def'].length[123].something"
@@ -429,8 +394,11 @@ testFunc() {
 	printf -v output "\n\ntwo\n\nfour\nfive\n\n"
 	local -a matches
 	@ output.toArray matches
-
+	@ matches.forEach match 'declare -p match'
+	@ matches.forEach match 'this[$index]="test $match"'
+	# @ matches.forEach match 'match="test $match"; echo $match'
 	matches.print
+	# matches.print
 
 	# this="$output" string.toArray
 	# echo 0: ${matches[0]}

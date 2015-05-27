@@ -2,6 +2,10 @@ namespace oo
 
 alias throw="__EXCEPTION_TYPE__=\${e:-Manually invoked} command_not_found_handle"
 
+Exception.CustomCommandHandler() {
+    return 1
+}
+
 command_not_found_handle() {
     # USE DEFAULT IFS IN CASE IT WAS CHANGED - important!
     local IFS=$' \t\n'
@@ -11,6 +15,8 @@ command_not_found_handle() {
     then
         return 0
     fi
+
+    Exception.CustomCommandHandler "$@" && return 0 || true
 
     local script="${BASH_SOURCE[1]#./}"
     local lineNo="${BASH_LINENO[0]}"
