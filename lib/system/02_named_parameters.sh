@@ -17,12 +17,12 @@ Function.AssignParamLocally() {
     if [[ "${commandWithArgs[*]}" == "true" ]]
     then
         __assign_next=true
-        # Console.WriteStdErr "Will assign next one"
+        subject="parameters-assign" Log "Will assign next one"
 
         local nextAssignment=$(( ${__assign_paramNo:-0} + 1 ))
         if [[ "${!nextAssignment}" == "$ref:"* ]]
         then
-            # Console.WriteStdErr param is a reference: $nextAssignment
+            subject="parameters-reference" Log "next param is an object reference: $nextAssignment"
             __assign_isReference="-n"
         else
             __assign_isReference=""
@@ -43,8 +43,8 @@ Function.AssignParamLocally() {
 
     if [[ ! -z $__assign_varType ]]
     then
-        # Console.WriteStdErr "SETTING $__assign_varName = \$$__assign_paramNo"
-        # Console.WriteStdErr --
+        subject="parameters-setting" Log "SETTING: $__assign_varName = \$$__assign_paramNo"
+        # subject="parameters-setting" Log --
 
         local execute
 
@@ -60,21 +60,21 @@ Function.AssignParamLocally() {
         then
             execute="$__assign_varName=( \"\${@:$__assign_paramNo}\" )"
             eval "$execute"
-        elif [[ "$__assign_varType" == "reference" ]]
-        then
-            execute="$__assign_varName=\"\$$__assign_paramNo\""
-            eval "$execute"
-        elif [[ ! -z "${!__assign_paramNo}" ]]
+        elif [[ "$__assign_varType" == "reference" || ! -z "${!__assign_paramNo}" ]]
         then
             if [[ "${!__assign_paramNo}" == "$ref:"* ]]
             then
                 local refVarName="${!__assign_paramNo#$ref:}"
                 execute="$__assign_varName=$refVarName"
             else
+                # escape $__assign_paramNo with \"
+                # local escapedAssignment="${!__assign_paramNo}"
+                # escapedAssignment="${escapedAssignment//\"/\\\"}"
+                # execute="$__assign_varName=\"$escapedAssignment\""
                 execute="$__assign_varName=\"\$$__assign_paramNo\""
             fi
 
-            # Console.WriteStdErr "EXECUTE $execute"
+            subject="parameters-executing" Log "EXECUTING: $execute"
             eval "$execute"
         fi
         unset __assign_varType
@@ -85,9 +85,9 @@ Function.AssignParamLocally() {
     then
         __assign_normalCodeStarted+=1
 
-        # Console.WriteStdErr "NOPASS ${commandWithArgs[*]}"
-        # Console.WriteStdErr "normal code count ($__assign_normalCodeStarted)"
-        # Console.WriteStdErr --
+        subject="parameters-nopass" Log "NOPASS ${commandWithArgs[*]}"
+        subject="parameters-nopass" Log "normal code count ($__assign_normalCodeStarted)"
+        # subject="parameters-nopass" Log --
     else
         unset __assign_next
 
@@ -96,22 +96,19 @@ Function.AssignParamLocally() {
         __assign_varType="$__capture_type"
         __assign_arrLength="$__capture_arrLength"
 
-        # Console.WriteStdErr "PASS ${commandWithArgs[*]}"
-        # Console.WriteStdErr --
+        subject="parameters-pass" Log "PASS ${commandWithArgs[*]}"
+        # subject="parameters-pass" Log --
 
         __assign_paramNo+=1
     fi
 }
 
 Function.CaptureParams() {
-    # Console.WriteStdErr "Capturing Type $_type"
-    # Console.WriteStdErr --
+    subject="parameters" Log "Capturing Type $_type"
+    # subject="parameters" Log --
 
     __capture_type="$_type"
     __capture_arrLength="$l"
-    
-    #__assign_OLDIFS=$IFS
-    #IFS=$__oo__originalIFS
 }
     
 # NOTE: true; true; at the end is required to workaround an edge case where TRAP doesn't behave properly
