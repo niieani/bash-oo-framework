@@ -5,6 +5,7 @@ source "$( cd "${BASH_SOURCE[0]%/*}" && pwd )/../lib/oo-framework.sh"
 namespace seamless
 
 Log.AddOutput seamless CUSTOM
+Log.AddOutput oo/parameters-executing CUSTOM
 
 String.GetRandomAlphanumeric() {
     # http://stackoverflow.com/a/23837814/595157
@@ -89,9 +90,6 @@ Type.CaptureParams() {
     # Console.WriteStdErr --
 
     __capture_type="$_type"
-    
-    #__typeCreate_OLDIFS=$IFS
-    #IFS=$__oo__originalIFS
 }
     
 # NOTE: true; true; at the end is required to workaround an edge case where TRAP doesn't behave properly
@@ -367,57 +365,48 @@ Exception.CustomCommandHandler() {
 }
 
 testFunc() {
-	var hello=somevalue
-	var makownik=makownikowiec
-	local normalVar="yo yoo yoo1"
-	local -i normalInt=1
-	local -A object=( [abc]=$obj:dupa )
+	# local testing="onething.object['abc def'].length[123].something[2]{another}"
+	local testing="something.somethingElse{var1,var2,var3}[a].extensive{param1 : + can be =\"anything \"YO # -yo space}{another}[0][2]=LALALA} and what if=we have.an equals.test[immi]{lol}?"
+	#local regex='(?:^|\.)([a-zA-Z0-9_]+)((?:{.*?})*)((?:\[.*?\])*)(?:(=|\+|/|\\|\*|~|:|-|\+=|-=|\*=|/=|==)(.*))*'
+	local regex='(^|\.)([a-zA-Z0-9_]+)(({[^}]*})*)((\[[^]]*\])*)((=|\+|/|\\|\*|~|:|-|\+=|-=|\*=|/=|==)(.*))*'
 
-	#Advanced kopsik # initialize string kopsik with a unique ID refering to the object
-	#dictionary somedic=([one]=something [two]=somethingElse)
-
-	normalVar
-	local group=1
-	local match=1
-	normalVar.match[$group][$match] "(y[o1]*)"
-	# normalVar.match "(y[o1]*)" 1 0
-	normalVar.length
-	normalVar.match[$group][$match]{"(y[o1]*)"}.length
-	normalVar.sanitized.length
-	@ normalVar.change
-	normalVar
-
-	local testing="onething.object['abc def'].length[123].something"
-	# testing.match "([a-zA-Z0-9_]+)\[['\"]*([^]'\"]+)['\"]*\]" 0 @ #"\[([^\]]*)\]"
-	#local output="$(testing.match "([a-zA-Z0-9_]+)+(\[['\"]*([^]'\"]+)['\"]*\])*" 3 @)"
-	local output #="$(echo -e "\ntwo\n\nfour\nfive\n\n")"
-	printf -v output "\n\ntwo\n\nfour\nfive\n\n"
 	local -a matches
-	@ output.toArray matches
-	@ matches.forEach match 'declare -p match'
-	@ matches.forEach match 'this[$index]="test $match"'
-	# @ matches.forEach match 'match="test $match"; echo $match'
-	matches.print
-	# matches.print
+	this="$testing" bracketParam=@ string.matchGroups "$regex" matches
+	# @ matches.forEach match 'this[$index]="$index: $match"'
 
-	# this="$output" string.toArray
-	# echo 0: ${matches[0]}
-	# echo 1: ${matches[1]}
+	local -a callStack
+	local -a callStackParams
+	local -a callStackLastParam
+	local -a callStackBrackets
+	local -a callStackLastBracket
+	local callOperator="${matches[-2]}"
+	local callValue="${matches[-1]}"
 
-	# object[abc].length
+	local -n this="matches"
+		array.takeEvery 10 2 callStack
+		array.takeEvery 10 3 callStackParams
+		array.takeEvery 10 4 callStackLastParam
+		array.takeEvery 10 5 callStackBrackets
+		array.takeEvery 10 6 callStackLastBracket
+	unset -n this
 
-	# hello
-	# makownik
-	# normalVar
-	# normalInt++
-	# object
-	# object.subObject.tralala
-	# object.subObject.tralalaInt[something]
-	# object.subObject.tralalaInt[something]--
-	# object[abc]
-	# normalInt*dupa
-	#someError.blabla
+	local -n this="callStack"
+		echo callStack:
+		array.print
+	unset -n this
 
+	local -n this="callStackParams"
+		echo callStackParams:
+		array.print
+	unset -n this
+	
+	local -n this="callStackBrackets"
+		echo callStackBrackets:
+		array.print
+	unset -n this
+
+	echo callOperator: $callOperator
+	echo callValue: $callValue
 }
 
 testFunc
