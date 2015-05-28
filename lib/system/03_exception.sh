@@ -62,7 +62,7 @@ command_not_found_handle() {
     local -a exception=( "$lineNo" "$undefinedObject" "$script" )
     
     local IFS=$'\n'
-    for traceElement in $(Exception.DumpBacktrace 2)
+    for traceElement in $(Exception.DumpBacktrace ${skipBacktraceCount:-2})
     do
         exception+=( "$traceElement" )
     done
