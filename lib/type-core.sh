@@ -17,7 +17,7 @@ Type.CreateInstance() {
     local baseNow=${FUNCNAME[2]#*:}
 
     if [[ ! -z $extending ]]; then
-        subject=level1 Log "basing ($baseNow) $fullName on $objectType..."
+        DEBUG subject=level1 Log "basing ($baseNow) $fullName on $objectType..."
 
         # TODO: base cannot be set as $base because that means it cannot be called from the base
         # - the reference will always be to just that one base
@@ -26,10 +26,10 @@ Type.CreateInstance() {
         if Function.Exists "$fullName.__baseType__"
         then
             baseType="$($fullName.__baseType__)"
-            subject=level2 Log "baseType = $baseType"
+            DEBUG subject=level2 Log "baseType = $baseType"
         fi
     else
-        subject=level1 Log "initializing and constructing $fullName ($visibleAsType) of $objectType"
+        DEBUG subject=level1 Log "initializing and constructing $fullName ($visibleAsType) of $objectType"
     fi
 
     ## add methods
@@ -45,7 +45,7 @@ Type.CreateInstance() {
             # leave just function name from end
             method=${method##*.}
 
-            subject=level2 Log "mapping static method: $fullName.$method ==> $method"
+            DEBUG subject=level2 Log "mapping static method: $fullName.$method ==> $method"
             #local parentName=${fullName%.*}
 
             # add method aliases
@@ -69,7 +69,7 @@ Type.CreateInstance() {
             # leave just function name from end
             method=${method##*::}
 
-            subject=level2 Log "mapping instance method: $fullName.$method ==> $method"
+            DEBUG subject=level2 Log "mapping instance method: $fullName.$method ==> $method"
             #local parentName=${fullName%.*}
 
             local baseMethod="$baseType::$method"
@@ -201,12 +201,12 @@ Type.Initialize() {
     
     local parentName="$fullName"
 
-    subject=level1 Log "Running the initializer for: $objectType"
-    subject=level1 Log "Type: $fullType"
-    subject=level1 Log "Name: $newObjectName"
-    subject=level1 Log "Params for initializing: $*"
-    subject=level1 Log "Parent Type: $parentType"
-    subject=level1 Log "Parent Name: $fullName"
+    DEBUG subject=level1 Log "Running the initializer for: $objectType"
+    DEBUG subject=level1 Log "Type: $fullType"
+    DEBUG subject=level1 Log "Name: $newObjectName"
+    DEBUG subject=level1 Log "Params for initializing: $*"
+    DEBUG subject=level1 Log "Parent Type: $parentType"
+    DEBUG subject=level1 Log "Parent Name: $fullName"
 
     # TODO: add a check if parent is an object
 
@@ -223,7 +223,7 @@ Type.Initialize() {
         local fullName=$parentName.$newObjectName
     fi
     
-    subject=level1 Log "Full Name: $fullName"
+    DEBUG subject=level1 Log "Full Name: $fullName"
     shift
 
     test ! -z "$fullName" || throw "No name ($newObjectName)? This shouldn\'t happen"
@@ -231,16 +231,16 @@ Type.Initialize() {
     __oo__objects["$fullName"]=$objectType
 
     if [[ ! -z $__private__ && $__private__ == "true" ]]; then
-        subject=level1 Log "new private object $fullType, parent: $parentName"
+        DEBUG subject=level1 Log "new private object $fullType, parent: $parentName"
         __oo__objects_private["$fullName"]=$objectType
     #else
-    #    subject=level1 Log "new object $fullType, parent: $parentName"
+    #    DEBUG subject=level1 Log "new object $fullType, parent: $parentName"
     fi
 
-    subject=level1 Log "Creating an instance of $fullType"
+    DEBUG subject=level1 Log "Creating an instance of $fullType"
     instance=true $fullType
 
-    subject=level1 Log "Initializing the instance of $fullType"
+    DEBUG subject=level1 Log "Initializing the instance of $fullType"
     Type.CreateInstance "$@"
     # TODO: Type.CreateInstance "${paramsForInitializing[@]}"
 }
@@ -251,7 +251,7 @@ Type.Load(){
     types+=($(compgen -A 'function' static: || true))
 
     if [[ ${#types[@]} -eq 0 ]]; then
-        subject=level1 Log "no types to import... : ${types[@]}"
+        DEBUG subject=level1 Log "no types to import... : ${types[@]}"
     else
         local fullType
         local type
@@ -265,10 +265,10 @@ Type.Load(){
                 # import methods if not static
                 if [[ ${fullType:0:6} != "static" ]]
                 then
-                    subject=level1 Log "enabling type [ $fullType ]"
+                    DEBUG subject=level1 Log "enabling type [ $fullType ]"
                     instance=false class:$type
                 else
-                    subject=level1 Log "enabling static type [ $fullType ]"
+                    DEBUG subject=level1 Log "enabling static type [ $fullType ]"
                 fi
 
                 # 'new' function for creating the object
@@ -289,7 +289,7 @@ Type.Load(){
                     #"
 
                     ## alias enabling to define parameters ##
-                    subject=level4 Log "Aliasing @$type"
+                    DEBUG subject=level4 Log "Aliasing @$type"
                     alias @$type="_type=$type @param"
                 fi
             fi
