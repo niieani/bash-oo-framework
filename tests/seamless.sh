@@ -5,7 +5,7 @@ source "$( cd "${BASH_SOURCE[0]%/*}" && pwd )/../lib/oo-framework.sh"
 namespace seamless
 
 Log.AddOutput seamless CUSTOM
-Log.AddOutput oo/parameters-executing CUSTOM
+#Log.AddOutput oo/parameters-executing CUSTOM
 
 String.GetRandomAlphanumeric() {
     # http://stackoverflow.com/a/23837814/595157
@@ -142,6 +142,17 @@ Object.New() {
 }
 
 Object.IsObject() {
+	:
+}
+
+# insted of echo let's use $return
+# return="something"
+# return should be declared prior to entering the func
+
+@returns() {
+	# switch case array
+	# check if $return is an array
+	# etc...
 	:
 }
 
@@ -366,9 +377,13 @@ Exception.CustomCommandHandler() {
 
 testFunc() {
 	# local testing="onething.object['abc def'].length[123].something[2]{another}"
-	local testing="something.somethingElse{var1,var2,var3}[a].extensive{param1 : + can be =\"anything \"YO # -yo space}{another}[0][2]=LALALA} and what if=we have.an equals.test[immi]{lol}?"
+	#local testing="something.somethingElse{var1,var2,var3}[a].extensive{param1 : + can be =\"anything \"YO # -yo space}{another}[0][2]=LALALA} and what if=we have.an equals.test[immi]{lol}?"
+	local something="haha haha Yo!"
+	local testing="something.sanitized{}.length{}"
+	# local -a dupa
+	# dupa~=something.toArray -- use dupa as output parameter/ret-val
 	#local regex='(?:^|\.)([a-zA-Z0-9_]+)((?:{.*?})*)((?:\[.*?\])*)(?:(=|\+|/|\\|\*|~|:|-|\+=|-=|\*=|/=|==)(.*))*'
-	local regex='(^|\.)([a-zA-Z0-9_]+)(({[^}]*})*)((\[[^]]*\])*)((=|\+|/|\\|\*|~|:|-|\+=|-=|\*=|/=|==)(.*))*'
+	local regex='(^|\.)([a-zA-Z0-9_]+)(({[^}]*})*)((\[[^]]*\])*)((\+=|-=|\*=|/=|==|\+\+|~=|:=|=|\+|/|\\|\*|~|:|-)(.*))*'
 
 	local -a matches
 	this="$testing" bracketParam=@ string.matchGroups "$regex" matches
@@ -407,6 +422,107 @@ testFunc() {
 
 	echo callOperator: $callOperator
 	echo callValue: $callValue
+	echo
+
+	local -i callLength=$((${#callStack[@]} - 1))
+	local -i callHead=1
+
+	echo callLength: $callLength
+
+	local rootObject="${callStack[0]}"
+
+	# check for existance of $callStack[0] and whether it is an object
+	# if is resolvable immediately
+	local rootObjectResolvable=$rootObject[@]
+	if [[ -n ${!rootObjectResolvable+isSet} ]]
+	then
+		local typeInfo="$(declare -p $rootObject)"
+
+		# first dereferrence
+		# maybe this should be "while" for recursive dereferrence?
+		if [[ "$typeInfo" =~ "declare -n" ]] && [[ "$typeInfo" =~ \"([a-zA-Z0-9_]*)\" ]]
+		then
+			rootObject=${BASH_REMATCH[1]}
+			typeInfo="$(declare -p $rootObject)"
+		fi
+
+		if [[ "$typeInfo" == "declare -a"* ]]
+		then
+			local type=array
+			local -n this="$rootObject"
+		elif [[ "$typeInfo" == "declare -A"* ]]
+		then
+			local type=dictionary
+			local -n this="$rootObject"
+		elif [[ "$typeInfo" == "declare -i"* ]]
+		then
+			local type=integer
+			local value="${!rootObject}"
+		elif [[ "${!rootObject}" == "$obj:"* ]]
+		then
+			# pass the rest of the call stack to the object invoker
+			Object.Invoke "${!rootObject}" "${@:2}"
+			return 0
+		else
+			local type=string
+			local value="${!rootObject}"
+		fi
+
+		if (( $callLength == 1 )) && [[ -n "$callOperator" ]]
+		then
+			$type.$callOperator "$callValue" "${@:2}"
+		else
+			while ((callLength--))
+			do
+				echo calling: $type.${callStack[$callHead]}
+				# does the method exist?
+				if ! Function.Exists $type.${callStack[$callHead]}
+				then
+					throw "Method: $type.${callStack[$callHead]} does not exist."
+				fi
+
+				local -a mustacheParams=()
+				local mustacheParamsRegex='[^{}]+'
+				this="${callStackParams[$callHead]}" bracketParam=@ string.matchGroups "$mustacheParamsRegex" mustacheParams
+
+				local -a brackets=()
+				local bracketRegex='[^[]]+'
+				this="${callStackBrackets[$callHead]}" bracketParam=@ string.matchGroups "$bracketRegex" brackets
+
+				echo brackets: ${brackets[*]} #${callStackParams[$callHead]}
+				echo mustacheParams: ${mustacheParams[*]} #${callStackBrackets[$callHead]}
+				echo --
+
+				# if (( $callLength == 1 )) && [[ -n "$callOperator" ]]
+				# then
+				if (( $callHead == 1 )) && ! [[ "$type" == "string" || "$type" == "integer" ]]
+				then
+					$type.${callStack[$callHead]} "${@:2}"
+				else
+					value=$(this="$value" $type.${callStack[$callHead]} "${@:2}")
+				fi
+				# fi
+
+				# save output for next call
+				callHead+=1
+			done
+
+			if [[ -n ${value+isSet} ]]
+			then
+				echo "${value}"
+			fi
+		fi
+
+		#subject="complex" Log "Invoke type: $type, object: $rootObject, ${child:+child: $child, }${bracketOperator:+"$bracketOperator: $bracketParam, "}operator: $operator${parameter:+, param $parameter}"
+		
+		#$type${child:+".$child"} "${@:2}"
+	else
+		return 1
+	fi
+
+	# if callOperator then for sure an object - check if exists, else error
+	
+
 }
 
 testFunc
