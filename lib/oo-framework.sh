@@ -47,6 +47,12 @@ shopt -s expand_aliases
 declare -g __oo__libPath="$( cd "${BASH_SOURCE[0]%/*}" && pwd )"
 declare -g __oo__path="${__oo__libPath}/.."
 declare -ag __oo__importedFiles
+if [[ -n "$__INTERNAL_LOGGING__" ]]
+then
+    alias DEBUG=":; "
+else
+    alias DEBUG="#"
+fi
 
 System.Bootstrap
 

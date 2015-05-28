@@ -1,11 +1,14 @@
 #!/usr/bin/env bash
 
+__INTERNAL_LOGGING__=true
 source "$( cd "${BASH_SOURCE[0]%/*}" && pwd )/../lib/oo-framework.sh"
 
 namespace seamless
 
 Log.AddOutput seamless CUSTOM
 #Log.AddOutput oo/parameters-executing CUSTOM
+
+alias @="Exception.CustomCommandHandler"
 
 String.GetRandomAlphanumeric() {
     # http://stackoverflow.com/a/23837814/595157
@@ -56,7 +59,7 @@ Type.CreateVar() {
         # Console.WriteStdErr --
         #Console.WriteStdErr $tempName
 
-    	Console.WriteStdErr "creating $__typeCreate_varName ($__typeCreate_varType)"
+    	DEBUG Log "creating $__typeCreate_varName ($__typeCreate_varType)"
     	
     	# __oo__objects+=( $__typeCreate_varName )
 
@@ -149,6 +152,61 @@ Object.GetType() {
 	:
 }
 
+Reference.GetRealVariableName() {
+	local realObject="$1"
+	# local typeInfo="$(declare -p $realObject 2> /dev/null || declare -p | grep "^declare -[aAign\-]* $realObject\(=\|$\)" || true)"
+	local typeInfo="$(declare -p $realObject 2> /dev/null || true)"
+
+	if [[ -z "$typeInfo" ]]
+	then
+		DEBUG local extraInfo="$(declare -p | grep "^declare -[aAign\-]* $realObject\(=\|$\)" || true)"
+		DEBUG subject="dereferrenceNoSuccess" Log "$extraInfo"
+		echo "$realObject"
+		return 0
+	fi
+
+	#DEBUG subject="dereferrence" Log "$realObject to $typeInfo"
+	# dereferrence
+	while [[ "$typeInfo" =~ "declare -n" ]] && [[ "$typeInfo" =~ \"([a-zA-Z0-9_]*)\" ]]
+	do
+		DEBUG subject="dereferrence" Log "$realObject to ${BASH_REMATCH[1]}"
+		realObject=${BASH_REMATCH[1]}
+		typeInfo="$(declare -p $realObject 2> /dev/null)" # || declare -p | grep "^declare -[aAign\-]* $realObject\(=\|$\)"
+	done
+
+	echo "$realObject"
+}
+
+Variable.GetType() {
+	local typeInfo="$(declare -p $1 2> /dev/null || declare -p | grep "^declare -[aAign\-]* $1\(=\|$\)" || true)"
+	# local typeInfo="$(declare -p $1 2> /dev/null || true)"
+
+	if [[ -z "$typeInfo" ]]
+	then
+		echo undefined
+		return 0
+	fi
+
+	if [[ "$typeInfo" == "declare -n"* ]]
+	then
+		echo reference
+	elif [[ "$typeInfo" == "declare -a"* ]]
+	then
+		echo array
+	elif [[ "$typeInfo" == "declare -A"* ]]
+	then
+		echo dictionary
+	elif [[ "$typeInfo" == "declare -i"* ]]
+	then
+		echo integer
+	# elif [[ "${!1}" == "$obj:"* ]]
+	# then
+	# 	echo "$(Object.GetType "${!realObject}")"
+	else
+		echo string
+	fi
+}
+
 # insted of echo let's use $return
 # return="something"
 # return should be declared prior to entering the func
@@ -167,31 +225,39 @@ Object.GetType() {
 		*) ;;
 	esac
 
-	local typeInfo="$(declare -p return)"
+	# DEBUG subject="returnsMatch" Log 
+	local realVar=$(Reference.GetRealVariableName return)
+	local type=$(Variable.GetType $realVar)
 
-	# first dereferrence
-	# maybe this should be "while" for recursive dereferrence?
-	while [[ "$typeInfo" =~ "declare -n" ]] && [[ "$typeInfo" =~ \"([a-zA-Z0-9_]*)\" ]]
-	do
-		local realObject=${BASH_REMATCH[1]}
-		typeInfo="$(declare -p $realObject)"
-	done
+	# if [[ $type == reference ]]
+	# then
+	# 	type=$(Reference.GetRealVariableName return)
+	# fi
 
-	if [[ "$typeInfo" == "declare -a"* ]]
-	then
-		local type=array
-	elif [[ "$typeInfo" == "declare -A"* ]]
-	then
-		local type=dictionary
-	elif [[ "$typeInfo" == "declare -i"* ]]
-	then
-		local type=integer
-	elif [[ "${!realObject}" == "$obj:"* ]]
-	then
-		local type=$(Object.GetType "${!realObject}")
-	else
-		local type=string
-	fi
+	# local typeInfo="$(declare -p return)"
+	# # first dereferrence
+	# # maybe this should be "while" for recursive dereferrence?
+	# while [[ "$typeInfo" =~ "declare -n" ]] && [[ "$typeInfo" =~ \"([a-zA-Z0-9_]*)\" ]]
+	# do
+	# 	local realObject=${BASH_REMATCH[1]}
+	# 	typeInfo="$(declare -p $realObject)"
+	# done
+
+	# if [[ "$typeInfo" == "declare -a"* ]]
+	# then
+	# 	local type=array
+	# elif [[ "$typeInfo" == "declare -A"* ]]
+	# then
+	# 	local type=dictionary
+	# elif [[ "$typeInfo" == "declare -i"* ]]
+	# then
+	# 	local type=integer
+	# elif [[ "${!realObject}" == "$obj:"* ]]
+	# then
+	# 	local type=$(Object.GetType "${!realObject}")
+	# else
+	# 	local type=string
+	# fi
 
 	if [[ "$returnType" != "$type" ]]
 	then
@@ -201,7 +267,7 @@ Object.GetType() {
 }
 
 string.length() {
-	echo ${#this}
+	return=${#this}
 }
 
 array.length() {
@@ -211,11 +277,11 @@ array.length() {
 
 string.sanitized() {
     local sanitized="${this//[^a-zA-Z0-9]/_}"
-    echo "${sanitized^^}"
+    return="${sanitized^^}"
 }
 
 string.toArray() {
-	@reference array
+	#@reference array
 	@modifiesLocals
 
 	local newLine=$'\n'
@@ -225,14 +291,14 @@ string.toArray() {
 	local element
 	for element in $string
 	do
-		array+=( "$element" )
+		return+=( "$element" )
 	done
 
 	local newLines=${string//[^$separationCharacter]}
-	local -i trailingNewLines=$(( ${#newLines} - ${#array[@]} + 1 ))
+	local -i trailingNewLines=$(( ${#newLines} - ${#return[@]} + 1 ))
 	while (( trailingNewLines-- ))
 	do
-		array+=( "" )
+		return+=( "" )
 	done
 }
 
@@ -253,20 +319,23 @@ string.change() {
 
 string.match() {
 	@var regex
-	@int capturingGroup=${bracketParam[0]} #bracketParam
-	@var returnMatch="${bracketParam[1]}"
+	@int capturingGroup=${bracketParams[0]} #bracketParams
+	@var returnMatch="${bracketParams[1]}"
 
-	local -a matches
-	string.matchGroups "$regex" matches "$returnMatch"
-	echo "${matches[$capturingGroup]}"
+	DEBUG subject="string.match" Log "string to match on: $this"
+	local -a allMatches=()
+	@ allMatches~=this.matchGroups "$regex" "$returnMatch"
+	#allMatches.print
+	return="${allMatches[$capturingGroup]}"
 }
 
 string.matchGroups() {
 	@returns array
 	@var regex
 	# @reference matchGroups
-	@var returnMatch="${bracketParam[0]}"
+	@var returnMatch="${bracketParams[0]}"
 
+	DEBUG subject="matchGroups" Log "string to match on: $this" 
 	local -i matchNo=0
 	local string="$this"
 	while [[ "$string" =~ $regex ]]
@@ -314,11 +383,11 @@ array.forEach() {
 	@var do
 
 	# first dereferrence
-	local typeInfo="$(declare -p this)"
-	if [[ "$typeInfo" =~ "declare -n" ]] && [[ "$typeInfo" =~ \"([a-zA-Z0-9_]*)\" ]]
-	then
-		local realName=${BASH_REMATCH[1]}
-	fi
+	# local typeInfo="$(declare -p this)"
+	# if [[ "$typeInfo" =~ "declare -n" ]] && [[ "$typeInfo" =~ \"([a-zA-Z0-9_]*)\" ]]
+	# then
+	# 	local realName=${BASH_REMATCH[1]}
+	# fi
 
 	local index
 	for index in "${!this[@]}"
@@ -331,20 +400,20 @@ array.forEach() {
 	done
 }
 
-alias @="Exception.CustomCommandHandler"
 Exception.CustomCommandHandler() {
+	# best method for checking if variable is declared: http://unix.stackexchange.com/questions/56837/how-to-test-if-a-variable-is-defined-at-all-in-bash-prior-to-version-4-2-with-th
 	if [[ ! "$1" =~ \. ]] && [[ -n ${!1+isSet} ]]
 	then
 		# check if an object UUID
 		# else print var
-		subject="builtin" Log "Invoke builtin getter"
+		DEBUG subject="builtin" Log "Invoke builtin getter"
 		# echo "var $1=${!1}"
 		echo "${!1}"
 	else
 		local regex='(^|\.)([a-zA-Z0-9_]+)(({[^}]*})*)((\[[^]]*\])*)((\+=|-=|\*=|/=|==|\+\+|~=|:=|=|\+|/|\\|\*|~|:|-)(.*))*'
 
 		local -a matches
-		local -n return=matches; this="$1" bracketParam=@ string.matchGroups "$regex"; unset -n return
+		local -n return=matches; this="$1" bracketParams=@ string.matchGroups "$regex"; unset -n return
 
 		if (( ${#matches[@]} == 0 ))
 		then
@@ -359,6 +428,11 @@ Exception.CustomCommandHandler() {
 		local callOperator="${matches[-2]}"
 		local callValue="${matches[-1]}"
 
+		#unset -n this
+		local originalThisReference="$(Reference.GetRealVariableName this)"
+		DEBUG [[ ${originalThisReference} == this ]] || subject="originalThisReference" Log $originalThisReference
+		[[ ${originalThisReference} != this ]] || local originalThis="$this"
+
 		local -n this="matches"
 			local -n return=callStack; array.takeEvery 10 2; unset -n return
 			local -n return=callStackParams; array.takeEvery 10 3; unset -n return
@@ -367,381 +441,226 @@ Exception.CustomCommandHandler() {
 			local -n return=callStackLastBracket; array.takeEvery 10 6; unset -n return
 		unset -n this
 
-		local -n this="callStack"
-			subject="complex" Log callStack:
-			array.print
-		unset -n this
+		# restore the reference/value:
+		[[ ${originalThisReference} == this ]] || local -n this="$originalThisReference"
+		[[ -z ${originalThis} ]] || local this="$originalThis"
 
-		local -n this="callStackParams"
-			subject="complex" Log callStackParams:
-			array.print
-		unset -n this
+		# local -n this="callStack"
+		# 	subject="complex" Log callStack:
+		# 	array.print
+		# unset -n this
+
+		# local -n this="callStackParams"
+		# 	subject="complex" Log callStackParams:
+		# 	array.print
+		# unset -n this
 		
-		local -n this="callStackBrackets"
-			subject="complex" Log callStackBrackets:
-			array.print
-		unset -n this
+		# local -n this="callStackBrackets"
+		# 	subject="complex" Log callStackBrackets:
+		# 	array.print
+		# unset -n this
 
-		subject="complex" Log callOperator: $callOperator
-		subject="complex" Log callValue: $callValue
-		subject="complex" Log
+		#DEBUG subject="complex" Log this: ${this[@]}
+		DEBUG subject="complex" Log callOperator: $callOperator
+		DEBUG subject="complex" Log callValue: $callValue
+		#DEBUG subject="complex" Log
 
 		local -i callLength=$((${#callStack[@]} - 1))
 		local -i callHead=1
 
-		subject="complex" Log callLength: $callLength
+		DEBUG subject="complex" Log callLength: $callLength
 
 		local rootObject="${callStack[0]}"
 
 		# check for existance of $callStack[0] and whether it is an object
 		# if is resolvable immediately
 		local rootObjectResolvable=$rootObject[@]
-		if [[ -n ${!rootObjectResolvable+isSet} ]]
+		if [[ -n ${!rootObjectResolvable+isSet} || "$(eval "echo \" \${!$rootObject*} \"")" == *" $rootObject "* ]]
 		then
-			local typeInfo="$(declare -p $rootObject)"
+			local realVar=$(Reference.GetRealVariableName $rootObject)
+			local type=$(Variable.GetType $realVar)
+			DEBUG subject="variable" Log "Variable \$$realVar of type: $type"
 
-			# first dereferrence
-			# maybe this should be "while" for recursive dereferrence?
-			while [[ "$typeInfo" =~ "declare -n" ]] && [[ "$typeInfo" =~ \"([a-zA-Z0-9_]*)\" ]]
-			do
-				rootObject=${BASH_REMATCH[1]}
-				typeInfo="$(declare -p $rootObject)"
-			done
-
-			if [[ "$typeInfo" == "declare -a"* ]]
-			then
-				local type=array
-				local -n this="$rootObject"
-			elif [[ "$typeInfo" == "declare -A"* ]]
-			then
-				local type=dictionary
-				local -n this="$rootObject"
-			elif [[ "$typeInfo" == "declare -i"* ]]
-			then
-				local type=integer
-				local value="${!rootObject}"
-			elif [[ "${!rootObject}" == "$obj:"* ]]
+			if [[ $type == string && "${!rootObject}" == "$obj:"* ]]
 			then
 				# pass the rest of the call stack to the object invoker
 				Object.Invoke "${!rootObject}" "${@:2}"
 				return 0
-			else
-				local type=string
-				local value="${!rootObject}"
 			fi
 
-			if (( $callLength == 1 )) && [[ -n "$callOperator" ]]
+			# #DEBUG subject="complex" Log "Current contents of $(eval "echo \" \${!$rootObject*} \""): ${!rootObject}"
+			# local typeInfo="$(declare -p $rootObject 2> /dev/null || declare -p | grep "^declare -[aAign\-]* mik\(=\|$\)" )"
+
+			# # first dereferrence
+			# # maybe this should be "while" for recursive dereferrence?
+			# while [[ "$typeInfo" =~ "declare -n" ]] && [[ "$typeInfo" =~ \"([a-zA-Z0-9_]*)\" ]]
+			# do
+			# 	rootObject=${BASH_REMATCH[1]}
+			# 	typeInfo="$(declare -p $rootObject 2> /dev/null || declare -p | grep "^declare -[aAign\-]* mik\(=\|$\)" )"
+			# done
+
+			# if [[ "$typeInfo" == "declare -a"* ]]
+			# then
+			# 	local type=array
+			# 	#local -n this="$rootObject"
+			# elif [[ "$typeInfo" == "declare -A"* ]]
+			# then
+			# 	local type=dictionary
+			# 	#local -n this="$rootObject"
+			# elif [[ "$typeInfo" == "declare -i"* ]]
+			# then
+			# 	local type=integer
+			# 	#local value="${!rootObject}"
+			# elif [[ "${!rootObject}" == "$obj:"* ]]
+			# then
+			# 	# pass the rest of the call stack to the object invoker
+			# 	Object.Invoke "${!rootObject}" "${@:2}"
+			# 	return 0
+			# else
+			# 	local type=string
+			# 	#local value="${!rootObject}"
+			# fi
+
+			if (( $callLength == 0 )) && [[ -n "$callOperator" ]]
 			then
-				subject="complex" Log "CallStack length is 1, using the operator."
-				$type.$callOperator "$callValue" "${@:2}"
+				DEBUG subject="complex" Log "CallStack length is 0, using the operator."
+				case "$callOperator" in
+					'~=') 
+						  if [[ "${!callValue}" == "$obj:"* && -z "${*:2}" ]]
+						  then
+						  	eval "$rootObject=\"\${!callValue}\""
+						  elif [[ -n "${callValue}" ]]
+					  	  then
+						  	# local -n returnValue="$rootObject"
+						  	# __oo__useReturnValue=true @ $callValue "${@:2}"
+						  	# (
+						  	# declare -p this
+						  	# local returnValue=$(
+						  		#unset -n this
+
+					  		#DEBUG subject="complexAssignment" Log "New Value for $callValue ${*:2} === $($callValue "${@:2}")"
+						  		# )
+						  	
+						  	# local originalThis="$(Reference.GetRealVariableName this)"
+						  	# DEBUG subject="complexAssignment" Log "This is set to: $originalThis"
+
+						  	#[[ -n ${originalThis+isSet} ]] || 
+						  	# unset -n this
+						  	# local -n this="$rootObject"
+						  	
+						  	#eval "$callValue \"\${@:2}\""
+						  	# [[ -n ${originalThis+isSet} ]] || unset -n this
+						  	# [[ -n ${originalThis+isSet} ]] || local -n this="$originalThis"
+						  	# )
+						  	# local echoOut="$($callValue "${@:2}")"
+						  	# if [[ -n "${echoOut}" ]]
+					  		# then
+					  		# 	DEBUG subject="complexAssignment" Log "$echoOut |vs| $return"
+						  	# 	returnValue="$echoOut"
+						  	# fi
+						  	# unset -n returnValue
+						  	eval "$rootObject=\$($callValue \"\${@:2}\")"
+						  fi
+						  DEBUG subject="complexAssignment" Log "$rootObject=${!rootObject}"
+						  ;;
+				esac
+				# $type.$callOperator "$callValue" "${@:2}"
 			else
 				while ((callLength--))
 				do
-					subject="complex" Log calling: $type.${callStack[$callHead]}
+					DEBUG subject="complex" Log calling: $type.${callStack[$callHead]}
 					# does the method exist?
 					if ! Function.Exists $type.${callStack[$callHead]}
 					then
-						e="Method: $type.${callStack[$callHead]} does not exist." throw
+						e="Method: $type.${callStack[$callHead]} does not exist." skipBacktraceCount=4 throw ${callStack[$callHead]}
 					fi
 
 					local -a mustacheParams=()
 					local mustacheParamsRegex='[^{}]+'
-					local -n return=mustacheParams; this="${callStackParams[$callHead]}" bracketParam=@ string.matchGroups "$mustacheParamsRegex"; unset -n return
+					local -n return=mustacheParams; this="${callStackParams[$callHead]}" bracketParams=@ string.matchGroups "$mustacheParamsRegex"; unset -n return
 
-					local -a brackets=()
-					local bracketRegex='[^[]]+'
-					local -n return=brackets; this="${callStackBrackets[$callHead]}" bracketParam=@ string.matchGroups "$bracketRegex" brackets; unset -n return
+					local -a bracketParams=()
+					local bracketRegex='[^][]+'
+					local -n return=bracketParams; this="${callStackBrackets[$callHead]}" string.matchGroups "$bracketRegex" @; unset -n return
 
-					subject="complex" Log brackets: ${brackets[*]} #${callStackParams[$callHead]}
-					subject="complex" Log mustacheParams: ${mustacheParams[*]} #${callStackBrackets[$callHead]}
-					subject="complex" Log --
+					DEBUG subject="complex" Log bracketParams: ${bracketParams[*]} #${callStackParams[$callHead]}
+					DEBUG subject="complex" Log mustacheParams: ${mustacheParams[*]} #${callStackBrackets[$callHead]}
+					DEBUG subject="complex" Log --
 
+					#local originalThis="$(Reference.GetRealVariableName this)"
+					case "$type" in 
+						"array"|"dictionary") local -n this="$rootObject" ;;
+						"integer"|"string") local value="${!rootObject}" ;;
+					esac
+					
 					# if (( $callLength == 1 )) && [[ -n "$callOperator" ]]
 					# then
 					if (( $callHead == 1 )) && ! [[ "$type" == "string" || "$type" == "integer" ]]
 					then
 						$type.${callStack[$callHead]} "${@:2}"
 					else
-						value=$(this="$value" $type.${callStack[$callHead]} "${@:2}")
+						local newValue
+						local -n return=newValue
+						this="$value" $type.${callStack[$callHead]} "${mustacheParams[@]}" "${@:2}"
+						value="$newValue"
+						unset -n return
+						# value=$(this="$value" $type.${callStack[$callHead]} "${@:2}")
 					fi
 					# fi
 
-					# save output for next call
+					unset -n this
+
 					callHead+=1
 				done
 
 				if [[ -n ${value+isSet} ]]
 				then
-					echo "${value}"
+					# if [[ -n ${__oo__useReturnValue+isSet} ]]
+					# then
+						# returnValue="${value}"
+					# else
+						echo "${value}"
+					# fi
 				fi
 			fi
 
-			#subject="complex" Log "Invoke type: $type, object: $rootObject, ${child:+child: $child, }${bracketOperator:+"$bracketOperator: $bracketParam, "}operator: $operator${parameter:+, param $parameter}"
+			#DEBUG subject="complex" Log "Invoke type: $type, object: $rootObject, ${child:+child: $child, }${bracketOperator:+"$bracketOperator: $bracketParams, "}operator: $operator${parameter:+, param $parameter}"
 			
 			#$type${child:+".$child"} "${@:2}"
 		else
+			#eval "echo \" \${!$rootObject*} \""
+			DEBUG subject="complex" Log ${rootObjectResolvable} is not resolvable: ${!rootObjectResolvable}
 			return 1
 		fi
 	fi
 	# if callOperator then for sure an object - check if exists, else error
 	
 }
-# # command_not_found_handle() {
-# Exception.CustomCommandHandler() {
-# 	subject="command" Log "Invoking $1"
-# 	# if is resolvable immediately
-# 	if [[ ! "$1" =~ \. ]] && [[ -n ${!1+isSet} ]]
-# 	then
-# 		# check if an object UUID
-# 		# else print var
-# 		subject="builtin" Log "Invoke builtin getter"
-# 		# echo "var $1=${!1}"
-# 		echo "${!1}"
-# 	else
-# 		local splitParamRegex='([^=+/\\\*~:-]+)([=+/\\\*~:-])?(.*)'
-# 		local -a varDetails
-# 		this="$1" bracketParam=0 string.matchGroups "$splitParamRegex" varDetails
 
-# 		local varName="${varDetails[1]}"
-# 		local operator="${varDetails[2]}"
-# 		local parameter="${varDetails[3]}"
-
-# 		local -a varDetails=( )
-# 		local splitBracketRegex='([a-zA-Z0-9_]+)+([[{][^.]*[]}])*' #([a-zA-Z0-9_]+)+
-# 		this="$1" bracketParam=@ string.matchGroups "$splitBracketRegex" varDetails
-
-# 		local -a methodList
-# 		local -a methodParamsToParse
-
-# 		local -n this="varDetails" 
-# 			array.takeEvery 3 1 methodList
-# 			array.takeEvery 3 2 methodParamsToParse
-# 		unset -n this
-
-# 		subject="complex" Log "Will make an object call: ${methodList[*]}"
-
-# 		if [[ "${methodParamsToParse[*]}" == *'['* || "${methodParamsToParse[*]}" == *'{'* ]]
-# 		then
-
-# 			local -n this="methodParamsToParse" 
-# 				#array.forEach param 'echo test: $method'
-# 				local paramsList=$(array.last)
-# 			unset -n this
-
-# 			local -a bracketDetails
-# 			local bracketDetailsRegex='[[]([^]]*)[]]'
-# 			this="$paramsList" bracketParam=@ string.matchGroups "$bracketDetailsRegex" bracketDetails
-
-# 			local -a bracketParam
-
-# 			local -n this="bracketDetails" 
-# 				array.takeEvery 2 1 bracketParam
-# 			unset -n this
-
-# 			subject="complex" Log "Last Object Params: ${bracketParam[*]}"
-
-# 		fi
-
-#     	local rootObject=${varName%%.*} # strip . maybe better to use methodList[0] ?
-#     	[[ $rootObject == $varName ]] || child=${methodList[1]}
-		
-# 		# if is resolvable immediately
-# 		local rootObjectResolvable=$rootObject[@]
-#     	if [[ -n ${!rootObjectResolvable+isSet} ]]
-# 		then
-# 			local typeInfo="$(declare -p $rootObject)"
-
-# 			# first dereferrence
-# 			if [[ "$typeInfo" =~ "declare -n" ]] && [[ "$typeInfo" =~ \"([a-zA-Z0-9_]*)\" ]]
-# 			then
-# 				rootObject=${BASH_REMATCH[1]}
-# 				typeInfo="$(declare -p $rootObject)"
-# 			fi
-
-# 			if [[ "$typeInfo" == "declare -a"* ]]
-# 			then
-# 				local type=array
-# 			elif [[ "$typeInfo" == "declare -A"* ]]
-# 			then
-# 				local type=dictionary
-# 			elif [[ "$typeInfo" == "declare -i"* ]]
-# 			then
-# 				local type=integer
-# 			else
-# 				local type=string
-# 			fi
-
-# 			subject="complex" Log "Invoke type: $type, object: $rootObject, ${child:+child: $child, }${bracketOperator:+"$bracketOperator: $bracketParam, "}operator: $operator${parameter:+, param $parameter}"
-# 			local -n this="$rootObject"
-# 			$type${child:+".$child"} "${@:2}"
-# 		else
-# 			return 1
-# 		fi
-# 	fi
-# }
-
-testFunc() {
+# testFunc() {
 	# local testing="onething.object['abc def'].length[123].something[2]{another}"
 	#local testing="something.somethingElse{var1,var2,var3}[a].extensive{param1 : + can be =\"anything \"YO # -yo space}{another}[0][2]=LALALA} and what if=we have.an equals.test[immi]{lol}?"
-	local something="haha haha Yo!"
-	local testing="something.sanitized{}.length{}"
+	# local something="haha haha Yo!"
+	# local testing="something.sanitized{}.length{}"
 	# local -a dupa
 	# dupa~=something.toArray -- use dupa as output parameter/ret-val
 	#local regex='(?:^|\.)([a-zA-Z0-9_]+)((?:{.*?})*)((?:\[.*?\])*)(?:(=|\+|/|\\|\*|~|:|-|\+=|-=|\*=|/=|==)(.*))*'
-	local regex='(^|\.)([a-zA-Z0-9_]+)(({[^}]*})*)((\[[^]]*\])*)((\+=|-=|\*=|/=|==|\+\+|~=|:=|=|\+|/|\\|\*|~|:|-)(.*))*'
-
-	local -a matches
-	local -n return=matches
-	this="$testing" bracketParam=@ string.matchGroups "$regex"
-	# @ matches.forEach match 'this[$index]="$index: $match"'
-	unset -n return
-
-	local -a callStack
-	local -a callStackParams
-	local -a callStackLastParam
-	local -a callStackBrackets
-	local -a callStackLastBracket
-	local callOperator="${matches[-2]}"
-	local callValue="${matches[-1]}"
-
-	local -n this="matches"
-		local -n return=callStack; array.takeEvery 10 2; unset -n return
-		local -n return=callStackParams; array.takeEvery 10 3; unset -n return
-		local -n return=callStackLastParam; array.takeEvery 10 4; unset -n return
-		local -n return=callStackBrackets; array.takeEvery 10 5; unset -n return
-		local -n return=callStackLastBracket; array.takeEvery 10 6; unset -n return
-	unset -n this
-
-	local -n this="callStack"
-		echo callStack:
-		array.print
-	unset -n this
-
-	local -n this="callStackParams"
-		echo callStackParams:
-		array.print
-	unset -n this
-	
-	local -n this="callStackBrackets"
-		echo callStackBrackets:
-		array.print
-	unset -n this
-
-	echo callOperator: $callOperator
-	echo callValue: $callValue
-	echo
-
-	local -i callLength=$((${#callStack[@]} - 1))
-	local -i callHead=1
-
-	echo callLength: $callLength
-
-	local rootObject="${callStack[0]}"
-
-	# check for existance of $callStack[0] and whether it is an object
-	# if is resolvable immediately
-	local rootObjectResolvable=$rootObject[@]
-	if [[ -n ${!rootObjectResolvable+isSet} ]]
-	then
-		local typeInfo="$(declare -p $rootObject)"
-
-		# first dereferrence
-		# maybe this should be "while" for recursive dereferrence?
-		if [[ "$typeInfo" =~ "declare -n" ]] && [[ "$typeInfo" =~ \"([a-zA-Z0-9_]*)\" ]]
-		then
-			rootObject=${BASH_REMATCH[1]}
-			typeInfo="$(declare -p $rootObject)"
-		fi
-
-		if [[ "$typeInfo" == "declare -a"* ]]
-		then
-			local type=array
-			local -n this="$rootObject"
-		elif [[ "$typeInfo" == "declare -A"* ]]
-		then
-			local type=dictionary
-			local -n this="$rootObject"
-		elif [[ "$typeInfo" == "declare -i"* ]]
-		then
-			local type=integer
-			local value="${!rootObject}"
-		elif [[ "${!rootObject}" == "$obj:"* ]]
-		then
-			# pass the rest of the call stack to the object invoker
-			Object.Invoke "${!rootObject}" "${@:2}"
-			return 0
-		else
-			local type=string
-			local value="${!rootObject}"
-		fi
-
-		if (( $callLength == 1 )) && [[ -n "$callOperator" ]]
-		then
-			$type.$callOperator "$callValue" "${@:2}"
-		else
-			while ((callLength--))
-			do
-				echo calling: $type.${callStack[$callHead]}
-				# does the method exist?
-				if ! Function.Exists $type.${callStack[$callHead]}
-				then
-					e="Method: $type.${callStack[$callHead]} does not exist." skipBacktraceCount=4 thorw
-				fi
-
-				local -a mustacheParams=()
-				local mustacheParamsRegex='[^{}]+'
-				local -n return=mustacheParams; this="${callStackParams[$callHead]}" bracketParam=@ string.matchGroups "$mustacheParamsRegex"; unset -n return
-
-				local -a brackets=()
-				local bracketRegex='[^[]]+'
-				local -n return=brackets; this="${callStackBrackets[$callHead]}" bracketParam=@ string.matchGroups "$bracketRegex" brackets; unset -n return
-
-				echo brackets: ${brackets[*]} #${callStackParams[$callHead]}
-				echo mustacheParams: ${mustacheParams[*]} #${callStackBrackets[$callHead]}
-				echo --
-
-				# if (( $callLength == 1 )) && [[ -n "$callOperator" ]]
-				# then
-				if (( $callHead == 1 )) && ! [[ "$type" == "string" || "$type" == "integer" ]]
-				then
-					$type.${callStack[$callHead]} "${@:2}"
-				else
-					value=$(this="$value" $type.${callStack[$callHead]} "${@:2}")
-				fi
-				# fi
-
-				# save output for next call
-				callHead+=1
-			done
-
-			if [[ -n ${value+isSet} ]]
-			then
-				echo "${value}"
-			fi
-		fi
-
-		#subject="complex" Log "Invoke type: $type, object: $rootObject, ${child:+child: $child, }${bracketOperator:+"$bracketOperator: $bracketParam, "}operator: $operator${parameter:+, param $parameter}"
-		
-		#$type${child:+".$child"} "${@:2}"
-	else
-		return 1
-	fi
-
-	# if callOperator then for sure an object - check if exists, else error
-	
-
-}
 
 # testFunc
 
 testFunc2() {
 	local something="haha haha Yo!"
+	local another="hey! works!"
+	# something
+	# another
+	# something.sanitized{}.length{}.length{}
+	# something.sanitized{}
+	@ something~="another.sanitized{}"
 	something
-	something.sanitized{}.length{}.length{}.legnth{}
+	something.match{'WOR.*'}[0][0]
 }
 
 testFunc2
-
 
 # new method for a type system:
 #
