@@ -6,6 +6,7 @@ source "$( cd "${BASH_SOURCE[0]%/*}" && pwd )/../lib/oo-framework.sh"
 namespace seamless
 
 Log.AddOutput seamless CUSTOM
+Log.AddOutput error ERROR
 #Log.AddOutput oo/parameters-executing CUSTOM
 
 alias @="Exception.CustomCommandHandler"
@@ -53,17 +54,34 @@ Type.CreateVar() {
     # var value is only important if making an object later on from it
     local varValue="${varDeclaration#*=}"
 
+    # TODO: make this better:
+    if [[ "$varValue" == "$varName" ]]
+	then
+    	local varValue=""
+    fi
+
     if [[ ! -z $__typeCreate_varType ]]
     then
         # Console.WriteStdErr "SETTING $__typeCreate_varName = \$$__typeCreate_paramNo"
         # Console.WriteStdErr --
         #Console.WriteStdErr $tempName
 
-    	DEBUG Log "creating $__typeCreate_varName ($__typeCreate_varType)"
+    	DEBUG Log "creating $__typeCreate_varName ($__typeCreate_varType) = $__typeCreate_varValue"
     	
+    	if [[ -z "$__typeCreate_varValue" ]]
+		then
+	    	case "$__typeCreate_varType" in
+	    		'array'|'dictionary') eval "$__typeCreate_varName=()" ;;
+				'string') eval "$__typeCreate_varName=''" ;;
+				'integer') eval "$__typeCreate_varName=0" ;;
+				* ) ;;
+			esac
+		fi
+
     	# __oo__objects+=( $__typeCreate_varName )
 
         unset __typeCreate_varType
+        unset __typeCreate_varValue
     fi
 
     if [[ "$command" != "declare" || "$__typeCreate_next" != "true" ]]
@@ -78,6 +96,7 @@ Type.CreateVar() {
 
         __typeCreate_normalCodeStarted=0
         __typeCreate_varName="$varName"
+        __typeCreate_varValue="$varValue"
         __typeCreate_varType="$__capture_type"
         __typeCreate_arrLength="$__capture_arrLength"
 
@@ -96,10 +115,10 @@ Type.CaptureParams() {
 }
     
 # NOTE: true; true; at the end is required to workaround an edge case where TRAP doesn't behave properly
-alias trapAssign='Type.CaptureParams; declare -i __typeCreate_normalCodeStarted=0; trap "declare -i __typeCreate_paramNo; Type.CreateVar \"\$BASH_COMMAND\" \"\$@\"; [[ \$__typeCreate_normalCodeStarted -ge 2 ]] && trap - DEBUG && unset __typeCreate_varType && unset __typeCreate_varName && unset __typeCreate_paramNo" DEBUG; true; true; '
+alias trapAssign='Type.CaptureParams; declare -i __typeCreate_normalCodeStarted=0; trap "declare -i __typeCreate_paramNo; Type.CreateVar \"\$BASH_COMMAND\" \"\$@\"; [[ \$__typeCreate_normalCodeStarted -ge 2 ]] && trap - DEBUG && unset __typeCreate_varType && unset __typeCreate_varName && unset __typeCreate_varValue && unset __typeCreate_paramNo" DEBUG; true; true; '
 alias reference='_type=reference trapAssign declare -n'
-alias var='_type=var trapAssign declare'
-alias int='_type=int trapAssign declare -i'
+alias string='_type=string trapAssign declare'
+alias int='_type=integer trapAssign declare -i'
 alias array='_type=array trapAssign declare -a'
 alias dictionary='_type=dictionary trapAssign declare -A'
 
@@ -179,7 +198,6 @@ Reference.GetRealVariableName() {
 
 Variable.GetType() {
 	local typeInfo="$(declare -p $1 2> /dev/null || declare -p | grep "^declare -[aAign\-]* $1\(=\|$\)" || true)"
-	# local typeInfo="$(declare -p $1 2> /dev/null || true)"
 
 	if [[ -z "$typeInfo" ]]
 	then
@@ -229,45 +247,18 @@ Variable.GetType() {
 	local realVar=$(Reference.GetRealVariableName return)
 	local type=$(Variable.GetType $realVar)
 
-	# if [[ $type == reference ]]
-	# then
-	# 	type=$(Reference.GetRealVariableName return)
-	# fi
-
-	# local typeInfo="$(declare -p return)"
-	# # first dereferrence
-	# # maybe this should be "while" for recursive dereferrence?
-	# while [[ "$typeInfo" =~ "declare -n" ]] && [[ "$typeInfo" =~ \"([a-zA-Z0-9_]*)\" ]]
-	# do
-	# 	local realObject=${BASH_REMATCH[1]}
-	# 	typeInfo="$(declare -p $realObject)"
-	# done
-
-	# if [[ "$typeInfo" == "declare -a"* ]]
-	# then
-	# 	local type=array
-	# elif [[ "$typeInfo" == "declare -A"* ]]
-	# then
-	# 	local type=dictionary
-	# elif [[ "$typeInfo" == "declare -i"* ]]
-	# then
-	# 	local type=integer
-	# elif [[ "${!realObject}" == "$obj:"* ]]
-	# then
-	# 	local type=$(Object.GetType "${!realObject}")
-	# else
-	# 	local type=string
-	# fi
-
 	if [[ "$returnType" != "$type" ]]
 	then
 		e="Return type ($returnType) doesn't match with the actual type ($type)." throw
 	fi
-
 }
 
 string.length() {
 	return=${#this}
+}
+
+string.toUpper() {
+	return="${this^^}"
 }
 
 array.length() {
@@ -378,6 +369,12 @@ array.last() {
 	echo "${this[($count-1)]}"
 }
 
+array.add() {
+	@var element
+
+	this+=( "$element" )
+}
+
 array.forEach() {
 	@var elementName
 	@var do
@@ -441,29 +438,28 @@ Exception.CustomCommandHandler() {
 			local -n return=callStackLastBracket; array.takeEvery 10 6; unset -n return
 		unset -n this
 
-		# restore the reference/value:
+		DEBUG local -n this="callStack"
+			DEBUG subject="complex" Log callStack:
+			DEBUG array.print
+		DEBUG unset -n this
+
+		DEBUG local -n this="callStackParams"
+			DEBUG subject="complex" Log callStackParams:
+			DEBUG array.print
+		DEBUG unset -n this
+		
+		DEBUG local -n this="callStackBrackets"
+			DEBUG subject="complex" Log callStackBrackets:
+			DEBUG array.print
+		DEBUG unset -n this
+
+		# restore the this reference/value:
 		[[ ${originalThisReference} == this ]] || local -n this="$originalThisReference"
 		[[ -z ${originalThis} ]] || local this="$originalThis"
-
-		# local -n this="callStack"
-		# 	subject="complex" Log callStack:
-		# 	array.print
-		# unset -n this
-
-		# local -n this="callStackParams"
-		# 	subject="complex" Log callStackParams:
-		# 	array.print
-		# unset -n this
-		
-		# local -n this="callStackBrackets"
-		# 	subject="complex" Log callStackBrackets:
-		# 	array.print
-		# unset -n this
 
 		#DEBUG subject="complex" Log this: ${this[@]}
 		DEBUG subject="complex" Log callOperator: $callOperator
 		DEBUG subject="complex" Log callValue: $callValue
-		#DEBUG subject="complex" Log
 
 		local -i callLength=$((${#callStack[@]} - 1))
 		local -i callHead=1
@@ -488,39 +484,6 @@ Exception.CustomCommandHandler() {
 				return 0
 			fi
 
-			# #DEBUG subject="complex" Log "Current contents of $(eval "echo \" \${!$rootObject*} \""): ${!rootObject}"
-			# local typeInfo="$(declare -p $rootObject 2> /dev/null || declare -p | grep "^declare -[aAign\-]* mik\(=\|$\)" )"
-
-			# # first dereferrence
-			# # maybe this should be "while" for recursive dereferrence?
-			# while [[ "$typeInfo" =~ "declare -n" ]] && [[ "$typeInfo" =~ \"([a-zA-Z0-9_]*)\" ]]
-			# do
-			# 	rootObject=${BASH_REMATCH[1]}
-			# 	typeInfo="$(declare -p $rootObject 2> /dev/null || declare -p | grep "^declare -[aAign\-]* mik\(=\|$\)" )"
-			# done
-
-			# if [[ "$typeInfo" == "declare -a"* ]]
-			# then
-			# 	local type=array
-			# 	#local -n this="$rootObject"
-			# elif [[ "$typeInfo" == "declare -A"* ]]
-			# then
-			# 	local type=dictionary
-			# 	#local -n this="$rootObject"
-			# elif [[ "$typeInfo" == "declare -i"* ]]
-			# then
-			# 	local type=integer
-			# 	#local value="${!rootObject}"
-			# elif [[ "${!rootObject}" == "$obj:"* ]]
-			# then
-			# 	# pass the rest of the call stack to the object invoker
-			# 	Object.Invoke "${!rootObject}" "${@:2}"
-			# 	return 0
-			# else
-			# 	local type=string
-			# 	#local value="${!rootObject}"
-			# fi
-
 			if (( $callLength == 0 )) && [[ -n "$callOperator" ]]
 			then
 				DEBUG subject="complex" Log "CallStack length is 0, using the operator."
@@ -531,7 +494,12 @@ Exception.CustomCommandHandler() {
 						  	eval "$rootObject=\"\${!callValue}\""
 						  elif [[ -n "${callValue}" ]]
 					  	  then
-						  	# local -n returnValue="$rootObject"
+					  	  	#unset -n this
+					  	    local -n returnVariable="$rootObject"
+					  	    __oo__useReturnVariable=true @ "$callValue" "${@:2}"
+					  	    # eval "@ $callValue \"\${@:2}\""
+					  	    unset -n returnVariable
+					  	    # local -n returnValue="$rootObject"
 						  	# __oo__useReturnValue=true @ $callValue "${@:2}"
 						  	# (
 						  	# declare -p this
@@ -559,13 +527,22 @@ Exception.CustomCommandHandler() {
 						  	# 	returnValue="$echoOut"
 						  	# fi
 						  	# unset -n returnValue
-						  	eval "$rootObject=\$($callValue \"\${@:2}\")"
+
+						  	#eval "$rootObject=\$($callValue \"\${@:2}\")"
 						  fi
 						  DEBUG subject="complexAssignment" Log "$rootObject=${!rootObject}"
-						  ;;
+					  ;;
+				  # TODO: other operators
+				  # $type.$callOperator "$callValue" "${@:2}"
 				esac
-				# $type.$callOperator "$callValue" "${@:2}"
 			else
+				local value=""
+
+				case "$type" in 
+					"array"|"dictionary") local -n this="$rootObject" ;;
+					"integer"|"string") value="${!rootObject}" ;;
+				esac
+
 				while ((callLength--))
 				do
 					DEBUG subject="complex" Log calling: $type.${callStack[$callHead]}
@@ -588,30 +565,28 @@ Exception.CustomCommandHandler() {
 					DEBUG subject="complex" Log --
 
 					#local originalThis="$(Reference.GetRealVariableName this)"
-					case "$type" in 
-						"array"|"dictionary") local -n this="$rootObject" ;;
-						"integer"|"string") local value="${!rootObject}" ;;
-					esac
+
 					
-					# if (( $callLength == 1 )) && [[ -n "$callOperator" ]]
-					# then
 					if (( $callHead == 1 )) && ! [[ "$type" == "string" || "$type" == "integer" ]]
 					then
-						$type.${callStack[$callHead]} "${@:2}"
+						DEBUG subject="complexA" Log "Executing: $type.${callStack[$callHead]} ${*:2}"
+						$type.${callStack[$callHead]} "${mustacheParams[@]}" "${@:2}"
 					else
-						local newValue
-						local -n return=newValue
+						DEBUG subject="complexB" Log "Executing: this=$value $type.${callStack[$callHead]} ${mustacheParams[*]} ${*:2}"
+						local retVal
+						[[ -n ${__oo__useReturnVariable+isSet} ]] && local -n return="returnVariable" || local -n return=retVal
+						# local -n return=value
 						this="$value" $type.${callStack[$callHead]} "${mustacheParams[@]}" "${@:2}"
-						value="$newValue"
 						unset -n return
-						# value=$(this="$value" $type.${callStack[$callHead]} "${@:2}")
+						value="$retVal"
 					fi
 					# fi
 
-					unset -n this
-
 					callHead+=1
 				done
+
+				# don't polute with a "this" reference
+				unset -n this
 
 				if [[ -n ${value+isSet} ]]
 				then
@@ -629,7 +604,7 @@ Exception.CustomCommandHandler() {
 			#$type${child:+".$child"} "${@:2}"
 		else
 			#eval "echo \" \${!$rootObject*} \""
-			DEBUG subject="complex" Log ${rootObjectResolvable} is not resolvable: ${!rootObjectResolvable}
+			DEBUG Error ${rootObjectResolvable} is not resolvable: ${!rootObjectResolvable}
 			return 1
 		fi
 	fi
@@ -649,15 +624,31 @@ Exception.CustomCommandHandler() {
 # testFunc
 
 testFunc2() {
-	local something="haha haha Yo!"
-	local another="hey! works!"
+	string something="haha haha Yo!"
+	string another="hey! works!"
+
+	array coolStuff
+
+	@ coolStuff.add{$ref:something}
+	@ coolStuff.add{$ref:another}
+	coolStuff.print
+
 	# something
 	# another
 	# something.sanitized{}.length{}.length{}
 	# something.sanitized{}
-	@ something~="another.sanitized{}"
-	something
-	something.match{'WOR.*'}[0][0]
+	# @ something~="another.sanitized{}"
+	# something
+	# local -a someArray=()
+	# @ someArray~=something.match{'WOR.*'}[0][0]
+	# someArray.print
+
+	# string stringArray="$(echo -e "ba\nok\nmimi\nlol")"
+	# array fromStringArray
+
+	# @ stringArray~=stringArray.toUpper
+	# @ fromStringArray~=stringArray.toArray{}
+	# fromStringArray.print
 }
 
 testFunc2
