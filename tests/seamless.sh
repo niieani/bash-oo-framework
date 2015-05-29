@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-__INTERNAL_LOGGING__=true
+#__INTERNAL_LOGGING__=true
 source "$( cd "${BASH_SOURCE[0]%/*}" && pwd )/../lib/oo-framework.sh"
 
 namespace seamless
@@ -9,7 +9,7 @@ Log.AddOutput seamless CUSTOM
 Log.AddOutput error ERROR
 #Log.AddOutput oo/parameters-executing CUSTOM
 
-alias @="Exception.CustomCommandHandler"
+alias ~="Exception.CustomCommandHandler"
 
 String.GetRandomAlphanumeric() {
     # http://stackoverflow.com/a/23837814/595157
@@ -140,7 +140,7 @@ declare -Ag __oo__garbageCollector
 # it also means we can PIPE to a variable/object
 # echo dupa | someArray.Add
 
-alias @modifiesLocals="[[ \"\${FUNCNAME[2]}\" != \"command_not_found_handle\" ]] || subject=warn Log \"Method \$FUNCNAME modifies locals and needs to be run prefixed by '@'\""
+alias ~modifiesLocals="[[ \"\${FUNCNAME[2]}\" != \"command_not_found_handle\" ]] || subject=warn Log \"Method \$FUNCNAME modifies locals and needs to be run prefixed by '@'\""
 
 writeln() ( # forking for local scope for $IFS
 	local IFS=" " # needed for "$*"
@@ -229,7 +229,7 @@ Variable.GetType() {
 # return="something"
 # return should be declared prior to entering the func
 
-@returns() {
+~returns() {
 	@var returnType
 	# switch case array
 	# check if $return is an array
@@ -262,7 +262,7 @@ string.toUpper() {
 }
 
 array.length() {
-	@returns int
+	~returns int
 	return=${#this[@]}
 }
 
@@ -273,7 +273,7 @@ string.sanitized() {
 
 string.toArray() {
 	#@reference array
-	@modifiesLocals
+	~modifiesLocals
 
 	local newLine=$'\n'
 	local separationCharacter=$'\UFAFAF'
@@ -303,7 +303,7 @@ array.print() {
 
 string.change() {
 	## EXAMPLE
-	@modifiesLocals
+	~modifiesLocals
 	# [[ "${FUNCNAME[2]}" != "command_not_found_handle" ]] || s=warn Log "Method $FUNCNAME modifies locals and needs to be run prefixed by '@'."
 	this="somethingElse"
 }
@@ -314,14 +314,15 @@ string.match() {
 	@var returnMatch="${bracketParams[1]}"
 
 	DEBUG subject="string.match" Log "string to match on: $this"
-	local -a allMatches=()
-	@ allMatches~=this.matchGroups "$regex" "$returnMatch"
-	#allMatches.print
+
+	array allMatches
+	~ allMatches~=this.matchGroups "$regex" "$returnMatch"
+
 	return="${allMatches[$capturingGroup]}"
 }
 
 string.matchGroups() {
-	@returns array
+	~returns array
 	@var regex
 	# @reference matchGroups
 	@var returnMatch="${bracketParams[0]}"
@@ -331,7 +332,7 @@ string.matchGroups() {
 	local string="$this"
 	while [[ "$string" =~ $regex ]]
 	do
-		subject="regex" Log "match $matchNo: ${BASH_REMATCH[*]}"
+		DEBUG subject="regex" Log "match $matchNo: ${BASH_REMATCH[*]}"
 
 		if [[ "$returnMatch" == "@" || $matchNo -eq "$returnMatch" ]]
 		then
@@ -345,7 +346,7 @@ string.matchGroups() {
 }
 
 array.takeEvery() {
-	@returns array
+	~returns array
 	@int every
 	@int startingIndex
 	# @reference outputArray
@@ -365,8 +366,10 @@ array.takeEvery() {
 }
 
 array.last() {
+	~returns string
+
 	local count="${#this[@]}"
-	echo "${this[($count-1)]}"
+	return="${this[($count-1)]}"
 }
 
 array.add() {
@@ -477,6 +480,12 @@ Exception.CustomCommandHandler() {
 			local type=$(Variable.GetType $realVar)
 			DEBUG subject="variable" Log "Variable \$$realVar of type: $type"
 
+			if [[ $type == array || $type == dictionary ]] && [[ ! -z "${callStackBrackets[0]}" ]]
+			then
+				type=string
+				rootObject="$rootObject${callStackBrackets[0]}"
+			fi
+			
 			if [[ $type == string && "${!rootObject}" == "$obj:"* ]]
 			then
 				# pass the rest of the call stack to the object invoker
@@ -496,39 +505,9 @@ Exception.CustomCommandHandler() {
 					  	  then
 					  	  	#unset -n this
 					  	    local -n returnVariable="$rootObject"
-					  	    __oo__useReturnVariable=true @ "$callValue" "${@:2}"
+					  	    __oo__useReturnVariable=true ~ "$callValue" "${@:2}"
 					  	    # eval "@ $callValue \"\${@:2}\""
 					  	    unset -n returnVariable
-					  	    # local -n returnValue="$rootObject"
-						  	# __oo__useReturnValue=true @ $callValue "${@:2}"
-						  	# (
-						  	# declare -p this
-						  	# local returnValue=$(
-						  		#unset -n this
-
-					  		#DEBUG subject="complexAssignment" Log "New Value for $callValue ${*:2} === $($callValue "${@:2}")"
-						  		# )
-						  	
-						  	# local originalThis="$(Reference.GetRealVariableName this)"
-						  	# DEBUG subject="complexAssignment" Log "This is set to: $originalThis"
-
-						  	#[[ -n ${originalThis+isSet} ]] || 
-						  	# unset -n this
-						  	# local -n this="$rootObject"
-						  	
-						  	#eval "$callValue \"\${@:2}\""
-						  	# [[ -n ${originalThis+isSet} ]] || unset -n this
-						  	# [[ -n ${originalThis+isSet} ]] || local -n this="$originalThis"
-						  	# )
-						  	# local echoOut="$($callValue "${@:2}")"
-						  	# if [[ -n "${echoOut}" ]]
-					  		# then
-					  		# 	DEBUG subject="complexAssignment" Log "$echoOut |vs| $return"
-						  	# 	returnValue="$echoOut"
-						  	# fi
-						  	# unset -n returnValue
-
-						  	#eval "$rootObject=\$($callValue \"\${@:2}\")"
 						  fi
 						  DEBUG subject="complexAssignment" Log "$rootObject=${!rootObject}"
 					  ;;
@@ -580,7 +559,6 @@ Exception.CustomCommandHandler() {
 						unset -n return
 						value="$retVal"
 					fi
-					# fi
 
 					callHead+=1
 				done
@@ -588,14 +566,10 @@ Exception.CustomCommandHandler() {
 				# don't polute with a "this" reference
 				unset -n this
 
-				if [[ -n ${value+isSet} ]]
+				# if [[ -n ${value+isSet} ]]
+				if [[ -n ${value} ]]
 				then
-					# if [[ -n ${__oo__useReturnValue+isSet} ]]
-					# then
-						# returnValue="${value}"
-					# else
-						echo "${value}"
-					# fi
+					echo "${value}"
 				fi
 			fi
 
@@ -629,25 +603,29 @@ testFunc2() {
 
 	array coolStuff
 
-	@ coolStuff.add{$ref:something}
-	@ coolStuff.add{$ref:another}
+	~ coolStuff.add{$ref:something}
+	~ coolStuff.add{$ref:another}
 	coolStuff.print
+
+	string lol
+	lol="$(coolStuff[1].toUpper.match{'WOR.*'}[0][0])"
+	lol
 
 	# something
 	# another
 	# something.sanitized{}.length{}.length{}
 	# something.sanitized{}
-	# @ something~="another.sanitized{}"
+	# ~ something~="another.sanitized{}"
 	# something
 	# local -a someArray=()
-	# @ someArray~=something.match{'WOR.*'}[0][0]
+	# ~ someArray~=something.match{'WOR.*'}[0][0]
 	# someArray.print
 
 	# string stringArray="$(echo -e "ba\nok\nmimi\nlol")"
 	# array fromStringArray
 
-	# @ stringArray~=stringArray.toUpper
-	# @ fromStringArray~=stringArray.toArray{}
+	# ~ stringArray~=stringArray.toUpper
+	# ~ fromStringArray~=stringArray.toArray{}
 	# fromStringArray.print
 }
 
