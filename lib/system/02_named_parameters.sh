@@ -30,10 +30,10 @@ Function.AssignParamLocally() {
         return 0
     fi
 
-    local varDeclaration="${commandWithArgs[1]}"
+    local varDeclaration="${commandWithArgs[*]:1}"
     if [[ $varDeclaration == '-'* || $varDeclaration == '${'* ]]
     then
-        varDeclaration="${commandWithArgs[2]}"
+        varDeclaration="${commandWithArgs[*]:2}"
     fi
     local varName="${varDeclaration%%=*}"
 
