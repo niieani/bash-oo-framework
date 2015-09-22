@@ -154,6 +154,7 @@ Log.RegisterLogger ERROR Logger.ERROR
 Log.RegisterLogger INFO Logger.INFO
 Log.RegisterLogger WARN Logger.WARN
 Log.RegisterLogger CUSTOM Logger.CUSTOM
+Log.RegisterLogger DETAILED Logger.DETAILED
 
 alias Error="subject=error Log"
 
