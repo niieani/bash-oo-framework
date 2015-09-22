@@ -230,6 +230,7 @@ Exception.ContinueOrBreak()
 {
     ## TODO: Exceptions that happen in commands that are piped to others do not HALT the execution
     ## TODO: Add a workaround for this ^
+    ## probably it's enough to -pipefail, check for a pipe in command_not_found - and if yes - return 1
 
     # if in a terminal
     if [ -t 0 ]
