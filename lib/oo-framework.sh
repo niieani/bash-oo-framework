@@ -51,7 +51,7 @@ if [[ -n "$__INTERNAL_LOGGING__" ]]
 then
     alias DEBUG=":; "
 else
-    alias DEBUG="#"
+    alias DEBUG=":; #"
 fi
 
 System.Bootstrap
