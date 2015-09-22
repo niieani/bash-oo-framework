@@ -11,6 +11,10 @@ Log.AddOutput error ERROR
 
 alias ~="Exception.CustomCommandHandler"
 
+declare -Ag __oo__objectToType
+declare -Ag __oo__objectToName
+obj=OBJECT
+
 String.GetRandomAlphanumeric() {
     # http://stackoverflow.com/a/23837814/595157
     local chars=( {a..z} {A..Z} {0..9} )
@@ -26,7 +30,7 @@ String.GetRandomAlphanumeric() {
 Type.CreateVar() {
     # USE DEFAULT IFS IN CASE IT WAS CHANGED - important!
     local IFS=$' \t\n'
-    
+
     local commandWithArgs=( $1 )
     local command="${commandWithArgs[0]}"
 
@@ -44,10 +48,10 @@ Type.CreateVar() {
         return 0
     fi
 
-    local varDeclaration="${commandWithArgs[1]}"
+    local varDeclaration="${commandWithArgs[*]:1}"
     if [[ $varDeclaration == '-'* ]]
     then
-        varDeclaration="${commandWithArgs[2]}"
+        varDeclaration="${commandWithArgs[*]:2}"
     fi
     local varName="${varDeclaration%%=*}"
 
@@ -67,7 +71,7 @@ Type.CreateVar() {
         #Console.WriteStdErr $tempName
 
     	DEBUG Log "creating $__typeCreate_varName ($__typeCreate_varType) = $__typeCreate_varValue"
-    	
+
     	if [[ -z "$__typeCreate_varValue" ]]
 		then
 	    	case "$__typeCreate_varType" in
@@ -77,6 +81,13 @@ Type.CreateVar() {
 				* ) ;;
 			esac
 		fi
+
+    	case "$__typeCreate_varType" in
+    		'array'|'dictionary'|'string'|'integer') ;;
+    		*) local return
+               Object.New $__typeCreate_varType $__typeCreate_varName
+			   eval "$__typeCreate_varName=$return" ;;
+		esac
 
     	# __oo__objects+=( $__typeCreate_varName )
 
@@ -113,7 +124,7 @@ Type.CaptureParams() {
 
     __capture_type="$_type"
 }
-    
+
 # NOTE: true; true; at the end is required to workaround an edge case where TRAP doesn't behave properly
 alias trapAssign='Type.CaptureParams; declare -i __typeCreate_normalCodeStarted=0; trap "declare -i __typeCreate_paramNo; Type.CreateVar \"\$BASH_COMMAND\" \"\$@\"; [[ \$__typeCreate_normalCodeStarted -ge 2 ]] && trap - DEBUG && unset __typeCreate_varType && unset __typeCreate_varName && unset __typeCreate_varValue && unset __typeCreate_paramNo" DEBUG; true; true; '
 alias reference='_type=reference trapAssign declare -n'
@@ -121,6 +132,8 @@ alias string='_type=string trapAssign declare'
 alias int='_type=integer trapAssign declare -i'
 alias array='_type=array trapAssign declare -a'
 alias dictionary='_type=dictionary trapAssign declare -A'
+
+alias TestObject='_type=TestObject trapAssign declare'
 
 myFunction() {
     array something # creates object "something" && __oo__garbageCollector+=( something ) local -a something
@@ -157,10 +170,44 @@ writelne() (
 	printf '%b\n' "$*"
 )
 
-obj=OBJECT
-
 Object.New() {
-	local ObjectUUID=$obj:$(String.GetRandomAlphanumeric 12)
+	local objectUUID=$obj:$(String.GetRandomAlphanumeric 12)
+	__oo__objectToType[$objectUUID]="$1"
+	__oo__objectToName[$objectUUID]="$2"
+
+	return=$objectUUID
+}
+
+Object.Invoke() {
+	@var objectUUID
+	# remainingStack[]
+	@var stackElement
+	@params params
+
+	if [[ -z ${__oo__objectToType[$objectUUID]+isSet} ]]
+	then
+		e="Object $objectUUID doesn't exist" throw "$stackElement" && return 0
+	fi
+
+	${__oo__objectToType[$objectUUID]}.$stackElement "${params[@]}"
+}
+
+class:TestObject() {
+	var name
+	int age=30
+
+	# if parent function starts with "class:"
+	# capture and save
+}
+
+TestObject.__constructor__() {
+	this.age=20
+
+}
+
+TestObject.Hello() {
+	echo Hello!
+	alias Opica="local hello_sub1=wtf; local hello_sub2=lol; "
 }
 
 Object.IsObject() {
@@ -243,7 +290,7 @@ Variable.GetType() {
 		*) ;;
 	esac
 
-	# DEBUG subject="returnsMatch" Log 
+	# DEBUG subject="returnsMatch" Log
 	local realVar=$(Reference.GetRealVariableName return)
 	local type=$(Variable.GetType $realVar)
 
@@ -301,12 +348,13 @@ array.print() {
 	done
 }
 
-string.change() {
-	## EXAMPLE
-	~modifiesLocals
-	# [[ "${FUNCNAME[2]}" != "command_not_found_handle" ]] || s=warn Log "Method $FUNCNAME modifies locals and needs to be run prefixed by '@'."
-	this="somethingElse"
-}
+# string.change() {
+# 	## EXAMPLE
+# 	~modifiesLocals
+# 	# [[ "${FUNCNAME[2]}" != "command_not_found_handle" ]] || s=warn Log "Method $FUNCNAME modifies locals and needs to be run prefixed by '@'."
+# 	this="$1"
+# 	DEBUG Log "change list: $*"
+# }
 
 string.match() {
 	@var regex
@@ -327,7 +375,7 @@ string.matchGroups() {
 	# @reference matchGroups
 	@var returnMatch="${bracketParams[0]}"
 
-	DEBUG subject="matchGroups" Log "string to match on: $this" 
+	DEBUG subject="matchGroups" Log "string to match on: $this"
 	local -i matchNo=0
 	local string="$this"
 	while [[ "$string" =~ $regex ]]
@@ -402,188 +450,214 @@ array.forEach() {
 
 Exception.CustomCommandHandler() {
 	# best method for checking if variable is declared: http://unix.stackexchange.com/questions/56837/how-to-test-if-a-variable-is-defined-at-all-in-bash-prior-to-version-4-2-with-th
-	if [[ ! "$1" =~ \. ]] && [[ -n ${!1+isSet} ]]
+	if [[ ! "$1" =~ \. ]] && [[ -n ${!1+isSet} ]] && [[ -z "${*:2}" ]]
 	then
 		# check if an object UUID
 		# else print var
+
 		DEBUG subject="builtin" Log "Invoke builtin getter"
 		# echo "var $1=${!1}"
 		echo "${!1}"
-	else
-		local regex='(^|\.)([a-zA-Z0-9_]+)(({[^}]*})*)((\[[^]]*\])*)((\+=|-=|\*=|/=|==|\+\+|~=|:=|=|\+|/|\\|\*|~|:|-)(.*))*'
+		return 0
+	fi
 
-		local -a matches
-		local -n return=matches; this="$1" bracketParams=@ string.matchGroups "$regex"; unset -n return
+	local regex='(^|\.)([a-zA-Z0-9_]+)(({[^}]*})*)((\[[^]]*\])*)((\+=|-=|\*=|/=|==|\+\+|~=|:=|=|\+|/|\\|\*|~|:|-)(.*))*'
 
-		if (( ${#matches[@]} == 0 ))
+	local -a matches
+	local -n return=matches; this="$1" bracketParams=@ string.matchGroups "$regex"; unset -n return
+
+	if (( ${#matches[@]} == 0 ))
+	then
+		return 1
+	fi
+
+	local -a callStack
+	local -a callStackParams
+	local -a callStackLastParam
+	local -a callStackBrackets
+	local -a callStackLastBracket
+	local callOperator="${matches[-2]}"
+	local callValue="${matches[-1]}"
+
+	#unset -n this
+	local originalThisReference="$(Reference.GetRealVariableName this)"
+	DEBUG [[ ${originalThisReference} == this ]] || subject="originalThisReference" Log $originalThisReference
+	[[ ${originalThisReference} != this ]] || local originalThis="$this"
+
+	local -n this="matches"
+		local -n return=callStack; array.takeEvery 10 2; unset -n return
+		local -n return=callStackParams; array.takeEvery 10 3; unset -n return
+		local -n return=callStackLastParam; array.takeEvery 10 4; unset -n return
+		local -n return=callStackBrackets; array.takeEvery 10 5; unset -n return
+		local -n return=callStackLastBracket; array.takeEvery 10 6; unset -n return
+	unset -n this
+
+	DEBUG local -n this="callStack"
+		DEBUG subject="complex" Log callStack:
+		DEBUG array.print
+	DEBUG unset -n this
+
+	DEBUG local -n this="callStackParams"
+		DEBUG subject="complex" Log callStackParams:
+		DEBUG array.print
+	DEBUG unset -n this
+
+	DEBUG local -n this="callStackBrackets"
+		DEBUG subject="complex" Log callStackBrackets:
+		DEBUG array.print
+	DEBUG unset -n this
+
+	# restore the this reference/value:
+	[[ ${originalThisReference} == this ]] || local -n this="$originalThisReference"
+	[[ -z ${originalThis} ]] || local this="$originalThis"
+
+	#DEBUG subject="complex" Log this: ${this[@]}
+	DEBUG subject="complex" Log callOperator: $callOperator
+	DEBUG subject="complex" Log callValue: $callValue
+
+	local -i callLength=$((${#callStack[@]} - 1))
+	local -i callHead=1
+
+	DEBUG subject="complex" Log callLength: $callLength
+
+	local rootObject="${callStack[0]}"
+
+	## TODO: also check if rootObject is a function - the call it if it is
+	## i.e. we allow calling myFunction[param][param]{param}{param}
+
+	# check for existance of $callStack[0] and whether it is an object
+	# if is resolvable immediately
+	local rootObjectResolvable=$rootObject[@]
+	if [[ -n ${!rootObjectResolvable+isSet} || "$(eval "echo \" \${!$rootObject*} \"")" == *" $rootObject "* ]]
+	then
+		local realVar=$(Reference.GetRealVariableName $rootObject)
+		local type=$(Variable.GetType $realVar)
+		DEBUG subject="variable" Log "Variable \$$realVar of type: $type"
+
+		if [[ $type == array || $type == dictionary ]] && [[ ! -z "${callStackBrackets[0]}" ]]
 		then
-			return 1
+			type=string
+			rootObject="$rootObject${callStackBrackets[0]}"
 		fi
 
-		local -a callStack
-		local -a callStackParams
-		local -a callStackLastParam
-		local -a callStackBrackets
-		local -a callStackLastBracket
-		local callOperator="${matches[-2]}"
-		local callValue="${matches[-1]}"
-
-		#unset -n this
-		local originalThisReference="$(Reference.GetRealVariableName this)"
-		DEBUG [[ ${originalThisReference} == this ]] || subject="originalThisReference" Log $originalThisReference
-		[[ ${originalThisReference} != this ]] || local originalThis="$this"
-
-		local -n this="matches"
-			local -n return=callStack; array.takeEvery 10 2; unset -n return
-			local -n return=callStackParams; array.takeEvery 10 3; unset -n return
-			local -n return=callStackLastParam; array.takeEvery 10 4; unset -n return
-			local -n return=callStackBrackets; array.takeEvery 10 5; unset -n return
-			local -n return=callStackLastBracket; array.takeEvery 10 6; unset -n return
-		unset -n this
-
-		DEBUG local -n this="callStack"
-			DEBUG subject="complex" Log callStack:
-			DEBUG array.print
-		DEBUG unset -n this
-
-		DEBUG local -n this="callStackParams"
-			DEBUG subject="complex" Log callStackParams:
-			DEBUG array.print
-		DEBUG unset -n this
-		
-		DEBUG local -n this="callStackBrackets"
-			DEBUG subject="complex" Log callStackBrackets:
-			DEBUG array.print
-		DEBUG unset -n this
-
-		# restore the this reference/value:
-		[[ ${originalThisReference} == this ]] || local -n this="$originalThisReference"
-		[[ -z ${originalThis} ]] || local this="$originalThis"
-
-		#DEBUG subject="complex" Log this: ${this[@]}
-		DEBUG subject="complex" Log callOperator: $callOperator
-		DEBUG subject="complex" Log callValue: $callValue
-
-		local -i callLength=$((${#callStack[@]} - 1))
-		local -i callHead=1
-
-		DEBUG subject="complex" Log callLength: $callLength
-
-		local rootObject="${callStack[0]}"
-
-		# check for existance of $callStack[0] and whether it is an object
-		# if is resolvable immediately
-		local rootObjectResolvable=$rootObject[@]
-		if [[ -n ${!rootObjectResolvable+isSet} || "$(eval "echo \" \${!$rootObject*} \"")" == *" $rootObject "* ]]
+		if [[ $type == string && "${!rootObject}" == "$obj:"* ]]
 		then
-			local realVar=$(Reference.GetRealVariableName $rootObject)
-			local type=$(Variable.GetType $realVar)
-			DEBUG subject="variable" Log "Variable \$$realVar of type: $type"
+			# local isObject=true
+			# pass the rest of the call stack to the object invoker
+			Object.Invoke "${!rootObject}" "${@:2}"
+			return 0
+		fi
 
-			if [[ $type == array || $type == dictionary ]] && [[ ! -z "${callStackBrackets[0]}" ]]
-			then
-				type=string
-				rootObject="$rootObject${callStackBrackets[0]}"
-			fi
-			
-			if [[ $type == string && "${!rootObject}" == "$obj:"* ]]
-			then
-				# pass the rest of the call stack to the object invoker
-				Object.Invoke "${!rootObject}" "${@:2}"
-				return 0
-			fi
-
-			if (( $callLength == 0 )) && [[ -n "$callOperator" ]]
-			then
-				DEBUG subject="complex" Log "CallStack length is 0, using the operator."
-				case "$callOperator" in
-					'~=') 
-						  if [[ "${!callValue}" == "$obj:"* && -z "${*:2}" ]]
-						  then
-						  	eval "$rootObject=\"\${!callValue}\""
-						  elif [[ -n "${callValue}" ]]
-					  	  then
-					  	  	#unset -n this
-					  	    local -n returnVariable="$rootObject"
-					  	    __oo__useReturnVariable=true ~ "$callValue" "${@:2}"
-					  	    # eval "@ $callValue \"\${@:2}\""
-					  	    unset -n returnVariable
-						  fi
-						  DEBUG subject="complexAssignment" Log "$rootObject=${!rootObject}"
-					  ;;
-				  # TODO: other operators
-				  # $type.$callOperator "$callValue" "${@:2}"
-				esac
-			else
+		if (( $callLength == 0 )) && [[ -n "$callOperator" ]] #&& [[ $isObject != true ]]
+		then
+			DEBUG subject="complex" Log "CallStack length is 0, using the operator."
+			case "$callOperator" in
+				'~=')
+					  if [[ "${!callValue}" == "$obj:"* && -z "${*:2}" ]]
+					  then
+					    # TODO: rather than eval, use a local -n target="$rootObject"
+					  	eval "$rootObject=\"\${!callValue}\""
+					  elif [[ -n "${callValue}" ]]
+				  	  then
+				  	  	#unset -n this
+				  	    local -n returnVariable="$rootObject"
+				  	    __oo__useReturnVariable=true ~ "$callValue" "${@:2}"
+				  	    # eval "@ $callValue \"\${@:2}\""
+				  	    unset -n returnVariable
+					  fi
+					  DEBUG subject="complexAssignment" Log "$rootObject=${!rootObject}"
+				  ;;
+			  # TODO: other operators
+			  # $type.$callOperator "$callValue" "${@:2}"
+			esac
+		else
+			# if [[ $isObject != true ]]
+			# then
 				local value=""
 
-				case "$type" in 
+				case "$type" in
 					"array"|"dictionary") local -n this="$rootObject" ;;
 					"integer"|"string") value="${!rootObject}" ;;
 				esac
+			# fi
 
-				while ((callLength--))
-				do
-					DEBUG subject="complex" Log calling: $type.${callStack[$callHead]}
-					# does the method exist?
-					if ! Function.Exists $type.${callStack[$callHead]}
-					then
-						e="Method: $type.${callStack[$callHead]} does not exist." skipBacktraceCount=4 throw ${callStack[$callHead]}
-					fi
-
-					local -a mustacheParams=()
-					local mustacheParamsRegex='[^{}]+'
-					local -n return=mustacheParams; this="${callStackParams[$callHead]}" bracketParams=@ string.matchGroups "$mustacheParamsRegex"; unset -n return
-
-					local -a bracketParams=()
-					local bracketRegex='[^][]+'
-					local -n return=bracketParams; this="${callStackBrackets[$callHead]}" string.matchGroups "$bracketRegex" @; unset -n return
-
-					DEBUG subject="complex" Log bracketParams: ${bracketParams[*]} #${callStackParams[$callHead]}
-					DEBUG subject="complex" Log mustacheParams: ${mustacheParams[*]} #${callStackBrackets[$callHead]}
-					DEBUG subject="complex" Log --
-
-					#local originalThis="$(Reference.GetRealVariableName this)"
-
-					
-					if (( $callHead == 1 )) && ! [[ "$type" == "string" || "$type" == "integer" ]]
-					then
-						DEBUG subject="complexA" Log "Executing: $type.${callStack[$callHead]} ${*:2}"
-						$type.${callStack[$callHead]} "${mustacheParams[@]}" "${@:2}"
-					else
-						DEBUG subject="complexB" Log "Executing: this=$value $type.${callStack[$callHead]} ${mustacheParams[*]} ${*:2}"
-						local retVal
-						[[ -n ${__oo__useReturnVariable+isSet} ]] && local -n return="returnVariable" || local -n return=retVal
-						# local -n return=value
-						this="$value" $type.${callStack[$callHead]} "${mustacheParams[@]}" "${@:2}"
-						unset -n return
-						value="$retVal"
-					fi
-
-					callHead+=1
-				done
-
-				# don't polute with a "this" reference
-				unset -n this
-
-				# if [[ -n ${value+isSet} ]]
-				if [[ -n ${value} ]]
-				then
-					echo "${value}"
-				fi
+			# make it possible to also call functions through the use of first parameter:
+			# ex.  ~ coolStuff add $ref:something
+			# so, if 'coolStuff' is a VAR, then depending on it's type
+			# runs it runs TYPE.add $ref:something
+			if (( $callLength == 0 ))
+			then
+				callLength+=1
+				callStack[1]="$2"
+				shift
 			fi
 
-			#DEBUG subject="complex" Log "Invoke type: $type, object: $rootObject, ${child:+child: $child, }${bracketOperator:+"$bracketOperator: $bracketParams, "}operator: $operator${parameter:+, param $parameter}"
-			
-			#$type${child:+".$child"} "${@:2}"
-		else
-			#eval "echo \" \${!$rootObject*} \""
-			DEBUG Error ${rootObjectResolvable} is not resolvable: ${!rootObjectResolvable}
-			return 1
+			while ((callLength--))
+			do
+				DEBUG subject="complex" Log calling: $type.${callStack[$callHead]}
+				# does the method exist?
+				if ! Function.Exists $type.${callStack[$callHead]}
+				then
+					e="Method: $type.${callStack[$callHead]} does not exist." skipBacktraceCount=4 throw ${callStack[$callHead]}
+				fi
+
+				local -a mustacheParams=()
+				local mustacheParamsRegex='[^{}]+'
+				local -n return=mustacheParams; this="${callStackParams[$callHead]}" string.matchGroups "$mustacheParamsRegex" @; unset -n return
+
+				local -a bracketParams=()
+				local bracketRegex='[^][]+'
+				local -n return=bracketParams; this="${callStackBrackets[$callHead]}" string.matchGroups "$bracketRegex" @; unset -n return
+
+				DEBUG subject="complex" Log bracketParams: ${bracketParams[*]} #${callStackParams[$callHead]}
+				DEBUG subject="complex" Log mustacheParams: ${mustacheParams[*]} #${callStackBrackets[$callHead]}
+				DEBUG subject="complex" Log --
+
+				#local originalThis="$(Reference.GetRealVariableName this)"
+
+
+				if (( $callHead == 1 )) && ! [[ "$type" == "string" || "$type" == "integer" ]]
+				then
+					DEBUG subject="complexA" Log "Executing: $type.${callStack[$callHead]} ${*:2}"
+					$type.${callStack[$callHead]} "${mustacheParams[@]}" "${@:2}"
+				else
+					DEBUG subject="complexB" Log "Executing: this=$value $type.${callStack[$callHead]} ${mustacheParams[*]} ${*:2}"
+
+					local retVal
+					if [[ -n ${__oo__useReturnVariable+isSet} ]]
+					then
+						local -n return=returnVariable
+					else
+						local -n return=retVal
+					fi
+
+					this="$value" $type.${callStack[$callHead]} "${mustacheParams[@]}" "${@:2}"
+					unset -n return
+					value="$retVal"
+				fi
+
+				callHead+=1
+			done
+
+			# don't polute with a "this" reference
+			unset -n this
+
+			if [[ -n ${value} ]]
+			then
+				echo "${value}"
+			fi
 		fi
+
+		#DEBUG subject="complex" Log "Invoke type: $type, object: $rootObject, ${child:+child: $child, }${bracketOperator:+"$bracketOperator: $bracketParams, "}operator: $operator${parameter:+, param $parameter}"
+
+		#$type${child:+".$child"} "${@:2}"
+	else
+		#eval "echo \" \${!$rootObject*} \""
+		DEBUG Error ${rootObjectResolvable} is not resolvable: ${!rootObjectResolvable}
+		return 1
 	fi
 	# if callOperator then for sure an object - check if exists, else error
-	
+
 }
 
 # testFunc() {
@@ -597,19 +671,43 @@ Exception.CustomCommandHandler() {
 
 # testFunc
 
+Object.Hello
+
 testFunc2() {
 	string something="haha haha Yo!"
 	string another="hey! works!"
 
-	array coolStuff
+	array coolStuff=(a bobo)
 
-	~ coolStuff.add{$ref:something}
-	~ coolStuff.add{$ref:another}
-	coolStuff.print
+	Object mikrofalowka
+	#=> echo $mikrofalowka result unreachable
 
-	string lol
-	lol="$(coolStuff[1].toUpper.match{'WOR.*'}[0][0])"
-	lol
+  #=> $mikrofalowka result unreachable
+	mikrofalowka Hello
+
+	Opica
+	echo $hello_sub1
+
+	# ~ coolStuff.add{$ref:something}
+	# ~ coolStuff.add{$ref:another}
+	# coolStuff.print
+
+	# string lol
+	# lol="$(coolStuff[1].toUpper.match{'WOR.*'}[0][0])"
+	# lol
+
+	# coolStuff
+	# ~ coolStuff add something
+	# coolStuff print
+	#coolStuff[1]
+	# ~ something~=something toUpper
+	# something
+
+	# for creating objects we can use
+	# SomeType objectName
+
+	# always save a full stack
+	# for each created object at moment of creation
 
 	# something
 	# another
