@@ -72,7 +72,7 @@ else
     alias UI.Color.NoInvisible="echo"
 fi
 
-alias UI.Powerline.IsAvailable="(echo -e $'\u1F3B7' | grep -v F3B7) &> /dev/null"
+alias UI.Powerline.IsAvailable="test -z $NO_UNICODE && (echo -e $'\u1F3B7' | grep -v F3B7) &> /dev/null"
 if UI.Powerline.IsAvailable
 then
 	alias UI.Powerline.PointingArrow="echo -e $'\u27a1'"
