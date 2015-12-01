@@ -50,4 +50,4 @@ UI.Color.IsAvailable && static:UI.Color() {
             echo
         fi
     }
-}
+} || return 0
