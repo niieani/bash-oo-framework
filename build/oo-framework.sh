@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# oo-framework version: ea7c3af
+# oo-framework version: 28c5bb6
 ###########################
 ### BOOTSTRAP FUNCTIONS ###
 ###########################
@@ -49,6 +49,12 @@ shopt -s expand_aliases
 declare -g __oo__libPath="$( cd "${BASH_SOURCE[0]%/*}" && pwd )"
 declare -g __oo__path="${__oo__libPath}/.."
 declare -ag __oo__importedFiles
+if [[ -n "$__INTERNAL_LOGGING__" ]]
+then
+    alias DEBUG=":; "
+else
+    alias DEBUG=":; #"
+fi
 
 
 #########################
@@ -201,6 +207,9 @@ Logger.WARN() {
     Console.WriteStdErrAnnotated "${BASH_SOURCE[3]##*/}" ${BASH_LINENO[2]} $(UI.Color.Yellow) WARN "$@"
 }
 Logger.CUSTOM() {
+    Console.WriteStdErr "$(UI.Color.Yellow)[${subject^^}] $(UI.Color.Default)$* "
+}
+Logger.DETAILED() {
     Console.WriteStdErrAnnotated "${BASH_SOURCE[3]##*/}" ${BASH_LINENO[2]} $(UI.Color.Yellow) "${subject^^}" "$@"
 }
 
@@ -350,12 +359,12 @@ Function.AssignParamLocally() {
     if [[ "${commandWithArgs[*]}" == "true" ]]
     then
         __assign_next=true
-        # Console.WriteStdErr "Will assign next one"
+        subject="parameters-assign" Log "Will assign next one"
 
         local nextAssignment=$(( ${__assign_paramNo:-0} + 1 ))
         if [[ "${!nextAssignment}" == "$ref:"* ]]
         then
-            # Console.WriteStdErr param is a reference: $nextAssignment
+            subject="parameters-reference" Log "next param is an object reference: $nextAssignment"
             __assign_isReference="-n"
         else
             __assign_isReference=""
@@ -363,10 +372,10 @@ Function.AssignParamLocally() {
         return 0
     fi
 
-    local varDeclaration="${commandWithArgs[1]}"
+    local varDeclaration="${commandWithArgs[*]:1}"
     if [[ $varDeclaration == '-'* || $varDeclaration == '${'* ]]
     then
-        varDeclaration="${commandWithArgs[2]}"
+        varDeclaration="${commandWithArgs[*]:2}"
     fi
     local varName="${varDeclaration%%=*}"
 
@@ -376,8 +385,8 @@ Function.AssignParamLocally() {
 
     if [[ ! -z $__assign_varType ]]
     then
-        # Console.WriteStdErr "SETTING $__assign_varName = \$$__assign_paramNo"
-        # Console.WriteStdErr --
+        subject="parameters-setting" Log "SETTING: $__assign_varName = \$$__assign_paramNo"
+        # subject="parameters-setting" Log --
 
         local execute
 
@@ -393,21 +402,21 @@ Function.AssignParamLocally() {
         then
             execute="$__assign_varName=( \"\${@:$__assign_paramNo}\" )"
             eval "$execute"
-        elif [[ "$__assign_varType" == "reference" ]]
-        then
-            execute="$__assign_varName=\"\$$__assign_paramNo\""
-            eval "$execute"
-        elif [[ ! -z "${!__assign_paramNo}" ]]
+        elif [[ "$__assign_varType" == "reference" || ! -z "${!__assign_paramNo}" ]]
         then
             if [[ "${!__assign_paramNo}" == "$ref:"* ]]
             then
                 local refVarName="${!__assign_paramNo#$ref:}"
                 execute="$__assign_varName=$refVarName"
             else
+                # escape $__assign_paramNo with \"
+                # local escapedAssignment="${!__assign_paramNo}"
+                # escapedAssignment="${escapedAssignment//\"/\\\"}"
+                # execute="$__assign_varName=\"$escapedAssignment\""
                 execute="$__assign_varName=\"\$$__assign_paramNo\""
             fi
 
-            # Console.WriteStdErr "EXECUTE $execute"
+            subject="parameters-executing" Log "EXECUTING: $execute"
             eval "$execute"
         fi
         unset __assign_varType
@@ -418,9 +427,9 @@ Function.AssignParamLocally() {
     then
         __assign_normalCodeStarted+=1
 
-        # Console.WriteStdErr "NOPASS ${commandWithArgs[*]}"
-        # Console.WriteStdErr "normal code count ($__assign_normalCodeStarted)"
-        # Console.WriteStdErr --
+        subject="parameters-nopass" Log "NOPASS ${commandWithArgs[*]}"
+        subject="parameters-nopass" Log "normal code count ($__assign_normalCodeStarted)"
+        # subject="parameters-nopass" Log --
     else
         unset __assign_next
 
@@ -429,22 +438,19 @@ Function.AssignParamLocally() {
         __assign_varType="$__capture_type"
         __assign_arrLength="$__capture_arrLength"
 
-        # Console.WriteStdErr "PASS ${commandWithArgs[*]}"
-        # Console.WriteStdErr --
+        subject="parameters-pass" Log "PASS ${commandWithArgs[*]}"
+        # subject="parameters-pass" Log --
 
         __assign_paramNo+=1
     fi
 }
 
 Function.CaptureParams() {
-    # Console.WriteStdErr "Capturing Type $_type"
-    # Console.WriteStdErr --
+    subject="parameters" Log "Capturing Type $_type"
+    # subject="parameters" Log --
 
     __capture_type="$_type"
     __capture_arrLength="$l"
-    
-    #__assign_OLDIFS=$IFS
-    #IFS=$__oo__originalIFS
 }
     
 # NOTE: true; true; at the end is required to workaround an edge case where TRAP doesn't behave properly
@@ -471,6 +477,10 @@ namespace oo
 
 alias throw="__EXCEPTION_TYPE__=\${e:-Manually invoked} command_not_found_handle"
 
+Exception.CustomCommandHandler() {
+    return 1
+}
+
 command_not_found_handle() {
     # USE DEFAULT IFS IN CASE IT WAS CHANGED - important!
     local IFS=$' \t\n'
@@ -480,6 +490,8 @@ command_not_found_handle() {
     then
         return 0
     fi
+
+    Exception.CustomCommandHandler "$@" && return 0 || true
 
     local script="${BASH_SOURCE[1]#./}"
     local lineNo="${BASH_LINENO[0]}"
@@ -525,7 +537,7 @@ command_not_found_handle() {
     local -a exception=( "$lineNo" "$undefinedObject" "$script" )
     
     local IFS=$'\n'
-    for traceElement in $(Exception.DumpBacktrace 2)
+    for traceElement in $(Exception.DumpBacktrace ${skipBacktraceCount:-2})
     do
         exception+=( "$traceElement" )
     done
@@ -693,6 +705,7 @@ Exception.ContinueOrBreak()
 {
     ## TODO: Exceptions that happen in commands that are piped to others do not HALT the execution
     ## TODO: Add a workaround for this ^
+    ## probably it's enough to -pipefail, check for a pipe in command_not_found - and if yes - return 1
 
     # if in a terminal
     if [ -t 0 ]
@@ -833,11 +846,11 @@ System.LoadFile(){
         ## if already imported let's return
         if Array.Contains "$file" "${__oo__importedFiles[@]}"
         then
-            subject=level3 Log "File previously imported: ${libPath}"
+            DEBUG subject=level3 Log "File previously imported: ${libPath}"
             return 0
         fi
 
-        subject=level2 Log "Importing: $libPath"
+        DEBUG subject=level2 Log "Importing: $libPath"
 
         __oo__importedFiles+=( "$libPath" )
 
@@ -849,10 +862,11 @@ System.LoadFile(){
         if Function.Exists Type.Load
         then
             Type.Load
-            subject=level3 Log "Loading Types..."
+            DEBUG subject=level3 Log "Loading Types..."
         fi
     else
-        subject=level2 Log "File doesn't exist when importing: $libPath"
+        :
+        DEBUG subject=level2 Log "File doesn't exist when importing: $libPath"
     fi
 }
 
@@ -865,7 +879,7 @@ System.Import() {
         [ ! -e "$libPath" ] && libPath="${__oo__path}/${libPath}"
         [ ! -e "$libPath" ] && libPath="${libPath}.sh"
 
-        subject=level4 Log "Trying to load from: ${__oo__path} / ${requestedPath}"
+        DEBUG subject=level4 Log "Trying to load from: ${__oo__path} / ${requestedPath}"
 
         if [ ! -e "$libPath" ]
         then
@@ -874,12 +888,12 @@ System.Import() {
             local localPath="$( cd "${BASH_SOURCE[1]%/*}" && pwd )"
 #            [ -f "$localPath" ] && localPath="$(dirname "$localPath")"
             libPath="${localPath}/${requestedPath}"
-            subject=level4 Log "Trying to load from: ${localPath} / ${requestedPath}"
+            DEBUG subject=level4 Log "Trying to load from: ${localPath} / ${requestedPath}"
 
             [ ! -e "$libPath" ] && libPath="${libPath}.sh"
         fi
 
-        subject=level3 Log "Trying to load from: ${libPath}"
+        DEBUG subject=level3 Log "Trying to load from: ${libPath}"
         [ ! -e "$libPath" ] && throw "Cannot import $libPath" && return 1
 
         libPath="$(File.GetAbsolutePath "$libPath")"
