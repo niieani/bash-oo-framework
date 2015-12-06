@@ -7,6 +7,25 @@ The Infinity Framework is also plug & play: include it at the beginning of your 
 
 Disclaimer: Not all of the modules work with earlier versions of bash, as I test primarily with **bash 4**. However, it should be possible (and relatively easy) to port non-working parts to earlier versions.
 
+Quick-start
+===========
+
+With the v1.0.0 release, there's a great new way to include the framework in your scripts.
+If you don't mind a slightly slower startup of your script and know that an internet connection will be available at the time of execution, you can put this one-liner in front of your script to include the framework:
+
+```bash
+#!/usr/bin/env bash
+
+source <(VERSION=1.0.0; URL="https://github.com/niieani/bash-oo-framework/releases/download/$VERSION/oo-framework.sh"; RETRIES=3; hash curl 2>/dev/null && curl -sL --retry $RETRIES "$URL" || wget -t $RETRIES -O - -o /dev/null "$URL" || echo "echo 'An error occured while downloading the framework.' && exit 1")
+
+## your code goes here ##
+```
+
+Either `curl` or `wget` is required for the above to work.
+Note: sourcing the framework this way will not load the optional modules, such as the unit testing, and the type system modules.
+
+If you wish to load the framework locally, [read on](#how-to-use).
+
 Main features
 =============
 
