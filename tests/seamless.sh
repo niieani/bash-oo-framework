@@ -60,7 +60,7 @@ Type.CreateVar() {
 
     # TODO: make this better:
     if [[ "$varValue" == "$varName" ]]
-	then
+    then
     	local varValue=""
     fi
 
@@ -74,11 +74,11 @@ Type.CreateVar() {
 
     	if [[ -z "$__typeCreate_varValue" ]]
 		then
-	    	case "$__typeCreate_varType" in
-	    		'array'|'dictionary') eval "$__typeCreate_varName=()" ;;
-				'string') eval "$__typeCreate_varName=''" ;;
-				'integer') eval "$__typeCreate_varName=0" ;;
-				* ) ;;
+      case "$__typeCreate_varType" in
+        'array'|'dictionary') eval "$__typeCreate_varName=()" ;;
+        'string') eval "$__typeCreate_varName=''" ;;
+        'integer') eval "$__typeCreate_varName=0" ;;
+        * ) ;;
 			esac
 		fi
 
@@ -134,15 +134,6 @@ alias array='_type=array trapAssign declare -a'
 alias dictionary='_type=dictionary trapAssign declare -A'
 
 alias TestObject='_type=TestObject trapAssign declare'
-
-myFunction() {
-    array something # creates object "something" && __oo__garbageCollector+=( something ) local -a something
-    array another
-    something.Add "blabla"
-    something.Add $ref:something
-    # for member in "${something[@]}"
-    Array.Merge $ref:something $ref:another
-}
 
 declare -Ag __oo__garbageCollector
 
@@ -671,7 +662,21 @@ Exception.CustomCommandHandler() {
 
 # testFunc
 
-Object.Hello
+# Object.Hello
+
+# myFunction() {
+#     array something # creates object "something" && __oo__garbageCollector+=( something ) local -a something
+#     array another
+#     something.add "blabla"
+#     something.add $ref:something
+#     # for member in "${something[@]}"
+#     Array.Merge $ref:something $ref:another
+# }
+
+# myFunction
+
+
+
 
 testFunc2() {
 	string something="haha haha Yo!"
@@ -679,14 +684,21 @@ testFunc2() {
 
 	array coolStuff=(a bobo)
 
-	Object mikrofalowka
+	echo $something
+	something.length
+	
+	coolStuff.print
+	~ coolStuff.add{$ref:something}
+	coolStuff.print
+
+	# Object mikrofalowka
 	#=> echo $mikrofalowka result unreachable
 
   #=> $mikrofalowka result unreachable
-	mikrofalowka Hello
+	# mikrofalowka Hello
 
-	Opica
-	echo $hello_sub1
+	# Opica
+	# echo $hello_sub1
 
 	# ~ coolStuff.add{$ref:something}
 	# ~ coolStuff.add{$ref:another}

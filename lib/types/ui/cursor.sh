@@ -1,7 +1,7 @@
 import ../base/Object
 
 class:UI.Cursor() {
-    # http://askubuntu.com/questions/366103/saving-more-corsor-positions-with-tput-in-bash-terminal
+  # http://askubuntu.com/questions/366103/saving-more-corsor-positions-with-tput-in-bash-terminal
 	extends Object
 	
 	public Number X = 0
