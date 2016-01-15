@@ -54,16 +54,19 @@ capturePipeFaithful() {
 ## note: declaration needs to be trimmed, 
 ## since bash adds an enter at the end, hence %?
 alias @resolveThis="
-  local __declaration;
-  if [ -z \${this+x} ]; 
+  if [[ -z \${__use_this_natively+x} ]];
   then
-    capturePipe __declaration;
-  else
-    getDeclaration \$this __declaration;
-    local __mutableName=\$this;
-    unset this;
-  fi;
-  local -\${__declaration_type:--} this=\${__declaration};"
+    local __declaration;
+    if [[ -z \${this+x} ]]; 
+    then
+      capturePipe __declaration;
+    else
+      getDeclaration \$this __declaration;
+      # local __mutableName=\$this;
+      unset this;
+    fi;
+    local -\${__declaration_type:--} this=\${__declaration};
+  fi"
 
 # there could be a variable "modifiedThis", 
 # which is set to "printDeclaration this"
@@ -81,9 +84,12 @@ alias @resolveThis="
   local variableName=$1
   if [ ! -z ${__mutableName+x} ]
   then
-    __modifiedThis="$(printDeclaration this)"
+    local -a __return=("$(printDeclaration this)" "$(printDeclaration $variableName)")
+    printDeclaration __return
+    # __modifiedThis="$(printDeclaration this)"
+  else
+    printDeclaration $variableName
   fi
-  printDeclaration $variableName
 }
 alias @get='printDeclaration'
 
@@ -95,14 +101,14 @@ executeForType() {
   local method="$3"
   shift; shift;
   
-  local __modifiedThis
+  # local __modifiedThis
   
   this=$variableName $type.$method "$@"
   
-  if [ ! -z ${__modifiedThis+x} ]
-  then
-    eval $variableName=\$__modifiedThis
-  fi
+  # if [ ! -z ${__modifiedThis+x} ]
+  # then
+    # eval $variableName=\$__modifiedThis
+  # fi
 # this=result $type.$
 }
 
