@@ -15,18 +15,6 @@ declare -Ag __oo__objectToType
 declare -Ag __oo__objectToName
 obj=OBJECT
 
-String.GetRandomAlphanumeric() {
-    # http://stackoverflow.com/a/23837814/595157
-    local chars=( {a..z} {A..Z} {0..9} )
-    local length=$1
-    local ret=
-    while ((length--))
-    do
-        ret+=${chars[$((RANDOM%${#chars[@]}))]}
-    done
-    printf '%s\n' "$ret"
-}
-
 Type.CreateVar() {
     # USE DEFAULT IFS IN CASE IT WAS CHANGED - important!
     local IFS=$' \t\n'
@@ -66,33 +54,35 @@ Type.CreateVar() {
 
     if [[ ! -z $__typeCreate_varType ]]
     then
-        # Console.WriteStdErr "SETTING $__typeCreate_varName = \$$__typeCreate_paramNo"
-        # Console.WriteStdErr --
-        #Console.WriteStdErr $tempName
+      # Console.WriteStdErr "SETTING $__typeCreate_varName = \$$__typeCreate_paramNo"
+      # Console.WriteStdErr --
+      #Console.WriteStdErr $tempName
 
     	DEBUG Log "creating $__typeCreate_varName ($__typeCreate_varType) = $__typeCreate_varValue"
 
     	if [[ -z "$__typeCreate_varValue" ]]
-		then
-      case "$__typeCreate_varType" in
-        'array'|'dictionary') eval "$__typeCreate_varName=()" ;;
-        'string') eval "$__typeCreate_varName=''" ;;
-        'integer') eval "$__typeCreate_varName=0" ;;
-        * ) ;;
-			esac
-		fi
+      then
+        case "$__typeCreate_varType" in
+          'array'|'dictionary') eval "$__typeCreate_varName=()" ;;
+          'string') eval "$__typeCreate_varName=''" ;;
+          'integer') eval "$__typeCreate_varName=0" ;;
+          * ) ;;
+        esac
+      fi
 
-    	case "$__typeCreate_varType" in
-    		'array'|'dictionary'|'string'|'integer') ;;
-    		*) local return
-               Object.New $__typeCreate_varType $__typeCreate_varName
-			   eval "$__typeCreate_varName=$return" ;;
-		esac
+      case "$__typeCreate_varType" in
+        'array'|'dictionary'|'string'|'integer') ;;
+        *)
+          local return
+          Object.New $__typeCreate_varType $__typeCreate_varName
+          eval "$__typeCreate_varName=$return"
+        ;;
+      esac
 
     	# __oo__objects+=( $__typeCreate_varName )
 
-        unset __typeCreate_varType
-        unset __typeCreate_varValue
+      unset __typeCreate_varType
+      unset __typeCreate_varValue
     fi
 
     if [[ "$command" != "declare" || "$__typeCreate_next" != "true" ]]
@@ -160,6 +150,18 @@ writelne() (
 	local IFS=" "
 	printf '%b\n' "$*"
 )
+
+String.GetRandomAlphanumeric() {
+    # http://stackoverflow.com/a/23837814/595157
+    local chars=( {a..z} {A..Z} {0..9} )
+    local length=$1
+    local ret=
+    while ((length--))
+    do
+        ret+=${chars[$((RANDOM%${#chars[@]}))]}
+    done
+    printf '%s\n' "$ret"
+}
 
 Object.New() {
 	local objectUUID=$obj:$(String.GetRandomAlphanumeric 12)
@@ -686,7 +688,7 @@ testFunc2() {
 
 	echo $something
 	something.length
-	
+
 	coolStuff.print
 	~ coolStuff.add{$ref:something}
 	coolStuff.print
