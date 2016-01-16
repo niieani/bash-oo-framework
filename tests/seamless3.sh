@@ -20,7 +20,7 @@ getDeclaration() {
   local declaration
   local regexArray="declare -([a-zA-Z-]+) $variableName='(.*)'"
   local regex="declare -([a-zA-Z-]+) $variableName=\"(.*)\""
-  local definition=$(declare -p $variableName)
+  local definition=$(declare -p $variableName 2> /dev/null || true)
   
   local escaped="'\\\'"
   local escapedQuotes='\\"'
@@ -47,27 +47,28 @@ printDeclaration() {
 }
 
 capturePipe() {
-  read -r -d '' $1
+  read -r -d '' $1 || true
 }
 
 capturePipeFaithful() {
-  IFS= read -r -d '' $1
+  IFS= read -r -d '' $1 || true
 }
 
 ## note: declaration needs to be trimmed, 
 ## since bash adds an enter at the end, hence %?
-alias @resolveThis="
+alias @resolve:this="
   if [[ -z \${__use_this_natively+x} ]];
   then
     local __declaration;
-    local __declaration_type;
     
     if [[ ! -z \${returnValueDefinition+x} ]];
     then
+      local __declaration_type;
       __declaration=\"\$returnValueDefinition\"
       __declaration_type=\$returnValueType
     elif [[ -z \${thisReference+x} ]]; 
     then
+      # echo capturing via pipe
       capturePipe __declaration;
     else
       getDeclaration \$thisReference __declaration;
@@ -76,8 +77,9 @@ alias @resolveThis="
     fi;
     local -\${__declaration_type:--} this=\${__declaration};
     unset __declaration;
-    unset __declaration_type;
-  fi"
+    # unset __declaration_type;
+  fi
+  "
 
 # there could be a variable "modifiedThis", 
 # which is set to "printDeclaration this"
@@ -148,7 +150,15 @@ executeStack() {
   # eval "result=\$(executeForType \"\$type\" \"\$variableName\" \"\$method\" \"\${params[@]}\")"
   # result=$(executeForType "$type" "$variableName" "$method" "${params[@]}")
   
+  if [[ ! -z "$returnValueDefinition" && $affectTheInitialVariable == false ]]
+  then
+    local -$returnValueType "__self=$returnValueDefinition"
+    variableName=__self
+  fi
+  
   local -a result=$(executeForType "$type" "$variableName" "$method" "${params[@]}")
+  
+  unset __self
   
   # declare -p result
   local assignResult="${result[0]}"
@@ -157,12 +167,18 @@ executeStack() {
   # update the object
   eval "$variableName=$assignResult"
   
-  # TODO: this should work directly but doesn't
-  # eval $variableName=\$assignResult
-  
   # update the result
   returnValueDefinition="${result[1]}"
   returnValueType="${result[2]}"
+  
+  if [[ "$assignResult" != "${returnValueDefinition}" ]]
+  then
+    affectTheInitialVariable=false
+    type=$(Variable.GetTypeFromParam $returnValueType)
+  fi
+  
+  # TODO: this should work directly but doesn't
+  # eval $variableName=\$assignResult
   
   # TODO: act on the returnValue, not on the base
 }
@@ -170,6 +186,7 @@ executeStack() {
 handleType() {
   local variableName=$1
   local type=$(Variable.GetType $variableName)
+  local affectTheInitialVariable=true
   
   if [[ "$type" == "undefined" ]]
   then
@@ -233,6 +250,29 @@ handleType() {
   else
     @get $variableName
   fi
+}
+
+Variable.GetTypeFromParam() {
+  local typeInfo="$1"
+  
+	if [[ "$typeInfo" == "n"* ]]
+	then
+		echo reference
+	elif [[ "$typeInfo" == "a"* ]]
+	then
+		echo array
+	elif [[ "$typeInfo" == "A"* ]]
+	then
+		echo map
+	elif [[ "$typeInfo" == "i"* ]]
+	then
+		echo integer
+	# elif [[ "${!1}" == "$obj:"* ]]
+	# then
+	# 	echo "$(Object.GetType "${!realObject}")"
+	else
+		echo string
+	fi
 }
 
 Variable.GetType() {
@@ -376,6 +416,11 @@ alias string='_type=string trapAssign declare'
 alias int='_type=integer trapAssign declare -i'
 alias array='_type=array trapAssign declare -a'
 alias map='_type=map trapAssign declare -A'
+alias global:reference='_type=reference trapAssign declare -ng'
+alias global:string='_type=string trapAssign declare -g'
+alias global:int='_type=integer trapAssign declare -ig'
+alias global:array='_type=array trapAssign declare -ag'
+alias global:map='_type=map trapAssign declare -Ag'
 
 alias TestObject='_type=TestObject trapAssign declare'
 
@@ -384,7 +429,7 @@ alias TestObject='_type=TestObject trapAssign declare'
 ## TODO: use vars, not $1-9 so references are resolved
 
 map.set() {
-  @resolveThis
+  @resolve:this
   
   this["$1"]="$2"
   
@@ -392,7 +437,7 @@ map.set() {
 }
 
 map.delete() {
-  @resolveThis
+  @resolve:this
   
   unset this["$1"]
   
@@ -400,22 +445,46 @@ map.delete() {
 }
 
 map.get() {
-  @resolveThis
+  @resolve:this
 
   local value="${this[$1]}"
   @return value
 }
 
+### /MAP
+
+### STRING
+
 string.toUpper() {
-  @resolveThis
+  @resolve:this
   
-  local value="hohoho"
+  local value="hohoh o$this"
   @return value
 }
 
-### /MAP
+### /STRING
 
-function core() {
+### ARRAY
+
+array.push() {
+  @resolve:this
+  @var value
+  
+  this+=("$value")
+  
+  @return
+}
+
+array.length() {
+  @resolve:this
+  
+	local value="${#this[@]}"
+  @return value
+}
+
+### /ARRAY
+
+function test1() {
   string justDoIt="yes!"
   map ramda=([test]=ho [great]=ok [test]="\$result ''ha'  ha" [enter]=$(printf "\na\nb\n"))
   
@@ -427,8 +496,88 @@ function core() {
   ramda
   ramda get [ 'one' ]
   ramda get [ 'one' ] toUpper []
+  ramda set [ 'one' "$(ramda get [ 'one' ] toUpper [])" ]
+  ramda
+  
+  map polio=$(ramda)
+  
+  map kwiko=$(polio | monad=true map.set "kwiko" "liko")
+  kwiko
+  map kwiko=$(polio | monad=true map.set "kwiko" "kombo")
+  kwiko
+  
+  justDoIt toUpper
 }
 
-core
+# test1
 
-# invokeParams .doIt [ param1 param2 ] .property .doIt2 [ param1 param2 ] .doMore [] .more [ ] .anotherProp
+function test2() {
+  array hovno
+  hovno push [ one ]
+  hovno push [ two ]
+  hovno
+}
+
+# test2 
+
+private() {
+  @var type
+  @var property
+  
+  # ${FUNCNAME[1]} contains the name of the class
+  local class=${FUNCNAME[1]#*:}
+  
+  # local propertyNamesVarExpantion=__${class}_property_names[@]
+  # local propertyTypesVarExpantion=__${class}_property_types[@]
+  
+  # echo "${!propertyNamesVarExpantion}" "$property"
+  # echo "${!propertyTypesVarExpantion}" "$type"
+  
+  eval "__${class}_property_names+=( $property )"
+  eval "__${class}_property_types+=( $type )"
+  
+  # echo "__${class}_property_names+=( $property )"
+  # echo "__${class}_property_types+=( $type )"
+  
+  # declare -ag kakaka=(one two)
+  # "${!propertyNamesVarExpantion}" 
+  # "${!propertyTypesVarExpantion}" 
+  # declare -ag 
+  # declare -ag 
+  # declare -ag __${class}_property_names=( "$property" )
+  # declare -ag __${class}_property_types=( "$type" )
+}
+
+class:Human() {
+  private string firstName
+  private string lastName
+  private Human child
+  
+  Human.shout() {
+    @resolve:this
+    
+    this firstName toUpper
+    this child firstName 
+    
+    # $this firstName 
+    
+    # $this firstName = "one two"
+    
+    # resolve this_{property}
+    # and add methods so we can use also them
+    # like: this_firstName toUpper
+    # this_firstName="Bazyli"
+    
+    # for each this_{property}
+    # set this
+    
+    @return
+  }
+}
+
+class:Human
+
+declare -p __Human_property_names
+declare -p __Human_property_types
+
+# TODO: required parameters (via named_parameters)
