@@ -173,8 +173,16 @@ executeStack() {
   local assignResult="${result[0]}"
   # declare -p assignResult
   
-  # update the object
-  eval "$variableName=$assignResult"
+  local typeParam=$(Variable.GetParamFromType $type)
+  
+  # Log "Will eval: $variableName=$assignResult"
+  if [[ "$typeParam" =~ [aA] ]]
+  then
+    # update the object
+    eval "$variableName=$assignResult"
+  else
+    eval "$variableName=\"\$assignResult\""
+  fi
   
   # update the result
   returnValueDefinition="${result[1]}"
@@ -238,10 +246,11 @@ handleType() {
         if Variable::Exists __${type}_property_names && 
             @get __${type}_property_names | array.contains $1
         then
-          Log "traversing to a child property $1 of type $type"
           # stack now belongs to:
-          ### select property: 
+          ### selecting property: 
           local property="$1"
+          
+          Log "traversing to a child property $property of type $type"
           
           # local __return_self_and_result=false
           local -i index=$(@get __${type}_property_names | array.indexOf $property)
@@ -254,10 +263,20 @@ handleType() {
             
             ## TODO: check if this preserves spaces correctly
             local propertyValueIndirect=$variableName[$property]
-            local -$typeParam "__$property=${!propertyValueIndirect}"
             
-            Log "new $type value is: $(declare -p __$property) ${propertyValueIndirect}"
+            if [[ -z "${!propertyValueIndirect}" && "$typeParam" =~ [aA] ]]
+            then
+              local -$typeParam "__$property=()"
+            else
+              local -$typeParam "__$property=${!propertyValueIndirect}"
+            fi
+            
+            Log ".$property new $type value is: " # ${propertyValueIndirect} vs '${!propertyValueIndirect}'
+            Log "$(declare -p __$property)"
             # affectTheInitialVariable=false
+            
+            ## TODO: variableName needs to be unique (add count at the end)
+            ## in case the same property is nested 
             variableName=__$property
             
             propertyTree+=("$property")
@@ -584,6 +603,7 @@ array.push() {
   @resolve:this
   @var value
   
+  subject=array.push Log $(@get this)
   this+=("$value")
   
   @return
@@ -682,7 +702,7 @@ class:Human() {
   public string firstName
   public string lastName
   public array children
-  # public Human child
+  public Human child
   
   Human.shout() {
     @resolve:this
@@ -713,8 +733,6 @@ alias Human="_type=Human trapAssign declare -A"
 # declare -p __Human_property_types
 
 # TODO: required parameters (via named_parameters)
-
-
 
 
 function test1() {
@@ -763,13 +781,41 @@ function test3() {
 
 function test4() {
   Human obj
-  obj firstNamea
   obj firstName = [ Ivon ]
   declare -p obj
   obj firstName
 }
 
-test4
+# test4
+
+function test5() {
+  Human obj
+  obj children push [ '  "a"  b  c  ' ]
+  obj children push [ "123 $(printf "\ntest")" ]
+  # declare -p obj
+  obj children
+}
+
+# test5
+
+function test6() {
+  Human obj
+  obj child firstName = [ "Ivon \" $(printf "\ntest") 'Ivonova'" ]
+  obj child firstName
+  # declare -p obj
+}
+
+# test6
+
+function test7() {
+  Human obj
+  obj child child child children push [ '  "a"  b  c  ' ]
+  
+  test "$(obj child child child children)" == '([0]="  \"a\"  b  c  ")'
+  # declare -p obj
+}
+
+test7
 
 ## TODO: parametric versions of string/integer/array functions
 ## they could either take the variable name as param or @array 
