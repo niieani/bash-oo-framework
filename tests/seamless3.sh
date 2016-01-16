@@ -57,22 +57,23 @@ capturePipeFaithful() {
 ## note: declaration needs to be trimmed, 
 ## since bash adds an enter at the end, hence %?
 alias @resolve:this="
+  # TODO: local __access_private_members_of=
   if [[ -z \${__use_this_natively+x} ]];
   then
     local __declaration;
     
-    if [[ ! -z \${returnValueDefinition+x} ]];
+    if [[ ! -z \"\${useReturnValueDefinition}\" ]];
     then
       local __declaration_type;
       __declaration=\"\$returnValueDefinition\"
       __declaration_type=\$returnValueType
     elif [[ -z \${thisReference+x} ]]; 
     then
-      # echo capturing via pipe
       capturePipe __declaration;
+      local __declaration_type=\$(Variable.GetParamFromType \${FUNCNAME[0]%.*})
+      # Log capturing via pipe \${__declaration_type}
     else
       getDeclaration \$thisReference __declaration;
-      # local __mutableName=\$thisReference;
       unset thisReference;
     fi;
     local -\${__declaration_type:--} this=\${__declaration};
@@ -108,21 +109,29 @@ alias @resolve:this="
     getDeclaration this __return_declaration
   fi
   
-  if [[ ! -z ${__return_self_and_result+x} ]]
+  if [[ "${__return_self_and_result}" == "true" ]]
   then
+    # Log "returning heavy"
     local -a __return=("$(printDeclaration this)" "$__return_declaration" "$__return_declaration_type")
     
     printDeclaration __return
     # __modifiedThis="$(printDeclaration this)"
-  else
+  elif [[ "${#__return_declaration}" -gt 0 ]]
+  then
     echo "$__return_declaration"
   fi
 }
 alias @get='printDeclaration'
 
+@return:value() {
+  local value="$@"
+  
+  @return value
+}
+
 # ------------------------ #
 
-executeForType() {
+executeMethodOfType() {
   local type="$1"
   local variableName="$2"
   local method="$3"
@@ -131,7 +140,7 @@ executeForType() {
   
   # local __modifiedThis
   
-  thisReference=$variableName $type.$method "$@"
+  __return_self_and_result=true thisReference=$variableName $type.$method "$@"
   
   # if [ ! -z ${__modifiedThis+x} ]
   # then
@@ -147,8 +156,8 @@ executeStack() {
   DEBUG Log "will execute: $method (${params[@]})"
   
   # get result (0=this, 1=return_value)
-  # eval "result=\$(executeForType \"\$type\" \"\$variableName\" \"\$method\" \"\${params[@]}\")"
-  # result=$(executeForType "$type" "$variableName" "$method" "${params[@]}")
+  # eval "result=\$(executeMethodOfType \"\$type\" \"\$variableName\" \"\$method\" \"\${params[@]}\")"
+  # result=$(executeMethodOfType "$type" "$variableName" "$method" "${params[@]}")
   
   if [[ ! -z "$returnValueDefinition" && $affectTheInitialVariable == false ]]
   then
@@ -156,7 +165,7 @@ executeStack() {
     variableName=__self
   fi
   
-  local -a result=$(executeForType "$type" "$variableName" "$method" "${params[@]}")
+  local -a result=$(executeMethodOfType "$type" "$variableName" "$method" "${params[@]}")
   
   unset __self
   
@@ -179,14 +188,13 @@ executeStack() {
   
   # TODO: this should work directly but doesn't
   # eval $variableName=\$assignResult
-  
-  # TODO: act on the returnValue, not on the base
 }
 
 handleType() {
   local variableName=$1
   local type=$(Variable.GetType $variableName)
   local affectTheInitialVariable=true
+  local -a propertyTree=("$1")
   
   if [[ "$type" == "undefined" ]]
   then
@@ -199,18 +207,16 @@ handleType() {
   local returnValueDefinition
   local returnValueType
   
-  local __return_self_and_result=true
-  
   if [[ $# -gt 0 ]]
   then
     local method
     local -a params
     local mode=method
     local prevMode
-    local prevModeTemp
+    local prevModeNext
     while [[ $# -gt 0 ]]
     do
-      prevModeTemp=$mode
+      prevModeNext=$mode
       if [[ "$1" == '[' || "$1" == '{' ]]
       then
         mode=params
@@ -221,31 +227,99 @@ handleType() {
         method=''
         params=()
         mode=method
-        prevModeTemp=params
+        prevModeNext=params
       elif [[ "$mode" == 'params' ]]
       then
         params+=("$1")
       elif [[ "$mode" == 'method' ]]
       then
-        if [[ "$prevMode" == 'method' ]]
+        # Log $(@get __${type}_property_names | array.indexOf $1) $1 idx
+        # Log $(@get __${type}_property_names | array.contains $1 && echo t)
+        if Variable::Exists __${type}_property_names && 
+            @get __${type}_property_names | array.contains $1
         then
-          executeStack
+          Log "traversing to a child property $1 of type $type"
+          # stack now belongs to:
+          ### select property: 
+          local property="$1"
+          
+          # local __return_self_and_result=false
+          local -i index=$(@get __${type}_property_names | array.indexOf $property)
+          
+          if [[ $index -ge 0 ]]
+          then
+            local newType=__${type}_property_types[$index]
+            type=${!newType}
+            local typeParam=$(Variable.GetParamFromType $type)
+            
+            ## TODO: check if this preserves spaces correctly
+            local propertyValueIndirect=$variableName[$property]
+            local -$typeParam "__$property=${!propertyValueIndirect}"
+            
+            Log "new $type value is: $(declare -p __$property) ${propertyValueIndirect}"
+            # affectTheInitialVariable=false
+            variableName=__$property
+            
+            propertyTree+=("$property")
+            
+            prevModeNext=property
+          fi
+          ### /selectProperty          
+        else
+          if [[ "$prevMode" == 'method' ]]
+          then
+            executeStack
+          fi
+          method="$1"
         fi
-        method="$1"
       fi
-      prevMode=$prevModeTemp
+      prevMode=$prevModeNext
       shift
     done
     
     if [[ "$mode" == 'method' && "${#method}" -gt 0 ]]
     then
       executeStack
+    elif [[ "$prevMode" == 'property' ]]
+    then
+      subject='property' Log 'print out the property' $variableName
+      ## print out the property
+      @get $variableName
     fi
     
     # finally echo the latest return value if not empty
     if [[ ! -z "$returnValueDefinition" ]]
     then
       echo "$returnValueDefinition"
+    fi
+    
+    local -i propertyTreeLength=${#propertyTree[@]}
+    if [[ ${#propertyTree[@]} -gt 1 ]]
+    then
+      # Log PropertyTree: $(@get propertyTree)
+      local -a reversedPropertyTree=$(@get propertyTree | array.reverse)
+      
+      local -i i=$propertyTreeLength
+      local property
+      local parent
+      for parent in "${reversedPropertyTree[@]}"
+      do
+        ## recursively insert the children into parents
+        
+        i+=-1
+        (( $i == $propertyTreeLength - 1 )) && property=$parent && continue
+        
+        local parentVarName=__$parent
+        
+        (( $i == 0 )) && parentVarName=$parent
+        
+        local propertyDefinition="$(@get __$property)"
+        eval "$parentVarName[$property]=\"\$propertyDefinition\""
+        
+        Log "SETTING: ($i) $parentVarName.$property = \"$propertyDefinition\""  
+        
+        property=$parent
+      done
     fi
   else
     @get $variableName
@@ -275,6 +349,26 @@ Variable.GetTypeFromParam() {
 	fi
 }
 
+Variable.GetParamFromType() {
+  local typeInfo="$1"
+  
+	if [[ "$typeInfo" == "reference" ]]
+	then
+		echo n
+	elif [[ "$typeInfo" == "array" ]]
+	then
+		echo a
+	elif [[ "$typeInfo" == "string" ]]
+	then
+		echo -
+	elif [[ "$typeInfo" == "integer" ]]
+	then
+		echo i
+	else
+		echo A
+	fi
+}
+
 Variable.GetType() {
 	local typeInfo="$(declare -p $1 2> /dev/null || declare -p | grep "^declare -[aAign\-]* $1\(=\|$\)" || true)"
 
@@ -292,7 +386,14 @@ Variable.GetType() {
 		echo array
 	elif [[ "$typeInfo" == "declare -A"* ]]
 	then
-		echo map
+    local __object_type_ref="$1[__object_type]"
+    local __object_type="${!__object_type_ref}"
+    if [[ ! -z "${__object_type+x}" ]]
+    then
+      echo $__object_type
+    else
+		  echo map
+    fi
 	elif [[ "$typeInfo" == "declare -i"* ]]
 	then
 		echo integer
@@ -355,23 +456,27 @@ Type.CreateVar() {
           'array'|'map') eval "$__typeCreate_varName=()" ;;
           'string') eval "$__typeCreate_varName=''" ;;
           'integer') eval "$__typeCreate_varName=0" ;;
-          * ) ;;
+          * ) eval "$__typeCreate_varName=([__object_type]=$__typeCreate_varType)" ;;
         esac
       fi
-
-      case "$__typeCreate_varType" in
-        'array'|'map'|'string'|'integer') ;;
-        *)
-          local return
-          Object.New $__typeCreate_varType $__typeCreate_varName
-          eval "$__typeCreate_varName=$return"
-        ;;
-      esac
       
       ## declare method with the name of the var ##
       eval "$__typeCreate_varName() {
         handleType $__typeCreate_varName \"\$@\";
       }"
+
+      case "$__typeCreate_varType" in
+        'array'|'map'|'string'|'integer') ;;
+        *)
+          if Function.Exists ${__typeCreate_varType}.constructor
+          then
+            ${__typeCreate_varName} constructor
+          fi
+          # local return
+          # Object.New $__typeCreate_varType $__typeCreate_varName
+          # eval "$__typeCreate_varName=$return"
+        ;;
+      esac
 
     	# __oo__objects+=( $__typeCreate_varName )
 
@@ -422,8 +527,10 @@ alias global:int='_type=integer trapAssign declare -ig'
 alias global:array='_type=array trapAssign declare -ag'
 alias global:map='_type=map trapAssign declare -Ag'
 
-alias TestObject='_type=TestObject trapAssign declare'
-
+# for use in the object's methods
+this() {
+  handleType this "$@"
+}
 
 ### MAP 
 ## TODO: use vars, not $1-9 so references are resolved
@@ -447,8 +554,7 @@ map.delete() {
 map.get() {
   @resolve:this
 
-  local value="${this[$1]}"
-  @return value
+  @return:value "${this[$1]}"
 }
 
 ### /MAP
@@ -458,8 +564,16 @@ map.get() {
 string.toUpper() {
   @resolve:this
   
-  local value="hohoh o$this"
-  @return value
+  @return:value "${this^^}"
+}
+
+string.=() {
+  @resolve:this
+  @var value
+  
+  this="$value"
+  
+  @return
 }
 
 ### /STRING
@@ -482,7 +596,126 @@ array.length() {
   @return value
 }
 
+
+array.contains() {
+  @resolve:this
+  
+  local element
+  
+  @return # is it required?
+  
+  for element in "${this[@]}"
+  do 
+    [[ "$element" == "$1" ]] && return 0
+  done
+  return 1
+}
+
+array.indexOf() {
+  @resolve:this
+  
+  # Log this: $(declare -p this)
+  
+  local index
+  
+  for index in "${!this[@]}"
+  do 
+    # Log index: $index "${!this[@]}"
+    # Log value: "${this[$index]}"
+    [[ "${this[$index]}" == "$1" ]] && @return:value $index && return
+  done
+  @return:value -1
+}
+
+array.reverse() {
+  @resolve:this
+  
+  # Log reversing: $(@get this)
+  local -i length=$(this length)
+  local -a outArray
+  local -i indexFromEnd
+  local -i index
+  
+  for index in "${!this[@]}"
+  do
+    indexFromEnd=$(( $length - 1 - $index ))
+    outArray+=( "${this[$indexFromEnd]}" )
+  done
+  
+  @return outArray
+}
+
 ### /ARRAY
+
+Variable::Exists() {
+  @var variableName
+  
+  declare -p $variableName &> /dev/null
+}
+
+defineProperty() {
+  @var visibility
+  @var class
+  @var type
+  @var property
+  
+  eval "__${class}_property_names+=( $property )"
+  eval "__${class}_property_types+=( $type )"
+  eval "__${class}_property_visibilities+=( $visibility )"
+}
+
+private() {
+  # ${FUNCNAME[1]} contains the name of the class
+  local class=${FUNCNAME[1]#*:}
+  
+  defineProperty private $class "$@"
+}
+
+public() {
+  # ${FUNCNAME[1]} contains the name of the class
+  local class=${FUNCNAME[1]#*:}
+  
+  defineProperty public $class "$@"
+}
+
+class:Human() {
+  public string firstName
+  public string lastName
+  public array children
+  # public Human child
+  
+  Human.shout() {
+    @resolve:this
+    
+    this firstName toUpper
+    this child firstName 
+    
+    # $this firstName 
+    
+    # $this firstName = "one two"
+    
+    # resolve this_{property}
+    # and add methods so we can use also them
+    # like: this_firstName toUpper
+    # this_firstName="Bazyli"
+    
+    # for each this_{property}
+    # set this
+    
+    @return
+  }
+}
+
+class:Human
+alias Human="_type=Human trapAssign declare -A"
+
+# declare -p __Human_property_names
+# declare -p __Human_property_types
+
+# TODO: required parameters (via named_parameters)
+
+
+
 
 function test1() {
   string justDoIt="yes!"
@@ -520,64 +753,23 @@ function test2() {
 
 # test2 
 
-private() {
-  @var type
-  @var property
-  
-  # ${FUNCNAME[1]} contains the name of the class
-  local class=${FUNCNAME[1]#*:}
-  
-  # local propertyNamesVarExpantion=__${class}_property_names[@]
-  # local propertyTypesVarExpantion=__${class}_property_types[@]
-  
-  # echo "${!propertyNamesVarExpantion}" "$property"
-  # echo "${!propertyTypesVarExpantion}" "$type"
-  
-  eval "__${class}_property_names+=( $property )"
-  eval "__${class}_property_types+=( $type )"
-  
-  # echo "__${class}_property_names+=( $property )"
-  # echo "__${class}_property_types+=( $type )"
-  
-  # declare -ag kakaka=(one two)
-  # "${!propertyNamesVarExpantion}" 
-  # "${!propertyTypesVarExpantion}" 
-  # declare -ag 
-  # declare -ag 
-  # declare -ag __${class}_property_names=( "$property" )
-  # declare -ag __${class}_property_types=( "$type" )
+function test3() {
+  map obj=([__object_type]=Human [firstName]=Bazyli)
+  declare -p obj
+  obj firstName
 }
 
-class:Human() {
-  private string firstName
-  private string lastName
-  private Human child
-  
-  Human.shout() {
-    @resolve:this
-    
-    this firstName toUpper
-    this child firstName 
-    
-    # $this firstName 
-    
-    # $this firstName = "one two"
-    
-    # resolve this_{property}
-    # and add methods so we can use also them
-    # like: this_firstName toUpper
-    # this_firstName="Bazyli"
-    
-    # for each this_{property}
-    # set this
-    
-    @return
-  }
+# test3
+
+function test4() {
+  Human obj
+  obj firstNamea
+  obj firstName = [ Ivon ]
+  declare -p obj
+  obj firstName
 }
 
-class:Human
+test4
 
-declare -p __Human_property_names
-declare -p __Human_property_types
-
-# TODO: required parameters (via named_parameters)
+## TODO: parametric versions of string/integer/array functions
+## they could either take the variable name as param or @array 
