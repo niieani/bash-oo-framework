@@ -23,6 +23,8 @@ getDeclaration() {
   local definition=$(declare -p $variableName)
   
   local escaped="'\\\'"
+  local escapedQuotes='\\"'
+  local singleQuote='"'
   
   if [[ "$definition" =~ $regexArray ]]
   then
@@ -30,6 +32,7 @@ getDeclaration() {
   elif [[ "$definition" =~ $regex ]]
   then
     declaration="${BASH_REMATCH[2]//$escaped/}"
+    declaration="${declaration//$escapedQuotes/$singleQuote}"
   fi
   
   eval $targetVariable=\$declaration
@@ -57,15 +60,23 @@ alias @resolveThis="
   if [[ -z \${__use_this_natively+x} ]];
   then
     local __declaration;
-    if [[ -z \${this+x} ]]; 
+    local __declaration_type;
+    
+    if [[ ! -z \${returnValueDefinition+x} ]];
+    then
+      __declaration=\"\$returnValueDefinition\"
+      __declaration_type=\$returnValueType
+    elif [[ -z \${thisReference+x} ]]; 
     then
       capturePipe __declaration;
     else
-      getDeclaration \$this __declaration;
-      # local __mutableName=\$this;
-      unset this;
+      getDeclaration \$thisReference __declaration;
+      # local __mutableName=\$thisReference;
+      unset thisReference;
     fi;
     local -\${__declaration_type:--} this=\${__declaration};
+    unset __declaration;
+    unset __declaration_type;
   fi"
 
 # there could be a variable "modifiedThis", 
@@ -82,13 +93,27 @@ alias @resolveThis="
 
 @return() {
   local variableName=$1
-  if [ ! -z ${__mutableName+x} ]
+  
+  local __return_declaration
+  local __return_declaration_type
+  
+  ## if not returning anything, just update the self
+  if [[ ! -z "$variableName" ]]
   then
-    local -a __return=("$(printDeclaration this)" "$(printDeclaration $variableName)")
+    getDeclaration $variableName __return_declaration
+  elif [[ ! -z "${monad+x}" ]]
+  then
+    getDeclaration this __return_declaration
+  fi
+  
+  if [[ ! -z ${__return_self_and_result+x} ]]
+  then
+    local -a __return=("$(printDeclaration this)" "$__return_declaration" "$__return_declaration_type")
+    
     printDeclaration __return
     # __modifiedThis="$(printDeclaration this)"
   else
-    printDeclaration $variableName
+    echo "$__return_declaration"
   fi
 }
 alias @get='printDeclaration'
@@ -99,17 +124,47 @@ executeForType() {
   local type="$1"
   local variableName="$2"
   local method="$3"
-  shift; shift;
+  
+  shift; shift; shift;
   
   # local __modifiedThis
   
-  this=$variableName $type.$method "$@"
+  thisReference=$variableName $type.$method "$@"
   
   # if [ ! -z ${__modifiedThis+x} ]
   # then
     # eval $variableName=\$__modifiedThis
   # fi
-# this=result $type.$
+# thisReference=result $type.$
+}
+
+# /**
+#  * used inside handleType() for getting out the return value and updating this 
+#  */
+executeStack() {
+  DEBUG Log "will execute: $method (${params[@]})"
+  
+  # get result (0=this, 1=return_value)
+  # eval "result=\$(executeForType \"\$type\" \"\$variableName\" \"\$method\" \"\${params[@]}\")"
+  # result=$(executeForType "$type" "$variableName" "$method" "${params[@]}")
+  
+  local -a result=$(executeForType "$type" "$variableName" "$method" "${params[@]}")
+  
+  # declare -p result
+  local assignResult="${result[0]}"
+  # declare -p assignResult
+  
+  # update the object
+  eval "$variableName=$assignResult"
+  
+  # TODO: this should work directly but doesn't
+  # eval $variableName=\$assignResult
+  
+  # update the result
+  returnValueDefinition="${result[1]}"
+  returnValueType="${result[2]}"
+  
+  # TODO: act on the returnValue, not on the base
 }
 
 handleType() {
@@ -124,8 +179,10 @@ handleType() {
   
   shift
   
-  # local result=$(@get $variableName)
-  local result
+  local returnValueDefinition
+  local returnValueType
+  
+  local __return_self_and_result=true
   
   if [[ $# -gt 0 ]]
   then
@@ -136,24 +193,13 @@ handleType() {
     local prevModeTemp
     while [[ $# -gt 0 ]]
     do
-    
-      # unset result
-      # case "$type" in 
-      #   string) local result= ;;
-      #   array) local -a result=() ;;
-      #   map) local -A result=() ;;
-      #   integer) local -i result= ;;
-      # esac
-    
       prevModeTemp=$mode
       if [[ "$1" == '[' || "$1" == '{' ]]
       then
         mode=params
       elif [[ "$1" == '[]' || "$1" == ']' || "$1" == '{}' || "$1" == '}' ]]
       then
-        echo "would execute: $method ${params[@]}"
-        executeForType "$type" "$variableName" "${params[@]}"
-        result=$()
+        executeStack
         
         method=''
         params=()
@@ -166,7 +212,7 @@ handleType() {
       then
         if [[ "$prevMode" == 'method' ]]
         then
-          echo "would execute: $method ${params[@]}"
+          executeStack
         fi
         method="$1"
       fi
@@ -174,9 +220,15 @@ handleType() {
       shift
     done
     
-    if [[ "$mode" == 'method' ]]
+    if [[ "$mode" == 'method' && "${#method}" -gt 0 ]]
     then
-      echo "would execute: $method ${params[@]}"
+      executeStack
+    fi
+    
+    # finally echo the latest return value if not empty
+    if [[ ! -z "$returnValueDefinition" ]]
+    then
+      echo "$returnValueDefinition"
     fi
   else
     @get $variableName
@@ -328,53 +380,55 @@ alias map='_type=map trapAssign declare -A'
 alias TestObject='_type=TestObject trapAssign declare'
 
 
+### MAP 
+## TODO: use vars, not $1-9 so references are resolved
+
+map.set() {
+  @resolveThis
+  
+  this["$1"]="$2"
+  
+  @return #this
+}
+
+map.delete() {
+  @resolveThis
+  
+  unset this["$1"]
+  
+  @return #this
+}
+
+map.get() {
+  @resolveThis
+
+  local value="${this[$1]}"
+  @return value
+}
+
+string.toUpper() {
+  @resolveThis
+  
+  local value="hohoho"
+  @return value
+}
+
+### /MAP
+
 function core() {
   string justDoIt="yes!"
-  map ramda=([test]=ho [great]=ok)
+  map ramda=([test]=ho [great]=ok [test]="\$result ''ha'  ha" [enter]=$(printf "\na\nb\n"))
   
+  # monad=true ramda set [ "one" "yep" ]
+  ramda set [ "one" "yep" ]
+  ramda set [ 'two' "oki  dokies" ]
+  ramda delete [ enter ]
+  ramda delete [ test ]
   ramda
+  ramda get [ 'one' ]
+  ramda get [ 'one' ] toUpper []
 }
 
 core
 
-function invokeParams() {
-  local method
-  local -a params
-  local mode=method
-  local prevMode
-  local prevModeTemp
-  while [[ $# -gt 0 ]]
-  do
-    prevModeTemp=$mode
-    if [[ "$1" == '[' || "$1" == '{' ]]
-    then
-      mode=params
-    elif [[ "$1" == '[]' || "$1" == ']' || "$1" == '{}' || "$1" == '}' ]]
-    then
-      echo "would execute: $method ${params[@]}"
-      method=''
-      params=()
-      mode=method
-      prevModeTemp=params
-    elif [[ "$mode" == 'params' ]]
-    then
-      params+=("$1")
-    elif [[ "$mode" == 'method' ]]
-    then
-      if [[ "$prevMode" == 'method' ]]
-      then
-        echo "would execute: $method ${params[@]}"
-      fi
-      method="$1"
-    fi
-    prevMode=$prevModeTemp
-    shift
-  done
-  
-  if [[ "$mode" == 'method' ]]
-  then
-    echo "would execute: $method ${params[@]}"
-  fi
-}
-
-invokeParams .doIt [ param1 param2 ] .property .doIt2 [ param1 param2 ] .doMore [] .more [ ] .anotherProp
+# invokeParams .doIt [ param1 param2 ] .property .doIt2 [ param1 param2 ] .doMore [] .more [ ] .anotherProp
