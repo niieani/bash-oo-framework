@@ -65,7 +65,7 @@ Log() {
         loggers=( ${loggerList//;/ } )
         for logger in "${loggers[@]}"
         do
-            Log.Using "$logger" "$@"
+            subject="${subject:-LOG}" Log.Using "$logger" "$@"
             logged=true
         done
     fi
@@ -78,7 +78,7 @@ Log() {
             loggers=( ${loggerList//;/ } )
             for logger in "${loggers[@]}"
             do
-                Log.Using "$logger" "$@"
+                subject="${subject:-LOG}" Log.Using "$logger" "$@"
                 logged=true
             done
         fi
@@ -92,7 +92,7 @@ Log() {
             loggers=( ${loggerList//;/ } )
             for logger in "${loggers[@]}"
             do
-                Log.Using "$logger" "$@"
+                subject="${subject:-LOG}" Log.Using "$logger" "$@"
             done
         fi
     fi
