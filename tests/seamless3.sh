@@ -832,8 +832,10 @@ function test6() {
 
 function test7() {
   Human obj
-  # obj child child child children push [ '  "a"  b  c  ' ]
-  obj @functional child child child children push '  "a"  b  c  '
+  obj child child child children push [ '  "a"  b  c  ' ]
+  # obj @functional child child child children push '  "a"  b  c  '
+  
+  # obj { child child child children push 'abc' } { get 'abc' } { toUpper }
   
   test "$(obj child child child children)" == '([0]="  \"a\"  b  c  ")'
   declare -p obj
