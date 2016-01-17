@@ -37,7 +37,6 @@ getDeclaration() {
   
   eval $targetVariable=\$declaration
   eval ${targetVariable}_type=\${BASH_REMATCH[1]}
-  # __declaration_type=${BASH_REMATCH[1]}
 }
 
 printDeclaration() {
@@ -143,15 +142,7 @@ executeMethodOfType() {
   
   shift; shift; shift;
   
-  # local __modifiedThis
-  
   thisReference=$variableName $type.$method "$@"
-  
-  # if [ ! -z ${__modifiedThis+x} ]
-  # then
-    # eval $variableName=\$__modifiedThis
-  # fi
-# thisReference=result $type.$
 }
 
 # /**
@@ -159,10 +150,6 @@ executeMethodOfType() {
 #  */
 executeStack() {
   DEBUG Log "will execute: $method (${params[@]})"
-  
-  # get result (0=this, 1=return_value)
-  # eval "result=\$(executeMethodOfType \"\$type\" \"\$variableName\" \"\$method\" \"\${params[@]}\")"
-  # result=$(executeMethodOfType "$type" "$variableName" "$method" "${params[@]}")
   
   if [[ ! -z "$returnValueDefinition" && $affectTheInitialVariable == false ]]
   then
@@ -182,8 +169,6 @@ executeStack() {
     local -a result=$resultString
     # eval "local -a result=$resultString"
   fi
-  
-  #$(__return_self_and_result=true executeMethodOfType "$type" "$variableName" "$method" "${params[@]}")
   
   unset __self
   
@@ -217,7 +202,7 @@ executeStack() {
 }
 
 handleType() {
-  local variableName=$1
+  local variableName="$1"
   local type=$(Variable.GetType $variableName)
   local affectTheInitialVariable=true
   local -a propertyTree=("$1")
@@ -240,10 +225,16 @@ handleType() {
     local mode=method
     local prevMode
     local prevModeNext
+    local treatTheRestAsParams=false
+    
     while [[ $# -gt 0 ]]
     do
       prevModeNext=$mode
-      if [[ "$1" == '[' || "$1" == '{' ]]
+      if [[ "$1" == '@' ]]
+      then
+        # mode=method
+        treatTheRestAsParams=true
+      elif [[ "$1" == '[' || "$1" == '{' ]]
       then
         mode=params
       elif [[ "$1" == '[]' || "$1" == ']' || "$1" == '{}' || "$1" == '}' ]]
@@ -276,7 +267,7 @@ handleType() {
           
           if [[ $index -ge 0 ]]
           then
-            Log "traversing to a child property $property of type $type"
+            DEBUG Log "traversing to a child property $property of type $type"
             
             local newType=__${type}_property_types[$index]
             type=${!newType}
@@ -292,8 +283,8 @@ handleType() {
               local -$typeParam "__$property=${!propertyValueIndirect}"
             fi
             
-            Log ".$property new $type value is: " # ${propertyValueIndirect} vs '${!propertyValueIndirect}'
-            Log "$(declare -p __$property)"
+            DEBUG Log ".$property new $type value is: " # ${propertyValueIndirect} vs '${!propertyValueIndirect}'
+            DEBUG Log "$(declare -p __$property)"
             # affectTheInitialVariable=false
             
             ## TODO: variableName needs to be unique (add count at the end)
@@ -306,23 +297,30 @@ handleType() {
           fi
           ### /selectProperty          
         else
-          if [[ "$prevMode" == 'method' ]]
+          if [[ "$treatTheRestAsParams" == 'true' ]]
+          then
+            mode=params
+          elif [[ "$prevMode" == 'method' ]]
           then
             executeStack
           fi
           method="$1"
+          
         fi
       fi
       prevMode=$prevModeNext
+      
+      subject="type handling" Log "iter: $1 | prevMode: $prevMode | mode: $mode | type: $type | variable: $variableName | method: $method | #params: ${#params[@]}"
+      
       shift
     done
     
-    if [[ "$mode" == 'method' && "${#method}" -gt 0 ]]
+    if [[ "$mode" == 'method' && "${#method}" -gt 0 || "$treatTheRestAsParams" == 'true' ]]
     then
       executeStack
     elif [[ "$prevMode" == 'property' ]]
     then
-      subject='property' Log 'print out the property' $variableName
+      DEBUG subject='property' Log 'print out the property' $variableName
       ## print out the property
       @get $variableName
     fi
@@ -357,7 +355,7 @@ handleType() {
         # Log "Will eval: $parentVarName[$property]=\"\$propertyDefinition\""
         eval "$parentVarName[$property]=\"\$propertyDefinition\""
         
-        Log "SETTING: ($i) $parentVarName.$property = \"$propertyDefinition\""  
+        DEBUG Log "SETTING: ($i) $parentVarName.$property = \"$propertyDefinition\""  
         
         property=$parent
       done
@@ -429,7 +427,7 @@ Variable.GetType() {
 	then
     local __object_type_ref="$1[__object_type]"
     local __object_type="${!__object_type_ref}"
-    if [[ ! -z "${__object_type+x}" ]]
+    if [[ ! -z "${__object_type}" ]]
     then
       echo $__object_type
     else
@@ -625,7 +623,7 @@ array.push() {
   @resolve:this
   @var value
   
-  subject=array.push Log $(@get this)
+  # subject=array.push Log $(@get this)
   this+=("$value")
   
   @return
@@ -656,7 +654,7 @@ array.contains() {
 array.indexOf() {
   @resolve:this
   
-  Log this: $(declare -p this)
+  # Log this: $(declare -p this)
   
   local index
   
@@ -738,36 +736,23 @@ class:Human() {
     this children push [ 'shout' ]
     local a=$(this test)
     
-    # local a=shout
-    # local a=$(__return_self_and_result=false __local_return_self_and_result=false this kill)
-    
-    # this firstName toUpper 1>2
-    # this child firstName 
-    
-    # $this firstName 
-    
-    # $this firstName = "one two"
-    
-    # resolve this_{property}
-    # and add methods so we can use also them
-    # like: this_firstName toUpper
-    # this_firstName="Bazyli"
-    
-    # for each this_{property}
-    # set this
     @return a
-    # @return:value $(this firstName) #$(this firstName toUpper)
   }
 }
 
-class:Human
-alias Human="_type=Human trapAssign declare -A"
+initializeClass() {
+  @var name
+  class:$name
+  alias $name="_type=$name trapAssign declare -A"
+}
 
-# declare -p __Human_property_names
-# declare -p __Human_property_types
+initializeClass Human
+
+# class:Human
+# alias Human="_type=Human trapAssign declare -A"
 
 # TODO: required parameters (via named_parameters)
-
+# TODO: special overriden 'echo' and 'printf' function in methods that saves to a variable
 
 function test1() {
   string justDoIt="yes!"
@@ -781,6 +766,10 @@ function test1() {
   ramda
   ramda get [ 'one' ]
   ramda get [ 'one' ] toUpper []
+  
+  # ramda : get [ 'one' ] | string.toUpper
+  # ramda { get 'one' } { toUpper }
+  
   ramda set [ 'one' "$(ramda get [ 'one' ] toUpper [])" ]
   ramda
   
@@ -843,18 +832,20 @@ function test6() {
 
 function test7() {
   Human obj
-  obj child child child children push [ '  "a"  b  c  ' ]
+  # obj child child child children push [ '  "a"  b  c  ' ]
+  obj @functional child child child children push '  "a"  b  c  '
   
   test "$(obj child child child children)" == '([0]="  \"a\"  b  c  ")'
-  # declare -p obj
+  declare -p obj
 }
 
-# test7
+test7
 
 function test8() {
   Human obj
   
-  obj firstName = [ Bazyli ]
+  # obj firstName = [ Bazyli ]
+  obj @ firstName = Bazyli
   obj shout
   obj shout
   
@@ -862,7 +853,11 @@ function test8() {
   # obj
 }
 
-test8
+# test8
 
 ## TODO: parametric versions of string/integer/array functions
 ## they could either take the variable name as param or @array 
+
+## obj firstname = Bazyli
+## arr @ push Bazyli
+## obj @ firstname = Bazyli
