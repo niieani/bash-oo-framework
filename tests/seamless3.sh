@@ -57,6 +57,8 @@ capturePipeFaithful() {
 ## note: declaration needs to be trimmed, 
 ## since bash adds an enter at the end, hence %?
 alias @resolve:this="
+  local __local_return_self_and_result=false
+  [[ \$__return_self_and_result == 'true' ]] && local __local_return_self_and_result=true && local __return_self_and_result=false
   # TODO: local __access_private_members_of=
   if [[ -z \${__use_this_natively+x} ]];
   then
@@ -64,15 +66,18 @@ alias @resolve:this="
     
     if [[ ! -z \"\${useReturnValueDefinition}\" ]];
     then
+      DEBUG subject='@resolve:this' Log 'using: ReturnValueDefinition'
       local __declaration_type;
       __declaration=\"\$returnValueDefinition\"
       __declaration_type=\$returnValueType
     elif [[ -z \${thisReference+x} ]]; 
     then
+      DEBUG subject='@resolve:this' Log 'using: pipe'
       capturePipe __declaration;
       local __declaration_type=\$(Variable.GetParamFromType \${FUNCNAME[0]%.*})
       # Log capturing via pipe \${__declaration_type}
     else
+      DEBUG subject='@resolve:this' Log 'using: thisReference'
       getDeclaration \$thisReference __declaration;
       unset thisReference;
     fi;
@@ -109,7 +114,7 @@ alias @resolve:this="
     getDeclaration this __return_declaration
   fi
   
-  if [[ "${__return_self_and_result}" == "true" ]]
+  if [[ "${__local_return_self_and_result}" == "true" || "${__return_self_and_result}" == "true" ]]
   then
     # Log "returning heavy"
     local -a __return=("$(printDeclaration this)" "$__return_declaration" "$__return_declaration_type")
@@ -140,7 +145,7 @@ executeMethodOfType() {
   
   # local __modifiedThis
   
-  __return_self_and_result=true thisReference=$variableName $type.$method "$@"
+  thisReference=$variableName $type.$method "$@"
   
   # if [ ! -z ${__modifiedThis+x} ]
   # then
@@ -165,7 +170,20 @@ executeStack() {
     variableName=__self
   fi
   
-  local -a result=$(executeMethodOfType "$type" "$variableName" "$method" "${params[@]}")
+  # Log "Will assign: result=$(__return_self_and_result=true executeMethodOfType "$type" "$variableName" "$method" "${params[@]}")"
+  local resultString=$(__return_self_and_result=true executeMethodOfType "$type" "$variableName" "$method" "${params[@]}")
+  
+  if [[ -z "$resultString" ]]
+  then
+    ## TODO: debug these situations
+    local -a result=( "$(@get $variableName)" "" "" )
+  else
+    # Log "wtf $resultString"
+    local -a result=$resultString
+    # eval "local -a result=$resultString"
+  fi
+  
+  #$(__return_self_and_result=true executeMethodOfType "$type" "$variableName" "$method" "${params[@]}")
   
   unset __self
   
@@ -250,13 +268,16 @@ handleType() {
           ### selecting property: 
           local property="$1"
           
-          Log "traversing to a child property $property of type $type"
+          # Log found index __${type}_property_names $(@get __${type}_property_names | __return_self_and_result=false array.indexOf $property)
+          # Log prop: $property of [$(@get __${type}_property_names)]
           
-          # local __return_self_and_result=false
-          local -i index=$(@get __${type}_property_names | array.indexOf $property)
+          ## TODO: teoretically we can get rid of: __return_self_and_result=false
+          local -i index=$(@get __${type}_property_names | __return_self_and_result=false array.indexOf $property)
           
           if [[ $index -ge 0 ]]
           then
+            Log "traversing to a child property $property of type $type"
+            
             local newType=__${type}_property_types[$index]
             type=${!newType}
             local typeParam=$(Variable.GetParamFromType $type)
@@ -316,7 +337,7 @@ handleType() {
     if [[ ${#propertyTree[@]} -gt 1 ]]
     then
       # Log PropertyTree: $(@get propertyTree)
-      local -a reversedPropertyTree=$(@get propertyTree | array.reverse)
+      local -a reversedPropertyTree=$(@get propertyTree | __return_self_and_result=false array.reverse)
       
       local -i i=$propertyTreeLength
       local property
@@ -333,6 +354,7 @@ handleType() {
         (( $i == 0 )) && parentVarName=$parent
         
         local propertyDefinition="$(@get __$property)"
+        # Log "Will eval: $parentVarName[$property]=\"\$propertyDefinition\""
         eval "$parentVarName[$property]=\"\$propertyDefinition\""
         
         Log "SETTING: ($i) $parentVarName.$property = \"$propertyDefinition\""  
@@ -634,7 +656,7 @@ array.contains() {
 array.indexOf() {
   @resolve:this
   
-  # Log this: $(declare -p this)
+  Log this: $(declare -p this)
   
   local index
   
@@ -704,11 +726,23 @@ class:Human() {
   public array children
   public Human child
   
+  Human.test() {
+    @resolve:this
+    @return:value "children: $(this children)"
+  }
+  
   Human.shout() {
     @resolve:this
     
-    this firstName toUpper
-    this child firstName 
+    this firstName = [ "$(this firstName) shout!" ]
+    this children push [ 'shout' ]
+    local a=$(this test)
+    
+    # local a=shout
+    # local a=$(__return_self_and_result=false __local_return_self_and_result=false this kill)
+    
+    # this firstName toUpper 1>2
+    # this child firstName 
     
     # $this firstName 
     
@@ -721,8 +755,8 @@ class:Human() {
     
     # for each this_{property}
     # set this
-    
-    @return
+    @return a
+    # @return:value $(this firstName) #$(this firstName toUpper)
   }
 }
 
@@ -815,7 +849,20 @@ function test7() {
   # declare -p obj
 }
 
-test7
+# test7
+
+function test8() {
+  Human obj
+  
+  obj firstName = [ Bazyli ]
+  obj shout
+  obj shout
+  
+  declare -p obj
+  # obj
+}
+
+test8
 
 ## TODO: parametric versions of string/integer/array functions
 ## they could either take the variable name as param or @array 
