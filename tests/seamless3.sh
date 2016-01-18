@@ -98,6 +98,8 @@ alias @resolve:this="
 # and manual rewriting: someMap=$(someMap set a 30)
 # would not be required 
 
+declare __return_separator=52A586A48E074BB6812DCFDC790841F5
+
 @return() {
   local variableName=$1
   
@@ -118,6 +120,7 @@ alias @resolve:this="
     # Log "returning heavy"
     local -a __return=("$(printDeclaration this)" "$__return_declaration" "$__return_declaration_type")
     
+    printf $__return_separator
     printDeclaration __return
     # __modifiedThis="$(printDeclaration this)"
   elif [[ "${#__return_declaration}" -gt 0 ]]
@@ -160,6 +163,11 @@ executeStack() {
   # Log "Will assign: result=$(__return_self_and_result=true executeMethodOfType "$type" "$variableName" "$method" "${params[@]}")"
   local resultString=$(__return_self_and_result=true executeMethodOfType "$type" "$variableName" "$method" "${params[@]}")
   
+  ## TODO: some problem here sometimes
+  DEBUG Log "Result string: $resultString"
+  local echoed="${resultString%%$__return_separator*}"
+  resultString="${resultString##*$__return_separator}"
+  
   if [[ -z "$resultString" ]]
   then
     ## TODO: debug these situations
@@ -174,11 +182,15 @@ executeStack() {
   
   # declare -p result
   local assignResult="${result[0]}"
+  
+  DEBUG Log "Assign Result:"
+  DEBUG Log "START $assignResult END"
   # declare -p assignResult
   
   local typeParam=$(Variable.GetParamFromType $type)
   
-  # Log "Will eval: $variableName=$assignResult"
+  # Log "Will eval: | $variableName=$assignResult |"
+  
   if [[ "$typeParam" =~ [aA] ]]
   then
     # update the object
@@ -196,6 +208,12 @@ executeStack() {
     affectTheInitialVariable=false
     type=$(Variable.GetTypeFromParam $returnValueType)
   fi
+  
+  printf "$echoed"
+  
+  ## cleanup vars:
+  method=''
+  params=()
   
   # TODO: this should work directly but doesn't
   # eval $variableName=\$assignResult
@@ -218,6 +236,19 @@ handleType() {
   local returnValueDefinition
   local returnValueType
   
+  local multiExpression=false
+  
+  if [[ "$1" == ':' ]]
+  then
+    multiExpression=true
+    shift
+  fi
+  
+  DEBUG subject="type handling" Log "START ANALYZING: ($type) $variableName $@"
+  DEBUG subject="type handling" Log "WHAT: $(declare -p $variableName)"
+  
+  # Log multiExpression $multiExpression
+  
   if [[ $# -gt 0 ]]
   then
     local method
@@ -225,24 +256,36 @@ handleType() {
     local mode=method
     local prevMode
     local prevModeNext
-    local treatTheRestAsParams=false
+    local treatTheRestAsParams=true
+    local bracketsStarted=false
+    local -i closingBracketCount=0
     
     while [[ $# -gt 0 ]]
     do
       prevModeNext=$mode
-      if [[ "$1" == '@' ]]
+      # if [[ "$1" == '@' ]]
+      # then
+      #   # mode=method
+      #   treatTheRestAsParams=true
+      # el
+      if [[ $multiExpression == 'true' ]] && [[ "$1" == '{' ]]
       then
-        # mode=method
-        treatTheRestAsParams=true
-      elif [[ "$1" == '[' || "$1" == '{' ]]
+        if [[ $bracketsStarted == 'true' ]]
+        then
+          ## handle edge case of '}' as actual parameter
+          while (( closingBracketCount+=-1 ))
+          do
+            params+=( '}' )
+          done
+          
+          executeStack
+        fi
+        bracketsStarted=true
+        # treatTheRestAsParams=false
+        # mode=params
+      elif [[ $multiExpression == 'true' ]] && [[ "$1" == '}' ]]
       then
-        mode=params
-      elif [[ "$1" == '[]' || "$1" == ']' || "$1" == '{}' || "$1" == '}' ]]
-      then
-        executeStack
-        
-        method=''
-        params=()
+        closingBracketCount+=1
         mode=method
         prevModeNext=params
       elif [[ "$mode" == 'params' ]]
@@ -252,8 +295,9 @@ handleType() {
       then
         # Log $(@get __${type}_property_names | array.indexOf $1) $1 idx
         # Log $(@get __${type}_property_names | array.contains $1 && echo t)
-        if Variable::Exists __${type}_property_names && 
-            @get __${type}_property_names | array.contains $1
+        local typeSanitized="${type//[^a-zA-Z0-9]/_}"
+        if Variable::Exists __${typeSanitized}_property_names && 
+            @get __${typeSanitized}_property_names | array.contains $1
         then
           # stack now belongs to:
           ### selecting property: 
@@ -263,13 +307,13 @@ handleType() {
           # Log prop: $property of [$(@get __${type}_property_names)]
           
           ## TODO: teoretically we can get rid of: __return_self_and_result=false
-          local -i index=$(@get __${type}_property_names | __return_self_and_result=false array.indexOf $property)
+          local -i index=$(@get __${typeSanitized}_property_names | __return_self_and_result=false array.indexOf $property)
           
           if [[ $index -ge 0 ]]
           then
             DEBUG Log "traversing to a child property $property of type $type"
             
-            local newType=__${type}_property_types[$index]
+            local newType=__${typeSanitized}_property_types[$index]
             type=${!newType}
             local typeParam=$(Variable.GetParamFromType $type)
             
@@ -310,14 +354,17 @@ handleType() {
       fi
       prevMode=$prevModeNext
       
-      subject="type handling" Log "iter: $1 | prevMode: $prevMode | mode: $mode | type: $type | variable: $variableName | method: $method | #params: ${#params[@]}"
+      DEBUG subject="type handling" Log "iter: $1 | prevMode: $prevMode | mode: $mode | type: $type | variable: $variableName | method: $method | #params: ${#params[@]}"
       
       shift
     done
     
-    if [[ "$mode" == 'method' && "${#method}" -gt 0 || "$treatTheRestAsParams" == 'true' ]]
+    if [[ "${#method}" -gt 0 ]]
     then
-      executeStack
+      if [[ "$mode" == 'method' || "$treatTheRestAsParams" == 'true' ]]
+      then
+        executeStack
+      fi
     elif [[ "$prevMode" == 'property' ]]
     then
       DEBUG subject='property' Log 'print out the property' $variableName
@@ -325,6 +372,7 @@ handleType() {
       @get $variableName
     fi
     
+    ## TODO: shouldn't this be an elif ?
     # finally echo the latest return value if not empty
     if [[ ! -z "$returnValueDefinition" ]]
     then
@@ -444,7 +492,8 @@ Variable.GetType() {
 	fi
 }
 
-Type.CreateVar() {
+Variable.TrapAndCreate() {
+  # set -x
     # USE DEFAULT IFS IN CASE IT WAS CHANGED - important!
     local IFS=$' \t\n'
 
@@ -453,8 +502,11 @@ Type.CreateVar() {
 
     shift
 
+    Log "${commandWithArgs[*]}"
+    
     if [[ "$command" == "trap" || "$command" == "l="* || "$command" == "_type="* ]]
     then
+        # set +x 
         return 0
     fi
 
@@ -462,6 +514,7 @@ Type.CreateVar() {
     then
         __typeCreate_next=true
         # Console.WriteStdErr "Will assign next one"
+        # set +x
         return 0
     fi
 
@@ -478,6 +531,7 @@ Type.CreateVar() {
     # TODO: make this better:
     if [[ "$varValue" == "$varName" ]]
     then
+      # Log "equal $varName=$varValue"
     	local varValue=""
     fi
 
@@ -487,7 +541,7 @@ Type.CreateVar() {
       # Console.WriteStdErr --
       #Console.WriteStdErr $tempName
 
-    	DEBUG Log "creating $__typeCreate_varName ($__typeCreate_varType) = $__typeCreate_varValue"
+    	Log "creating $__typeCreate_varName ($__typeCreate_varType) = $__typeCreate_varValue"
 
     	if [[ -z "$__typeCreate_varValue" ]]
       then
@@ -509,7 +563,9 @@ Type.CreateVar() {
         *)
           if Function.Exists ${__typeCreate_varType}.constructor
           then
-            ${__typeCreate_varName} constructor
+            __typeCreate_runConstructor=${__typeCreate_varName}
+            Log __typeCreate_runConstructor $__typeCreate_runConstructor
+            # ${__typeCreate_varName} constructor
           fi
           # local return
           # Object.New $__typeCreate_varType $__typeCreate_varName
@@ -544,6 +600,7 @@ Type.CreateVar() {
 
         __typeCreate_paramNo+=1
     fi
+    # set +x
 }
 
 Type.CaptureParams() {
@@ -554,15 +611,16 @@ Type.CaptureParams() {
 }
 
 # NOTE: true; true; at the end is required to workaround an edge case where TRAP doesn't behave properly
-alias trapAssign='Type.CaptureParams; declare -i __typeCreate_normalCodeStarted=0; trap "declare -i __typeCreate_paramNo; Type.CreateVar \"\$BASH_COMMAND\" \"\$@\"; [[ \$__typeCreate_normalCodeStarted -ge 2 ]] && trap - DEBUG && unset __typeCreate_varType && unset __typeCreate_varName && unset __typeCreate_varValue && unset __typeCreate_paramNo" DEBUG; true; true; '
+alias trapAssign='Type.CaptureParams; declare -i __typeCreate_normalCodeStarted=0; trap "declare -i __typeCreate_paramNo; Variable.TrapAndCreate \"\$BASH_COMMAND\" \"\$@\"; [[ \$__typeCreate_normalCodeStarted -ge 2 ]] && trap - DEBUG && \${__typeCreate_runConstructor} constructor; [[ \$__typeCreate_normalCodeStarted -ge 2 ]] && unset __typeCreate_runConstructor && unset __typeCreate_varType && unset __typeCreate_varName && unset __typeCreate_varValue && unset __typeCreate_paramNo" DEBUG; true; true; '
+## TODO: add constructor running as the UNTRAP TRAP
 alias reference='_type=reference trapAssign declare -n'
 alias string='_type=string trapAssign declare'
-alias int='_type=integer trapAssign declare -i'
+alias integer='_type=integer trapAssign declare -i'
 alias array='_type=array trapAssign declare -a'
 alias map='_type=map trapAssign declare -A'
 alias global:reference='_type=reference trapAssign declare -ng'
 alias global:string='_type=string trapAssign declare -g'
-alias global:int='_type=integer trapAssign declare -ig'
+alias global:integer='_type=integer trapAssign declare -ig'
 alias global:array='_type=array trapAssign declare -ag'
 alias global:map='_type=map trapAssign declare -Ag'
 
@@ -615,7 +673,41 @@ string.=() {
   @return
 }
 
+UUID:generate() {
+  ## https://gist.github.com/markusfisch/6110640
+  local N B C='89ab'
+
+  for (( N=0; N < 16; ++N ))
+  do
+    B=$(( $RANDOM%256 ))
+
+    case $N in
+      6)
+        printf '4%x' $(( B%16 ))
+        ;;
+      8)
+        printf '%c%x' ${C:$RANDOM%${#C}:1} $(( B%16 ))
+        ;;
+      3 | 5 | 7 | 9)
+        printf '%02x-' $B
+        ;;
+      *)
+        printf '%02x' $B
+        ;;
+    esac
+  done
+}
+
 ### /STRING
+
+integer.=() {
+  @resolve:this
+  @var value
+  
+  this="$value"
+  
+  @return
+}
 
 ### ARRAY
 
@@ -667,11 +759,29 @@ array.indexOf() {
   @return:value -1
 }
 
+# static version
+array:reverse() {
+  @params this
+  
+  local -i length=${#this[@]}  #$(this length)
+  local -a outArray
+  local -i indexFromEnd
+  local -i index
+  
+  for index in "${!this[@]}"
+  do
+    indexFromEnd=$(( $length - 1 - $index ))
+    outArray+=( "${this[$indexFromEnd]}" )
+  done
+  
+  @get outArray
+}
+
 array.reverse() {
   @resolve:this
   
   # Log reversing: $(@get this)
-  local -i length=$(this length)
+  local -i length=${#this[@]}  #$(this length)
   local -a outArray
   local -i indexFromEnd
   local -i index
@@ -699,9 +809,11 @@ defineProperty() {
   @var type
   @var property
   
-  eval "__${class}_property_names+=( $property )"
-  eval "__${class}_property_types+=( $type )"
-  eval "__${class}_property_visibilities+=( $visibility )"
+  class="${class//[^a-zA-Z0-9]/_}"
+  
+  eval "__${class}_property_names+=( '$property' )"
+  eval "__${class}_property_types+=( '$type' )"
+  eval "__${class}_property_visibilities+=( '$visibility' )"
 }
 
 private() {
@@ -732,8 +844,8 @@ class:Human() {
   Human.shout() {
     @resolve:this
     
-    this firstName = [ "$(this firstName) shout!" ]
-    this children push [ 'shout' ]
+    this firstName = "$(this firstName) shout!"
+    this children push 'shout'
     local a=$(this test)
     
     @return a
@@ -759,18 +871,18 @@ function test1() {
   map ramda=([test]=ho [great]=ok [test]="\$result ''ha'  ha" [enter]=$(printf "\na\nb\n"))
   
   # monad=true ramda set [ "one" "yep" ]
-  ramda set [ "one" "yep" ]
-  ramda set [ 'two' "oki  dokies" ]
-  ramda delete [ enter ]
-  ramda delete [ test ]
+  ramda set "one" "yep"
+  ramda set 'two' "oki  dokies"
+  ramda delete enter
+  ramda delete test
   ramda
-  ramda get [ 'one' ]
-  ramda get [ 'one' ] toUpper []
+  ramda get 'one'
+  ramda : { get 'one' } { toUpper }
   
   # ramda : get [ 'one' ] | string.toUpper
   # ramda { get 'one' } { toUpper }
   
-  ramda set [ 'one' "$(ramda get [ 'one' ] toUpper [])" ]
+  ramda set 'one' "$(ramda '{' get 'one' } '{' toUpper })"
   ramda
   
   map polio=$(ramda)
@@ -787,8 +899,8 @@ function test1() {
 
 function test2() {
   array hovno
-  hovno push [ one ]
-  hovno push [ two ]
+  hovno push one
+  hovno push two
   hovno
 }
 
@@ -804,7 +916,7 @@ function test3() {
 
 function test4() {
   Human obj
-  obj firstName = [ Ivon ]
+  obj firstName = Ivon
   declare -p obj
   obj firstName
 }
@@ -813,8 +925,8 @@ function test4() {
 
 function test5() {
   Human obj
-  obj children push [ '  "a"  b  c  ' ]
-  obj children push [ "123 $(printf "\ntest")" ]
+  obj children push '  "a"  b  c  '
+  obj children push "123 $(printf "\ntest")"
   # declare -p obj
   obj children
 }
@@ -823,7 +935,7 @@ function test5() {
 
 function test6() {
   Human obj
-  obj child firstName = [ "Ivon \" $(printf "\ntest") 'Ivonova'" ]
+  obj child firstName = "Ivon \" $(printf "\ntest") 'Ivonova'"
   obj child firstName
   # declare -p obj
 }
@@ -832,8 +944,7 @@ function test6() {
 
 function test7() {
   Human obj
-  obj child child child children push [ '  "a"  b  c  ' ]
-  # obj @functional child child child children push '  "a"  b  c  '
+  obj child child child children push '  "a"  b  c  '
   
   # obj { child child child children push 'abc' } { get 'abc' } { toUpper }
   
@@ -841,21 +952,45 @@ function test7() {
   declare -p obj
 }
 
-test7
+# test7
 
 function test8() {
   Human obj
   
   # obj firstName = [ Bazyli ]
-  obj @ firstName = Bazyli
+  obj : { firstName = Bazyli } { toUpper }
+  # obj firstName = Bazyli
+  
   obj shout
   obj shout
   
-  declare -p obj
-  # obj
+  # declare -p obj
 }
 
 # test8
+
+function test9() {
+  array hovno
+  hovno : { push one }
+  hovno push two
+  hovno
+}
+
+# test9
+
+function test10() {
+  Human obj
+  
+  # obj firstName = [ Bazyli ]
+  obj child child firstName = Bazyli
+  
+  obj child child firstName
+  
+  # declare -p obj
+  # obj
+}
+
+# test10
 
 ## TODO: parametric versions of string/integer/array functions
 ## they could either take the variable name as param or @array 
@@ -863,3 +998,167 @@ function test8() {
 ## obj firstname = Bazyli
 ## arr @ push Bazyli
 ## obj @ firstname = Bazyli
+
+class:UI.Cursor() {
+  # http://askubuntu.com/questions/366103/saving-more-corsor-positions-with-tput-in-bash-terminal
+	
+	private integer X
+	private integer Y
+	
+  UI.Cursor.capture() {
+    @resolve:this
+    
+    exec < /dev/tty
+    local oldstty=$(stty -g)
+    stty raw -echo min 0
+    echo -en "\033[6n" > /dev/tty
+    IFS=';' read -r -d R -a pos
+    stty $oldstty
+    
+    this X = $((${pos[0]:2} - 1)) # TODO: needs to be - 2
+    this Y = $((${pos[1]} - 1)) 
+    
+    @return
+  }
+  
+  UI.Cursor.restore() {
+    @resolve:this
+    
+    tput cup $(this X) $(this Y)
+    
+    @return
+  }
+}
+
+initializeClass UI.Cursor
+
+function testCursor() {
+  UI.Cursor cursor
+  
+  cursor capture
+  
+  echo lol
+  
+  sleep 2
+  
+  cursor restore
+  
+  echo lila
+}
+
+# testCursor
+
+boolean.__getter__() {
+  : ## TODO implement getters (they're executed instead of @get if executed directly)
+}
+
+## TEST LIB
+
+class:StaticTest(){
+
+    private UI.Cursor onStartCursor
+    private string errors
+    private string groupName
+    
+    StaticTest.constructor() {
+      @resolve:this
+      
+      # array wtf
+      # wtf push 123
+      # set -x
+      # UI.Cursor tempCursora
+      # set +x
+      
+      # _type=UI.Cursor trapAssign declare -A tempCursora
+      # true
+      # true
+      this[onStartCursor]='([__object_type]="UI.Cursor" )'
+      
+      # set -x
+      # set +x
+      # Log YEP $(declare -p tempCursora)
+      # eval "this[onStartCursor]=$(tempCursor)"
+      
+      @return
+    }
+    
+    StaticTest.start() {
+        @resolve:this
+        @var verb
+        @var description
+
+        this onStartCursor capture
+        echo "$(UI.Color.Yellow)$(UI.Powerline.PointingArrow) $(UI.Color.Yellow)[$(UI.Color.LightGray)$(UI.Color.Bold)TEST$(UI.Color.NoBold)$(UI.Color.Yellow)] $(UI.Color.White)${verb} ${description}$(UI.Color.Default)"
+        @return
+    }
+    
+    StaticTest.OK() {
+        @resolve:this
+        @var printInPlace=true
+        
+        [[ $printInPlace == true ]] && this onStartCursor restore
+        
+        echo "$(UI.Color.Green)$(UI.Powerline.OK) $(UI.Color.Yellow)[ $(UI.Color.Green)$(UI.Color.Bold)OK$(UI.Color.NoBold) $(UI.Color.Yellow)]$(UI.Color.Default)"
+        @return
+    }
+
+    StaticTest.echoedOK() {
+        @resolve:this
+        this OK false
+    }
+    
+    StaticTest.fail() {
+        @resolve:this
+        #Test.OnStartCursor.Restore
+        echo "$(UI.Color.Red)$(UI.Powerline.Fail) $(UI.Color.Yellow)[$(UI.Color.Red)$(UI.Color.Bold)FAIL$(UI.Color.NoBold)$(UI.Color.Yellow)]$(UI.Color.Default)"
+        @return
+    }
+
+    StaticTest.displaySummary() {
+        @resolve:this
+        if [[ $(this errors) == true ]]
+        then
+          echo "$(UI.Powerline.ArrowLeft) $(UI.Color.Magenta)Completed [$(Test groupName)]: $(UI.Color.Default)$(UI.Color.Red)There were errors $(UI.Color.Default)$(UI.Powerline.Lightning)"
+          this errors = false
+        else
+          echo "$(UI.Powerline.ArrowLeft) $(UI.Color.Magenta)Completed [$(Test groupName)]: $(UI.Color.Default)$(UI.Color.Yellow)Test group completed succesfully $(UI.Color.Default)$(UI.Powerline.ThumbsUp)"
+        fi
+        @return
+    }
+
+    StaticTest.newGroup() {
+        @resolve:this
+        @var groupName
+        
+        echo "$(UI.Powerline.ArrowRight)" $(UI.Color.Magenta)Testing [$groupName]: $(UI.Color.Default)
+        
+        this groupName = "$groupName"
+        
+        @return
+    }
+}
+
+initializeClass StaticTest
+
+echo hi
+StaticTest Test
+Test constructor
+
+alias caught="echo \"CAUGHT: $(UI.Color.Red)\$__BACKTRACE_COMMAND__$(UI.Color.Default) in \$__BACKTRACE_SOURCE__:\$__BACKTRACE_LINE__\""
+alias it="Test start it"
+alias expectPass="Test OK; catch { Test errors = true; Test fail; }"
+alias expectOutputPass="Test echoedOK; catch { Test errors = true; Test fail; }"
+alias expectFail='catch { caught; Test echoedOK; }; test $? -eq 1 && Test errors = false; '
+
+testtest() {
+  Test newGroup "Objects"
+  
+  it 'should work'
+  try
+    true
+  expectPass
+  
+  Test displaySummary
+}
+
+testtest
