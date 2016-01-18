@@ -31,12 +31,23 @@ getDeclaration() {
     declaration="${BASH_REMATCH[2]//$escaped/}"
   elif [[ "$definition" =~ $regex ]]
   then
-    declaration="${BASH_REMATCH[2]//$escaped/}"
+    declaration="${BASH_REMATCH[2]//$escaped/}" ## TODO: is this transformation needed?
     declaration="${declaration//$escapedQuotes/$singleQuote}"
   fi
   
-  eval $targetVariable=\$declaration
-  eval ${targetVariable}_type=\${BASH_REMATCH[1]}
+  local variableType
+  
+  local objectTypeIndirect="$variableName[__object_type]"
+  if [[ ! -z "${!objectTypeIndirect}" ]]
+  then
+    variableType="${!objectTypeIndirect}"
+  else
+    variableType="$(Variable.GetTypeFromParam ${BASH_REMATCH[1]})"
+  fi
+  
+  eval "$targetVariable=\$declaration"
+  eval "${targetVariable}_type=\$variableType"
+  # eval "${targetVariable}_type=\${BASH_REMATCH[1]}"
 }
 
 printDeclaration() {
@@ -73,14 +84,16 @@ alias @resolve:this="
     then
       DEBUG subject='@resolve:this' Log 'using: pipe'
       capturePipe __declaration;
-      local __declaration_type=\$(Variable.GetParamFromType \${FUNCNAME[0]%.*})
+      local __declaration_type=\${FUNCNAME[0]%.*}
+      # local __declaration_type=\$(Variable.GetParamFromType \${FUNCNAME[0]%.*})
       # Log capturing via pipe \${__declaration_type}
     else
       DEBUG subject='@resolve:this' Log 'using: thisReference'
       getDeclaration \$thisReference __declaration;
       unset thisReference;
     fi;
-    local -\${__declaration_type:--} this=\${__declaration};
+    local -\$(Variable.GetParamFromType \$__declaration_type) this=\${__declaration};
+    # local -\${__declaration_type:--} this=\${__declaration};
     unset __declaration;
     # unset __declaration_type;
   fi
@@ -156,9 +169,9 @@ executeMethodOfType() {
 executeStack() {
   DEBUG Log "will execute: $method (${params[@]})"
   
-  if [[ ! -z "$returnValueDefinition" && $affectTheInitialVariable == false ]]
+  if [[ ! -z "$returnValueDefinition" && "$affectTheInitialVariable" == 'false' ]]
   then
-    local -$returnValueType "__self=$returnValueDefinition"
+    local -$(Variable.GetParamFromType returnValueType)"__self=$returnValueDefinition"
     variableName=__self
   fi
   
@@ -212,7 +225,7 @@ executeStack() {
   if [[ "$assignResult" != "${returnValueDefinition}" ]]
   then
     affectTheInitialVariable=false
-    type=$(Variable.GetTypeFromParam $returnValueType)
+    type="$returnValueType" # $(Variable.GetTypeFromParam $returnValueType)
   fi
   
   printf "$echoed"
@@ -434,9 +447,6 @@ Variable.GetTypeFromParam() {
 	elif [[ "$typeInfo" == "i"* ]]
 	then
 		echo integer
-	# elif [[ "${!1}" == "$obj:"* ]]
-	# then
-	# 	echo "$(Object.GetType "${!realObject}")"
 	else
 		echo string
 	fi
@@ -1259,7 +1269,7 @@ testtest() {
   Test displaySummary
 }
 
-# testtest
+testtest
 
 # local -A somehuman=$(new Human)
-new Human
+# new Human
