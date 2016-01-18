@@ -99,6 +99,8 @@ alias @resolve:this="
 # would not be required 
 
 declare __return_separator=52A586A48E074BB6812DCFDC790841F5
+declare __integer_fingerprint=2D6A822E36884C70843578D37E6773C4
+declare __integer_array_fingerprint=2884B8F8E6774006AD0CA1BD4518E093
 
 @return() {
   local variableName=$1
@@ -165,8 +167,12 @@ executeStack() {
   
   ## TODO: some problem here sometimes
   DEBUG Log "Result string: $resultString"
+  
+  # echo everything before the first occurence of the separator
   local echoed="${resultString%%$__return_separator*}"
-  resultString="${resultString##*$__return_separator}"
+  
+  # the result is everything after the first occurence of the separator
+  resultString="${resultString#*$__return_separator}"
   
   if [[ -z "$resultString" ]]
   then
@@ -502,7 +508,7 @@ Variable.TrapAndCreate() {
 
     shift
 
-    Log "${commandWithArgs[*]}"
+    # Log "${commandWithArgs[*]}"
     
     if [[ "$command" == "trap" || "$command" == "l="* || "$command" == "_type="* ]]
     then
@@ -541,7 +547,7 @@ Variable.TrapAndCreate() {
       # Console.WriteStdErr --
       #Console.WriteStdErr $tempName
 
-    	Log "creating $__typeCreate_varName ($__typeCreate_varType) = $__typeCreate_varValue"
+    	Log "creating: $__typeCreate_varName ($__typeCreate_varType) = $__typeCreate_varValue"
 
     	if [[ -z "$__typeCreate_varValue" ]]
       then
@@ -549,7 +555,18 @@ Variable.TrapAndCreate() {
           'array'|'map') eval "$__typeCreate_varName=()" ;;
           'string') eval "$__typeCreate_varName=''" ;;
           'integer') eval "$__typeCreate_varName=0" ;;
-          * ) eval "$__typeCreate_varName=([__object_type]=$__typeCreate_varType)" ;;
+          * )
+            # Log "constructing: $__typeCreate_varName ($__typeCreate_varType) = $(__constructor_recursion=0 Variable::Construct $__typeCreate_varType)"
+            
+            # eval "$__typeCreate_varName=\$(__constructor_recursion=0 Variable::Construct \$__typeCreate_varType)"
+            __constructor_recursion=0 Variable::Construct "$__typeCreate_varType" "$__typeCreate_varName"
+            
+            DEBUG Log "constructed: $(@get $__typeCreate_varName)"
+            
+            # Variable::Construct w
+            ## TODO: initialize all the sub-objects recursively 
+            # eval "$__typeCreate_varName=([__object_type]=$__typeCreate_varType)" ;;
+          ;;
         esac
       fi
       
@@ -557,21 +574,23 @@ Variable.TrapAndCreate() {
       eval "$__typeCreate_varName() {
         handleType $__typeCreate_varName \"\$@\";
       }"
-
-      case "$__typeCreate_varType" in
-        'array'|'map'|'string'|'integer') ;;
-        *)
-          if Function.Exists ${__typeCreate_varType}.constructor
-          then
-            __typeCreate_runConstructor=${__typeCreate_varName}
-            Log __typeCreate_runConstructor $__typeCreate_runConstructor
-            # ${__typeCreate_varName} constructor
-          fi
-          # local return
-          # Object.New $__typeCreate_varType $__typeCreate_varName
-          # eval "$__typeCreate_varName=$return"
-        ;;
-      esac
+      
+      ## IMPORTANT: TRAP won't work inside a TRAP
+      
+      # case "$__typeCreate_varType" in
+      #   'array'|'map'|'string'|'integer') ;;
+      #   *)
+      #     if Function.Exists ${__typeCreate_varType}.constructor
+      #     then
+      #       # __typeCreate_runConstructor=${__typeCreate_varName}
+      #       # Log __typeCreate_runConstructor $__typeCreate_runConstructor
+      #       ${__typeCreate_varName} constructor
+      #     fi
+      #     # local return
+      #     # Object.New $__typeCreate_varType $__typeCreate_varName
+      #     # eval "$__typeCreate_varName=$return"
+      #   ;;
+      # esac
 
     	# __oo__objects+=( $__typeCreate_varName )
 
@@ -611,7 +630,7 @@ Type.CaptureParams() {
 }
 
 # NOTE: true; true; at the end is required to workaround an edge case where TRAP doesn't behave properly
-alias trapAssign='Type.CaptureParams; declare -i __typeCreate_normalCodeStarted=0; trap "declare -i __typeCreate_paramNo; Variable.TrapAndCreate \"\$BASH_COMMAND\" \"\$@\"; [[ \$__typeCreate_normalCodeStarted -ge 2 ]] && trap - DEBUG && \${__typeCreate_runConstructor} constructor; [[ \$__typeCreate_normalCodeStarted -ge 2 ]] && unset __typeCreate_runConstructor && unset __typeCreate_varType && unset __typeCreate_varName && unset __typeCreate_varValue && unset __typeCreate_paramNo" DEBUG; true; true; '
+alias trapAssign='Type.CaptureParams; declare -i __typeCreate_normalCodeStarted=0; trap "declare -i __typeCreate_paramNo; Variable.TrapAndCreate \"\$BASH_COMMAND\" \"\$@\"; [[ \$__typeCreate_normalCodeStarted -ge 2 ]] && trap - DEBUG && unset __typeCreate_varType && unset __typeCreate_varName && unset __typeCreate_varValue && unset __typeCreate_paramNo" DEBUG; true; true; '
 ## TODO: add constructor running as the UNTRAP TRAP
 alias reference='_type=reference trapAssign declare -n'
 alias string='_type=string trapAssign declare'
@@ -808,12 +827,18 @@ defineProperty() {
   @var class
   @var type
   @var property
+  @var assignment
+  @var defaultValue
   
   class="${class//[^a-zA-Z0-9]/_}"
   
   eval "__${class}_property_names+=( '$property' )"
   eval "__${class}_property_types+=( '$type' )"
   eval "__${class}_property_visibilities+=( '$visibility' )"
+  if [[ "$assignment" == '=' && ! -z "$defaultValue" ]]
+  then
+    eval "__${class}_property_defaults+=( \"\$defaultValue\" )"
+  fi
 }
 
 private() {
@@ -832,7 +857,7 @@ public() {
 
 class:Human() {
   public string firstName
-  public string lastName
+  public string lastName = 'Lastnameovitch'
   public array children
   public Human child
   
@@ -1052,6 +1077,80 @@ boolean.__getter__() {
   : ## TODO implement getters (they're executed instead of @get if executed directly)
 }
 
+## TODO: save UUID prefix for numbers
+
+string::sanitizeForName() {
+  local type="$1"
+  echo "${type//[^a-zA-Z0-9]/_}"
+}
+
+
+
+Variable::Construct() {
+  local type="$1"
+  local typeSanitized=$(string::sanitizeForName $type)
+  local assignToVariable="$2"
+  
+  __constructor_recursion=$(( ${__constructor_recursion:-0} + 1 ))
+  
+  local -A constructedType=( [__object_type]="$type" )
+  # else
+  #   echo "$assignToVariable[__object_type]=\"$type\""
+  # fi
+  
+  if Variable::Exists "__${typeSanitized}_property_names"
+  then
+    local propertyIndexesIndirect="__${typeSanitized}_property_names[@]"
+    local -i propertyIndex=0
+    local propertyName
+    for propertyName in "${!propertyIndexesIndirect}"
+    do
+      DEBUG Log "iterating type: ${typeSanitized}, property: [$propertyIndex] $propertyName" 
+      # local propertyNameIndirect=__${typeSanitized}_property_names[$propertyIndex]
+      # local propertyName="${!propertyNameIndirect}"
+      
+      local propertyTypeIndirect=__${typeSanitized}_property_types[$propertyIndex]
+      local propertyType="${!propertyTypeIndirect}"
+      
+      local defaultValueIndirect=__${typeSanitized}_property_defaults[$propertyIndex]
+      local defaultValue="${!defaultValueIndirect}"
+      
+      local constructedPropertyDefinition="$defaultValue"
+      
+      case "$propertyType" in
+        'array'|'map'|'string') ;;
+        'integer') constructedPropertyDefinition="${__integer_fingerprint}$defaultValue" ;;
+        'integerArray') constructedPropertyDefinition="${__integer_array_fingerprint}$defaultValue" ;;
+        * ) 
+          if [[ -z "$defaultValue" && "$__constructor_recursion" -lt 15 ]]
+          then
+            constructedPropertyDefinition=$(Variable::Construct "$propertyType")
+          fi
+        ;;
+      esac
+      
+      DEBUG Log "Will exec: constructedType+=( [\"$propertyName\"]=\"$constructedPropertyDefinition\" )"
+      constructedType+=( ["$propertyName"]="$constructedPropertyDefinition" )
+      # eval 'constructedType+=( ["$propertyName"]="$constructedPropertyDefinition" )'
+      
+      propertyIndex+=1
+    done
+  fi
+  
+  if [[ -z "$assignToVariable" ]]
+  then
+    @get constructedType
+  else
+    local constructedIndex
+    for constructedIndex in "${!constructedType[@]}"
+    do
+      eval "$assignToVariable[\"\$constructedIndex\"]=\"\${constructedType[\"\$constructedIndex\"]}\""
+    done
+  fi
+}
+
+alias new='Variable::Construct'
+
 ## TEST LIB
 
 class:StaticTest(){
@@ -1140,9 +1239,8 @@ class:StaticTest(){
 
 initializeClass StaticTest
 
-echo hi
 StaticTest Test
-Test constructor
+# Test constructor
 
 alias caught="echo \"CAUGHT: $(UI.Color.Red)\$__BACKTRACE_COMMAND__$(UI.Color.Default) in \$__BACKTRACE_SOURCE__:\$__BACKTRACE_LINE__\""
 alias it="Test start it"
@@ -1161,4 +1259,7 @@ testtest() {
   Test displaySummary
 }
 
-testtest
+# testtest
+
+# local -A somehuman=$(new Human)
+new Human
