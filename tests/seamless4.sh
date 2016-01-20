@@ -3,9 +3,9 @@
 #__INTERNAL_LOGGING__=true
 source "$( cd "${BASH_SOURCE[0]%/*}" && pwd )/../lib/oo-framework.sh"
 
-namespace seamless
+#namespace seamless
 
-Log::AddOutput seamless CUSTOM
+Log::AddOutput oo/type CUSTOM
 Log::AddOutput error ERROR
 
 import lib/system/oo
@@ -16,6 +16,7 @@ class:Human() {
   public string lastName = 'Lastnameovitch'
   public array children
   public Human child
+  public boolean hasSomething
 
   Human.test() {
     @resolve:this
@@ -33,7 +34,7 @@ class:Human() {
   }
 }
 
-#Type::Initialize Human
+Type::Initialize Human
 
 
 function test2() {
@@ -43,7 +44,7 @@ function test2() {
   hovno
 }
 
-test2
+#test2
 
 function testParamPassing() {
   [string] first
@@ -55,7 +56,7 @@ function testParamPassing() {
   number
 }
 
-testParamPassing 'one' 'two' 99
+#testParamPassing 'one' 'two' 99
 
 function testBoolean() {
   boolean empty
@@ -67,6 +68,23 @@ function testBoolean() {
   echo bool true: $presetTrue
   echo bool false: $presetFalse
   echo bool blabla: $presetUnrecognized
+
+  empty = true
+  echo bool default: $empty
+
+  empty
 }
 
-testBoolean
+#testBoolean
+
+
+function testBooleanInClass() {
+  Human guy
+  guy
+  guy hasSomething toString
+  guy hasSomething = true
+  guy hasSomething toString
+#  guy
+}
+
+testBooleanInClass

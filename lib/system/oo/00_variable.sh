@@ -1,9 +1,15 @@
+namespace oo/variable
+
 declare __declaration_type ## for Variable::ExportDeclarationAndTypeToVariables (?)
 
 Variable::Exists() {
-  [string] variableName
+  local variableName="$1"
+  declare -p "$variableName" &> /dev/null
+}
 
-  declare -p $variableName &> /dev/null
+Variable::GetAllStartingWith() {
+  local startsWith="$1"
+  compgen -A 'variable' "$startsWith" || true
 }
 
 Variable::GetDeclarationFlagFromType() {
@@ -21,7 +27,7 @@ Variable::GetDeclarationFlagFromType() {
 	elif [[ "$typeInfo" == "array" ]]
 	then
 		echo a
-	elif [[ "$typeInfo" == "string" ]]
+	elif [[ "$typeInfo" == "string" || "$typeInfo" == "boolean" ]]
 	then
 		echo -
 	elif [[ "$typeInfo" == "integer" ]]
@@ -103,13 +109,22 @@ Variable::ExportDeclarationAndTypeToVariables() {
   local primitiveType=${BASH_REMATCH[1]}
 
   local objectTypeIndirect="$variableName[__object_type]"
-  if [[ "$primitiveType" =~ '[A]' && ! -z "${!objectTypeIndirect}" ]]
+  if [[ "$primitiveType" =~ [A] && ! -z "${!objectTypeIndirect}" ]]
   then
     DEBUG Log "Object Type $variableName[__object_type] = ${!objectTypeIndirect}"
     variableType="${!objectTypeIndirect}"
   else
     variableType="$(Variable::GetPrimitiveTypeFromDeclarationFlag "$primitiveType")"
     DEBUG Log "Primitive Type $primitiveType Resolved ${variableType}"
+  fi
+
+  if [[ "$variableType" == 'string' ]]
+  then
+    local extensionType=$(Type::GetPrimitiveExtensionFromVariable "${variableName}")
+    if [[ ! -z "$extensionType" ]]
+    then
+      variableType="$extensionType"
+    fi
   fi
 
   DEBUG Log "Variable $variableName is typeof $variableType"

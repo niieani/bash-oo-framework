@@ -1,3 +1,5 @@
+namespace oo/pipe
+
 Pipe::Capture() {
   read -r -d '' $1 || true
 }

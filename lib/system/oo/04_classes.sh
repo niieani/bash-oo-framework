@@ -1,3 +1,5 @@
+namespace oo/type
+
 # ------------------------ #
 
 Type::DefineProperty() {
@@ -36,7 +38,7 @@ public() {
 Type::Initialize() {
   [string] name
   class:$name
-  alias $name="_type=$name trapAssign declare -A"
+  alias $name="_type=$name Type::TrapAssign declare -A"
 }
 
 Type::Construct() {
@@ -74,7 +76,7 @@ Type::Construct() {
 
       DEBUG Log "iterating type: ${typeSanitized}, property: [$propertyIndex] $propertyName = $defaultValue"
 
-      ## AUTOMATICALLY CONSTRUCT
+      ## AUTOMATICALLY CONSTRUCTS THE PROPERTIES:
       # case "$propertyType" in
       #   'array'|'map'|'string'|'integer'|'integerArray') ;;
       #       # 'integer') constructedPropertyDefinition="${__integer_fingerprint}$defaultValue" ;;

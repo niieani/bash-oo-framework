@@ -1,3 +1,5 @@
+namespace oo/type
+
 Type::ExecuteMethod() {
   local type="$1"
   local variableName="$2"
@@ -60,6 +62,8 @@ Type::RunCurrentStack() {
     # update the object
     eval "$variableName=$assignResult"
   else
+    ## TODO: use the primitive extension fingerprint here, not in the methods themselves
+    # assignResult="$(Type::GetPrimitiveExtensionFingerprint $type):$assignResult"
     eval "$variableName=\"\$assignResult\""
   fi
 
@@ -67,6 +71,7 @@ Type::RunCurrentStack() {
   returnValueDefinition="${result[1]}"
   returnValueType="${result[2]}"
 
+  # switch context for the next command
   if [[ "$assignResult" != "${returnValueDefinition}" ]]
   then
     affectTheInitialVariable=false
@@ -83,9 +88,21 @@ Type::RunCurrentStack() {
   # eval $variableName=\$assignResult
 }
 
+Type::RunGetter() {
+  local variableName="$1"
+  local type="$2"
+
+  if Function::Exists "$type.__getter__"
+  then
+    __return_self_and_result=false Type::ExecuteMethod "$type" "$variableName" "__getter__"
+  else
+    @get $variableName
+  fi
+}
+
 Type::Handle() {
   local variableName="$1"
-  local type=$(Type::GetTypeOfVariable $variableName)
+  local type=$(Type::GetTypeOfVariable "${variableName}")
   local affectTheInitialVariable=true
   local -a propertyTree=("$1")
 
@@ -108,7 +125,7 @@ Type::Handle() {
     shift
   fi
 
-  DEBUG subject="type handling" Log "START ANALYZING: ($type) $variableName $@"
+  DEBUG subject="type handling" Log "START ANALYZING: type: $type | variable: $variableName $@"
   DEBUG subject="type handling" Log "WHAT: $(declare -p $variableName)"
 
   # Log multiExpression $multiExpression
@@ -159,21 +176,23 @@ Type::Handle() {
       then
         # Log $(@get __${type}_property_names | array.indexOf $1) $1 idx
         # Log $(@get __${type}_property_names | array.contains $1 && echo t)
-        local typeSanitized=$(string::SanitizeForVariableName $type)
+
+#        Log index __${type}_property_names $(@get __${type}_property_names | __return_self_and_result=false array.indexOf ${1})
+
+        local typeSanitized=$(string::SanitizeForVariableName ${type})
         # local typeSanitized="${type//[^a-zA-Z0-9]/_}"
 
         if Variable::Exists __${typeSanitized}_property_names &&
             @get __${typeSanitized}_property_names | array.contains $1
         then
-          # stack now belongs to:
-          ### selecting property:
+          # stack now belongs to selected property:
           local property="$1"
 
-          DEBUG Log found index __${type}_property_names $(@get __${type}_property_names | __return_self_and_result=false array.indexOf $property)
+          DEBUG Log found index __${type}_property_names $(@get __${type}_property_names | __return_self_and_result=false array.indexOf ${property})
           # Log prop: $property of [$(@get __${type}_property_names)]
 
-          ## TODO: teoretically we can get rid of: __return_self_and_result=false
-          local -i index=$(@get __${typeSanitized}_property_names | __return_self_and_result=false array.indexOf $property)
+          ## TODO: theoretically, we could get rid of: __return_self_and_result=false
+          local -i index=$(@get __${typeSanitized}_property_names | __return_self_and_result=false array.indexOf ${property})
 
           if [[ $index -ge 0 ]]
           then
@@ -239,8 +258,8 @@ Type::Handle() {
     elif [[ "$prevMode" == 'property' ]]
     then
       DEBUG subject='property' Log 'print out the property' $variableName
-      ## print out the property
-      @get $variableName
+      ## print out the property or run the getter
+      Type::RunGetter $variableName $type
     fi
 
     ## TODO: shouldn't this be an elif ?
@@ -280,7 +299,8 @@ Type::Handle() {
       done
     fi
   else
-    @get $variableName
+    #@get $variableName
+    Type::RunGetter $variableName $type
   fi
 }
 

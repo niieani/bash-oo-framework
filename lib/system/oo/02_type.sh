@@ -1,4 +1,7 @@
-declare -g __boolean_fingerprint=2D6A822E36884C70843578D37E6773C4
+namespace oo/type
+
+__primitive_extension_declaration=2D6A822E
+__primitive_extension_fingerprint__boolean=${__primitive_extension_declaration}36884C70843578D37E6773C4
 
 # /**
 #   * Code like: Variable::ExportDeclarationAndTypeToVariables
@@ -7,7 +10,7 @@ Type::GetTypeOfVariable() {
   local variableName="$1"
 
   local regex="declare -([a-zA-Z-]+) $variableName=(.*)"
-  local definition=$(declare -p $variableName 2> /dev/null || true)
+  local definition=$(declare -p "${variableName}" 2> /dev/null || true)
 
   [[ -z "$definition" ]] && e="Variable not defined" throw
   if [[ "$definition" =~ $regex ]]
@@ -16,18 +19,27 @@ Type::GetTypeOfVariable() {
       local primitiveType=${BASH_REMATCH[1]}
 
       local objectTypeIndirect="$variableName[__object_type]"
-      if [[ "$primitiveType" =~ '[A]' && ! -z "${!objectTypeIndirect}" ]]
+      if [[ "$primitiveType" =~ [A] && ! -z "${!objectTypeIndirect}" ]]
       then
-        DEBUG Log "Object Type $variableName[__object_type] = ${!objectTypeIndirect}"
+        DEBUG Log "typeof $variableName: Object Type $variableName[__object_type] = ${!objectTypeIndirect}"
         variableType="${!objectTypeIndirect}"
       else
         variableType="$(Variable::GetPrimitiveTypeFromDeclarationFlag "$primitiveType")"
-        DEBUG Log "Primitive Type $primitiveType Resolved ${variableType}"
+        DEBUG Log "typeof $variableName: Primitive Type $primitiveType Resolved ${variableType}"
+      fi
+
+      if [[ "$variableType" == 'string' ]]
+      then
+        local extensionType=$(Type::GetPrimitiveExtensionFromVariable "${variableName}")
+        if [[ ! -z "$extensionType" ]]
+        then
+          variableType="$extensionType"
+        fi
       fi
 
       DEBUG Log "Variable $variableName is typeof $variableType"
 
-      echo $variableType
+      echo "$variableType"
   fi
 
 #	local typeInfo="$(declare -p $1 2> /dev/null || declare -p | grep "^declare -[aAign\-]* $1\(=\|$\)" || true)"
@@ -69,11 +81,42 @@ Type::IsPrimitive() {
   local type="$1"
 
   case "$type" in
-    'array'|'map'|'string'|'integer'|'integerArray')
+    'array'|'map'|'string'|'integer'|'boolean'|'integerArray')
       return 0 ;;
     * )
       return 1 ;;
   esac
+}
+
+## Returns a matching __primitive_extension_fingerprint__*
+## Or nothing
+Type::GetPrimitiveExtensionFromVariable() {
+  local variableName="$1"
+
+  if [[ "${!variableName}" != "$__primitive_extension_declaration"* ]]
+  then
+    return
+  fi
+
+  local prefix=__primitive_extension_fingerprint__
+  local extensionType
+  for extensionType in $(Variable::GetAllStartingWith $prefix)
+  do
+    local fingerprint=${!extensionType}
+    if [[ "${!variableName}" == "$fingerprint"* ]]
+    then
+      extensionType=${extensionType##$prefix}
+      echo "$extensionType"
+      return
+    fi
+  done
+}
+
+Type::GetPrimitiveExtensionFingerprint() {
+  local type="$1"
+
+  local fingerprintVariable="__primitive_extension_fingerprint__${type}"
+  printf "${!fingerprintVariable}"
 }
 
 Type::CreateHandlerFunction() {
@@ -131,7 +174,7 @@ Type::TrapAndCreate() {
     if [[ ! -z $__typeCreate_varType ]]
     then
 
-      local __boolean_fingerprint=${__boolean_fingerprint:-2D6A822E36884C70843578D37E6773C4}
+      local __primitive_extension_fingerprint__boolean=${__primitive_extension_fingerprint__boolean:-2D6A822E36884C70843578D37E6773C4}
       # Console::WriteStrErr "SETTING $__typeCreate_varName = \$$__typeCreate_paramNo"
       # Console::WriteStrErr --
       #Console::WriteStrErr $tempName
@@ -144,7 +187,7 @@ Type::TrapAndCreate() {
           'array'|'map') eval "$__typeCreate_varName=()" ;;
           'string') eval "$__typeCreate_varName=''" ;;
           'integer') eval "$__typeCreate_varName=0" ;;
-          'boolean') eval "$__typeCreate_varName=${__boolean_fingerprint}:false" ;;
+          'boolean') eval "$__typeCreate_varName=${__primitive_extension_fingerprint__boolean}:false" ;;
           * )
             # Log "constructing: $__typeCreate_varName ($__typeCreate_varType) = $(__constructor_recursion=0 Type::Construct $__typeCreate_varType)"
 
@@ -165,7 +208,7 @@ Type::TrapAndCreate() {
             then
               __typeCreate_varValue='false'
             fi
-            eval "$__typeCreate_varName=\"${__boolean_fingerprint}:${__typeCreate_varValue}\"" ;;
+            eval "$__typeCreate_varName=\"${__primitive_extension_fingerprint__boolean}:${__typeCreate_varValue}\"" ;;
           *) ;;
         esac
       fi
@@ -249,10 +292,10 @@ this() {
   Type::Handle this "$@"
 }
 
-declare -g __return_separator=52A586A48E074BB6812DCFDC790841F5
+__return_separator=52A586A48E074BB6812DCFDC790841F5
 
 @return() {
-  local variableName=$1
+  local variableName="$1"
 
   local __return_declaration
   local __return_declaration_type
@@ -282,7 +325,6 @@ declare -g __return_separator=52A586A48E074BB6812DCFDC790841F5
 
 @return:value() {
   local value="$@"
-
   @return value
 }
 
