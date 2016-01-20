@@ -18,7 +18,7 @@ import lib/types/ui
 namespace myApp
 
 ## ADD OUTPUT OF "myApp" TO STDERR
-Log.AddOutput myApp STDERR
+Log::AddOutput myApp STDERR
 
 ## LET'S TRY LOGGING SOMETHING:
 Log "logging to stderr"
@@ -29,10 +29,10 @@ myLoggingDelegate() {
 }
 
 ## WE NEED TO REGISTER IT:
-Log.RegisterLogger MYLOGGER myLoggingDelegate
+Log::RegisterLogger MYLOGGER myLoggingDelegate
 
 ## WE WANT TO DIRECT ALL LOGGING WITHIN FUNCTION myFunction OF myApp TO MYLOGGER
-Log.AddOutput myApp/myFunction MYLOGGER
+Log::AddOutput myApp/myFunction MYLOGGER
 
 ## LET'S DECLARE THAT FUNCTION:
 myFunction() {
@@ -49,7 +49,7 @@ myFunction
 
 ## As you can see, logging automatically redirected the logger from our function from our previously registered STDERR to our more specifically defined MYLOGGER
 ## If you wish to keep logging to both loggers, you can disable the specificity filter:
-Log.DisableFilter myApp 
+Log::DisableFilter myApp
 
 ## Now if we run the function:
 myFunction
@@ -61,9 +61,9 @@ myFunction
 
 ## We can also be even more specific and redirect messages with specific subjects to other loggers or mute them
 ## Let's reset first
-Log.ResetAllOutputsAndFilters
+Log::ResetAllOutputsAndFilters
 
-Log.AddOutput myApp/myFunction MYLOGGER
+Log::AddOutput myApp/myFunction MYLOGGER
 
 myFunction() {
 	echo "Hey, I am a function!"
@@ -85,11 +85,11 @@ myFunction
 	## Hurray: unimportant message from myFunction
 
 ## To filter messages with subject "unimportant" within myFunction of myApp's file:
-Log.AddOutput myApp/myFunction/unimportant VOID
+Log::AddOutput myApp/myFunction/unimportant VOID
 ## or any messages with subject "unimportant" within myApp's file:
-Log.AddOutput myApp/unimportant VOID
+Log::AddOutput myApp/unimportant VOID
 ## or any messages with subject "unimportant" anywhere
-Log.AddOutput unimportant VOID
+Log::AddOutput unimportant VOID
 
 ## Now when we run:
 myFunction
@@ -99,10 +99,10 @@ myFunction
 	## Hurray: logging from myFunction
 
 
-Log.AddOutput myApp INFO
-Log.DisableFilter oo/func
-Log.AddOutput oo/func DEBUG
-Log.AddOutput oo/func/creation CUSTOM
+Log::AddOutput myApp INFO
+Log::DisableFilter oo/func
+Log::AddOutput oo/func DEBUG
+Log::AddOutput oo/func/creation CUSTOM
 
 func() {
 	Log from-func

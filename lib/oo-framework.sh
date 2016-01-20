@@ -2,7 +2,7 @@
 ### BOOTSTRAP FUNCTIONS ###
 ###########################
 
-System.Bootstrap(){
+System::Bootstrap(){
     local file
     local path
     for file in "$__oo__libPath"/system/*.sh
@@ -54,7 +54,9 @@ else
     alias DEBUG=":; #"
 fi
 
-System.Bootstrap
+System::Bootstrap
+
+declare -g __oo__bootstrapped=true
 
 #########################
 ### HANDLE EXCEPTIONS ###

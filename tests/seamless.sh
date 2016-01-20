@@ -5,11 +5,11 @@ source "$( cd "${BASH_SOURCE[0]%/*}" && pwd )/../lib/oo-framework.sh"
 
 namespace seamless
 
-Log.AddOutput seamless CUSTOM
-Log.AddOutput error ERROR
-#Log.AddOutput oo/parameters-executing CUSTOM
+Log::AddOutput seamless CUSTOM
+Log::AddOutput error ERROR
+#Log::AddOutput oo/parameters-executing CUSTOM
 
-alias ~="Exception.CustomCommandHandler"
+alias ~="Exception::CustomCommandHandler"
 
 declare -Ag __oo__objectToType
 declare -Ag __oo__objectToName
@@ -32,7 +32,7 @@ Type.CreateVar() {
     if [[ "${commandWithArgs[*]}" == "true" ]]
     then
         __typeCreate_next=true
-        # Console.WriteStdErr "Will assign next one"
+        # Console::WriteStrErr "Will assign next one"
         return 0
     fi
 
@@ -54,9 +54,9 @@ Type.CreateVar() {
 
     if [[ ! -z $__typeCreate_varType ]]
     then
-      # Console.WriteStdErr "SETTING $__typeCreate_varName = \$$__typeCreate_paramNo"
-      # Console.WriteStdErr --
-      #Console.WriteStdErr $tempName
+      # Console::WriteStrErr "SETTING $__typeCreate_varName = \$$__typeCreate_paramNo"
+      # Console::WriteStrErr --
+      #Console::WriteStrErr $tempName
 
     	DEBUG Log "creating $__typeCreate_varName ($__typeCreate_varType) = $__typeCreate_varValue"
 
@@ -89,9 +89,9 @@ Type.CreateVar() {
     then
         __typeCreate_normalCodeStarted+=1
 
-        # Console.WriteStdErr "NOPASS ${commandWithArgs[*]}"
-        # Console.WriteStdErr "normal code count ($__typeCreate_normalCodeStarted)"
-        # Console.WriteStdErr --
+        # Console::WriteStrErr "NOPASS ${commandWithArgs[*]}"
+        # Console::WriteStrErr "normal code count ($__typeCreate_normalCodeStarted)"
+        # Console::WriteStrErr --
     else
         unset __typeCreate_next
 
@@ -101,22 +101,22 @@ Type.CreateVar() {
         __typeCreate_varType="$__capture_type"
         __typeCreate_arrLength="$__capture_arrLength"
 
-        # Console.WriteStdErr "PASS ${commandWithArgs[*]}"
-        # Console.WriteStdErr --
+        # Console::WriteStrErr "PASS ${commandWithArgs[*]}"
+        # Console::WriteStrErr --
 
         __typeCreate_paramNo+=1
     fi
 }
 
-Type.CaptureParams() {
-    # Console.WriteStdErr "Capturing Type $_type"
-    # Console.WriteStdErr --
+Type::CaptureParams() {
+    # Console::WriteStrErr "Capturing Type $_type"
+    # Console::WriteStrErr --
 
     __capture_type="$_type"
 }
 
 # NOTE: true; true; at the end is required to workaround an edge case where TRAP doesn't behave properly
-alias trapAssign='Type.CaptureParams; declare -i __typeCreate_normalCodeStarted=0; trap "declare -i __typeCreate_paramNo; Type.CreateVar \"\$BASH_COMMAND\" \"\$@\"; [[ \$__typeCreate_normalCodeStarted -ge 2 ]] && trap - DEBUG && unset __typeCreate_varType && unset __typeCreate_varName && unset __typeCreate_varValue && unset __typeCreate_paramNo" DEBUG; true; true; '
+alias trapAssign='Type::CaptureParams; declare -i __typeCreate_normalCodeStarted=0; trap "declare -i __typeCreate_paramNo; Type.CreateVar \"\$BASH_COMMAND\" \"\$@\"; [[ \$__typeCreate_normalCodeStarted -ge 2 ]] && trap - DEBUG && unset __typeCreate_varType && unset __typeCreate_varName && unset __typeCreate_varValue && unset __typeCreate_paramNo" DEBUG; true; true; '
 alias reference='_type=reference trapAssign declare -n'
 alias string='_type=string trapAssign declare'
 alias int='_type=integer trapAssign declare -i'
@@ -172,10 +172,10 @@ Object.New() {
 }
 
 Object.Invoke() {
-	@var objectUUID
+	[string] objectUUID
 	# remainingStack[]
-	@var stackElement
-	@params params
+	[string] stackElement
+	[...rest] params
 
 	if [[ -z ${__oo__objectToType[$objectUUID]+isSet} ]]
 	then
@@ -236,7 +236,7 @@ Reference.GetRealVariableName() {
 	echo "$realObject"
 }
 
-Variable.GetType() {
+Type::GetTypeOfVariable() {
 	local typeInfo="$(declare -p $1 2> /dev/null || declare -p | grep "^declare -[aAign\-]* $1\(=\|$\)" || true)"
 
 	if [[ -z "$typeInfo" ]]
@@ -270,7 +270,7 @@ Variable.GetType() {
 # return should be declared prior to entering the func
 
 ~returns() {
-	@var returnType
+	[string] returnType
 	# switch case array
 	# check if $return is an array
 	# etc...
@@ -285,7 +285,7 @@ Variable.GetType() {
 
 	# DEBUG subject="returnsMatch" Log
 	local realVar=$(Reference.GetRealVariableName return)
-	local type=$(Variable.GetType $realVar)
+	local type=$(Type::GetTypeOfVariable $realVar)
 
 	if [[ "$returnType" != "$type" ]]
 	then
@@ -312,7 +312,7 @@ string.sanitized() {
 }
 
 string.toArray() {
-	#@reference array
+	#[reference] array
 	~modifiesLocals
 
 	local newLine=$'\n'
@@ -350,9 +350,9 @@ array.print() {
 # }
 
 string.match() {
-	@var regex
-	@int capturingGroup=${bracketParams[0]} #bracketParams
-	@var returnMatch="${bracketParams[1]}"
+	[string] regex
+	[integer] capturingGroup=${bracketParams[0]} #bracketParams
+	[string] returnMatch="${bracketParams[1]}"
 
 	DEBUG subject="string.match" Log "string to match on: $this"
 
@@ -364,9 +364,9 @@ string.match() {
 
 string.matchGroups() {
 	~returns array
-	@var regex
-	# @reference matchGroups
-	@var returnMatch="${bracketParams[0]}"
+	[string] regex
+	# [reference] matchGroups
+	[string] returnMatch="${bracketParams[0]}"
 
 	DEBUG subject="matchGroups" Log "string to match on: $this"
 	local -i matchNo=0
@@ -388,9 +388,9 @@ string.matchGroups() {
 
 array.takeEvery() {
 	~returns array
-	@int every
-	@int startingIndex
-	# @reference outputArray
+	[integer] every
+	[integer] startingIndex
+	# [reference] outputArray
 
 	local -i count=0
 
@@ -414,14 +414,14 @@ array.last() {
 }
 
 array.add() {
-	@var element
+	[string] element
 
 	this+=( "$element" )
 }
 
 array.forEach() {
-	@var elementName
-	@var do
+	[string] elementName
+	[string] do
 
 	# first dereferrence
 	# local typeInfo="$(declare -p this)"
@@ -441,7 +441,7 @@ array.forEach() {
 	done
 }
 
-Exception.CustomCommandHandler() {
+Exception::CustomCommandHandler() {
 	# best method for checking if variable is declared: http://unix.stackexchange.com/questions/56837/how-to-test-if-a-variable-is-defined-at-all-in-bash-prior-to-version-4-2-with-th
 	if [[ ! "$1" =~ \. ]] && [[ -n ${!1+isSet} ]] && [[ -z "${*:2}" ]]
 	then
@@ -524,7 +524,7 @@ Exception.CustomCommandHandler() {
 	if [[ -n ${!rootObjectResolvable+isSet} || "$(eval "echo \" \${!$rootObject*} \"")" == *" $rootObject "* ]]
 	then
 		local realVar=$(Reference.GetRealVariableName $rootObject)
-		local type=$(Variable.GetType $realVar)
+		local type=$(Type::GetTypeOfVariable $realVar)
 		DEBUG subject="variable" Log "Variable \$$realVar of type: $type"
 
 		if [[ $type == array || $type == dictionary ]] && [[ ! -z "${callStackBrackets[0]}" ]]
@@ -589,7 +589,7 @@ Exception.CustomCommandHandler() {
 			do
 				DEBUG subject="complex" Log calling: $type.${callStack[$callHead]}
 				# does the method exist?
-				if ! Function.Exists $type.${callStack[$callHead]}
+				if ! Function::Exists $type.${callStack[$callHead]}
 				then
 					e="Method: $type.${callStack[$callHead]} does not exist." skipBacktraceCount=4 throw ${callStack[$callHead]}
 				fi
@@ -646,7 +646,7 @@ Exception.CustomCommandHandler() {
 		#$type${child:+".$child"} "${@:2}"
 	else
 		#eval "echo \" \${!$rootObject*} \""
-		DEBUG Error ${rootObjectResolvable} is not resolvable: ${!rootObjectResolvable}
+		DEBUG subject=Error Log ${rootObjectResolvable} is not resolvable: ${!rootObjectResolvable}
 		return 1
 	fi
 	# if callOperator then for sure an object - check if exists, else error

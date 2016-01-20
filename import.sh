@@ -7,13 +7,13 @@ source "$( cd "${BASH_SOURCE[0]%/*}" && pwd )/lib/oo-framework.sh"
 
 namespace oo
 
-System.LoadFile(){
-    @var libPath
+System::LoadFile(){
+    [string] libPath
 
     if [ -f "$libPath" ]
     then
         ## if already imported let's return
-        if Array.Contains "$file" "${__oo__importedFiles[@]}"
+        if Array::Contains "$file" "${__oo__importedFiles[@]}"
         then
             DEBUG subject=level3 Log "File previously imported: ${libPath}"
             return 0
@@ -28,7 +28,7 @@ System.LoadFile(){
         # TODO: maybe only Type.Load when the filename starts with a capital?
         # In that case all the types would have to start with a capital letter
 
-        if Function.Exists Type.Load
+        if Function::Exists Type.Load
         then
             Type.Load
             DEBUG subject=level3 Log "Loading Types..."
@@ -39,7 +39,7 @@ System.LoadFile(){
     fi
 }
 
-System.Import() {
+System::Import() {
     local libPath
     for libPath in "$@"; do
         local requestedPath="$libPath"
@@ -71,13 +71,13 @@ System.Import() {
             local file
             for file in "$libPath"/*.sh
             do
-                System.LoadFile "$file"
+                System::LoadFile "$file"
             done
         else
-            System.LoadFile "$libPath"
+            System::LoadFile "$libPath"
         fi
     done
     return 0
 }
 
-alias import="System.Import"
+alias import="System::Import"

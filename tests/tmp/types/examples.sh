@@ -45,7 +45,7 @@ class:Human() {
 
             : @Array      mergeWith
             : @Number     many
-            : @params     stuff
+            : [...rest]     stuff
 
             @@map && {
                 echo Testing \"$mergeWith\" at manyCount: $many

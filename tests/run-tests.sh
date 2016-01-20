@@ -2,13 +2,13 @@
 
 source "$( cd "${BASH_SOURCE[0]%/*}" && pwd )/../lib/oo-framework.sh"
 
-# Log.AddOutput oo/System.LoadFile CUSTOM
-# Log.AddOutput oo/System.LoadFile/level2 VOID
-# Log.AddOutput oo CUSTOM
-# Log.AddOutput level1 CUSTOM
-# Log.AddOutput level2 CUSTOM
-# Log.AddOutput level3 CUSTOM
-# Log.AddOutput oo/level1 CUSTOM
+# Log::AddOutput oo/System::LoadFile CUSTOM
+# Log::AddOutput oo/System::LoadFile/level2 VOID
+# Log::AddOutput oo CUSTOM
+# Log::AddOutput level1 CUSTOM
+# Log::AddOutput level2 CUSTOM
+# Log::AddOutput level3 CUSTOM
+# Log::AddOutput oo/level1 CUSTOM
 
 import lib/type-core
 import lib/types/base
@@ -19,16 +19,16 @@ Test.NewGroup "Named Parameters"
 it 'should try to assign map the params locally'
 try
     testPassingParams() {
-        @var hello
-        @array[4] anArrayWithFourElements
+        [string] hello
+        [string[4]] anArrayWithFourElements
 
-        # note: between 2-10 there are aliases for arrays like @array[4] 
-        # after 10 you need to write l=LENGTH @array, like this:
-        l=2 @array anotherArrayWithTwo
+        # note: between 2-10 there are aliases for arrays like [string[4]]
+        # after 10 you need to write l=LENGTH [string[]], like this:
+        l=2 [string[]] anotherArrayWithTwo
 
-        @var anotherSingle
-        @reference table
-        @params anArrayOfVariedSize
+        [string] anotherSingle
+        [reference] table
+        [...rest] anArrayOfVariedSize
 
         local thisShouldWork="correct"
 
@@ -87,12 +87,12 @@ expectPass
 it 'should make an instance of a number'
 try
     Number aNumber
-    Object.Exists aNumber
+    Function::Exists aNumber
 expectPass
 
 it 'should have destroyed the previous instance'
 try
-    ! Object.Exists aNumber
+    ! Function::Exists aNumber
 expectPass
 
 it 'should make an instance of a number and initialize with 5'

@@ -3,33 +3,32 @@ declare -Ag __oo__logScopeOutputs
 declare -Ag __oo__logDisabledFilter
 declare -Ag __oo__loggers
 
-Log.NameScope() {
+Log::NameScope() {
     local scopeName="$1"
     local script="${BASH_SOURCE[1]}"
     __oo__logScopes["$script"]="$scopeName"
 }
-alias namespace="Log.NameScope"
 
-Log.AddOutput() {
+Log::AddOutput() {
     local scopeName="$1"
     local outputType="${2:-STDERR}"
     __oo__logScopeOutputs["$scopeName"]+="$outputType;"
 }
 
-Log.ResetOutputsAndFilters() {
+Log::ResetOutputsAndFilters() {
     local scopeName="$1"
     unset __oo__logScopeOutputs["$scopeName"]
     unset __oo__logDisabledFilter["$scopeName"]
 }
 
-Log.ResetAllOutputsAndFilters() {
+Log::ResetAllOutputsAndFilters() {
     unset __oo__logScopeOutputs
     unset __oo__logDisabledFilter
     declare -Ag __oo__logScopeOutputs
     declare -Ag __oo__logDisabledFilter
 }
 
-Log.DisableFilter() {
+Log::DisableFilter() {
     __oo__logDisabledFilter["$1"]=true
 }
 
@@ -65,7 +64,7 @@ Log() {
         loggers=( ${loggerList//;/ } )
         for logger in "${loggers[@]}"
         do
-            subject="${subject:-LOG}" Log.Using "$logger" "$@"
+            subject="${subject:-LOG}" Log::Using "$logger" "$@"
             logged=true
         done
     fi
@@ -78,7 +77,7 @@ Log() {
             loggers=( ${loggerList//;/ } )
             for logger in "${loggers[@]}"
             do
-                subject="${subject:-LOG}" Log.Using "$logger" "$@"
+                subject="${subject:-LOG}" Log::Using "$logger" "$@"
                 logged=true
             done
         fi
@@ -92,19 +91,19 @@ Log() {
             loggers=( ${loggerList//;/ } )
             for logger in "${loggers[@]}"
             do
-                subject="${subject:-LOG}" Log.Using "$logger" "$@"
+                subject="${subject:-LOG}" Log::Using "$logger" "$@"
             done
         fi
     fi
 }
 
-Log.RegisterLogger() {
+Log::RegisterLogger() {
     local logger="$1"
     local method="$2"
     __oo__loggers["$logger"]="$method"
 }
 
-Log.Using() {
+Log::Using() {
     local logger="$1"
     shift
     if [[ ! -z ${__oo__loggers["$logger"]} ]]
@@ -113,49 +112,48 @@ Log.Using() {
     fi
 }
 
-Console.WriteStdErr() {
+Console::WriteStrErr() {
     # http://stackoverflow.com/questions/2990414/echo-that-outputs-to-stderr
     cat <<< "$*" 1>&2
     return 0
 }
 
-Console.WriteStdErrAnnotated() {
+Console::WriteStrErrAnnotated() {
     local script="$1"
     local lineNo=$2
     local color=$3
     local type=$4
     shift; shift; shift; shift
 
-    Console.WriteStdErr "$color[$type] $(UI.Color.Blue)[${script}:${lineNo}]$(UI.Color.Default) $* "
+    Console::WriteStrErr "$color[$type] $(UI.Color.Blue)[${script}:${lineNo}]$(UI.Color.Default) $* "
 }
 
-Logger.DEBUG() {
-    Console.WriteStdErrAnnotated "${BASH_SOURCE[3]##*/}" ${BASH_LINENO[2]} $(UI.Color.Yellow) DEBUG "$@"
+Logger::DEBUG() {
+    Console::WriteStrErrAnnotated "${BASH_SOURCE[3]##*/}" ${BASH_LINENO[2]} $(UI.Color.Yellow) DEBUG "$@"
 }
-Logger.ERROR() {
-    Console.WriteStdErrAnnotated "${BASH_SOURCE[3]##*/}" ${BASH_LINENO[2]} $(UI.Color.Red) ERROR "$@"
+Logger::ERROR() {
+    Console::WriteStrErrAnnotated "${BASH_SOURCE[3]##*/}" ${BASH_LINENO[2]} $(UI.Color.Red) ERROR "$@"
 }
-Logger.INFO() {
-    Console.WriteStdErrAnnotated "${BASH_SOURCE[3]##*/}" ${BASH_LINENO[2]} $(UI.Color.Blue) INFO "$@"
+Logger::INFO() {
+    Console::WriteStrErrAnnotated "${BASH_SOURCE[3]##*/}" ${BASH_LINENO[2]} $(UI.Color.Blue) INFO "$@"
 }
-Logger.WARN() {
-    Console.WriteStdErrAnnotated "${BASH_SOURCE[3]##*/}" ${BASH_LINENO[2]} $(UI.Color.Yellow) WARN "$@"
+Logger::WARN() {
+    Console::WriteStrErrAnnotated "${BASH_SOURCE[3]##*/}" ${BASH_LINENO[2]} $(UI.Color.Yellow) WARN "$@"
 }
-Logger.CUSTOM() {
-    Console.WriteStdErr "$(UI.Color.Yellow)[${subject^^}] $(UI.Color.Default)$* "
+Logger::CUSTOM() {
+    Console::WriteStrErr "$(UI.Color.Yellow)[${subject^^}] $(UI.Color.Default)$* "
 }
-Logger.DETAILED() {
-    Console.WriteStdErrAnnotated "${BASH_SOURCE[3]##*/}" ${BASH_LINENO[2]} $(UI.Color.Yellow) "${subject^^}" "$@"
+Logger::DETAILED() {
+    Console::WriteStrErrAnnotated "${BASH_SOURCE[3]##*/}" ${BASH_LINENO[2]} $(UI.Color.Yellow) "${subject^^}" "$@"
 }
 
-Log.RegisterLogger STDERR Console.WriteStdErr
-Log.RegisterLogger DEBUG Logger.DEBUG
-Log.RegisterLogger ERROR Logger.ERROR
-Log.RegisterLogger INFO Logger.INFO
-Log.RegisterLogger WARN Logger.WARN
-Log.RegisterLogger CUSTOM Logger.CUSTOM
-Log.RegisterLogger DETAILED Logger.DETAILED
+Log::RegisterLogger STDERR Console::WriteStrErr
+Log::RegisterLogger DEBUG Logger::DEBUG
+Log::RegisterLogger ERROR Logger::ERROR
+Log::RegisterLogger INFO Logger::INFO
+Log::RegisterLogger WARN Logger::WARN
+Log::RegisterLogger CUSTOM Logger::CUSTOM
+Log::RegisterLogger DETAILED Logger::DETAILED
 
-alias Error="subject=error Log"
-
+alias namespace="Log::NameScope"
 namespace oo/log

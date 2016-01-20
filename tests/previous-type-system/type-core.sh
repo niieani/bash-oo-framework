@@ -23,7 +23,7 @@ Type.CreateInstance() {
         # - the reference will always be to just that one base
 
         local baseType
-        if Function.Exists "$fullName.__baseType__"
+        if Function::Exists "$fullName.__baseType__"
         then
             baseType="$($fullName.__baseType__)"
             DEBUG subject=level2 Log "baseType = $baseType"
@@ -109,13 +109,13 @@ Type.CreateInstance() {
         # do we use the constructor operator? ~~
         if [[ "$1" = '~~' ]]; then
             shift
-            if Function.Exists $fullName.__constructor__
+            if Function::Exists $fullName.__constructor__
             then
                 $fullName.__constructor__ "$@"
             fi
         else
             # we are immediately doing an operation, so use the default constructor and run the thing!
-            if Function.Exists $fullName.__constructor__
+            if Function::Exists $fullName.__constructor__
             then
                 $fullName.__constructor__
             fi
@@ -123,7 +123,7 @@ Type.CreateInstance() {
         fi
     else
         # just run the constructor if any
-        if Function.Exists $fullName.__constructor__
+        if Function::Exists $fullName.__constructor__
         then
             $fullName.__constructor__
         fi
@@ -131,7 +131,7 @@ Type.CreateInstance() {
 }
 
 Type.CallInstance() {
-    @var operator
+    [string] operator
     
     local caller="${FUNCNAME[3]%.*}"
     local parent="${fullName%.*}"
@@ -176,21 +176,21 @@ Type.CallInstance() {
 }
 
 Type.Exists(){
-    @var type
-    if ! Array.Contains "$type" "${__oo__importedTypes[@]}"
+    [string] type
+    if ! Array::Contains "$type" "${__oo__importedTypes[@]}"
     then
         # type=${type#*:}
-        Array.Contains "static:$type" "${__oo__importedTypes[@]}" || Array.Contains "class:$type" "${__oo__importedTypes[@]}" || return 1
+        Array::Contains "static:$type" "${__oo__importedTypes[@]}" || Array::Contains "class:$type" "${__oo__importedTypes[@]}" || return 1
     fi
     return 0
 }
 
 Type.Initialize() {
-    @var objectType
-    @var fullType
-    @var newObjectName
+    [string] objectType
+    [string] fullType
+    [string] newObjectName
 
-    # TODO: @params paramsForInitializing
+    # TODO: [...rest] paramsForInitializing
     shift; shift
 
     ## TODO: add name sanitization, like, you cannot create objects with DOTs (.)
@@ -257,7 +257,7 @@ Type.Load(){
         local type
 
         for fullType in "${types[@]}"; do
-            if ! Array.Contains "$fullType" "${__oo__importedTypes[@]}"; then
+            if ! Array::Contains "$fullType" "${__oo__importedTypes[@]}"; then
 
                 # trim class: or static: from front
                 type=${fullType#*:}
@@ -290,7 +290,7 @@ Type.Load(){
 
                     ## alias enabling to define parameters ##
                     DEBUG subject=level4 Log "Aliasing @$type"
-                    alias @$type="_type=$type @param"
+                    alias @$type="_type=$type Variable::TrapAssignLocal"
                 fi
             fi
         done
@@ -306,7 +306,7 @@ Type.Extend() {
     then
         local extensionType="$1"
         shift
-        if Function.Exists "class:$extensionType"
+        if Function::Exists "class:$extensionType"
         then
             class:$extensionType
             extending=true objectType=$extensionType Type.CreateInstance "$@"

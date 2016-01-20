@@ -72,7 +72,7 @@ else
     alias UI.Color.NoInvisible="echo"
 fi
 
-alias UI.Powerline.IsAvailable="test -z $NO_UNICODE && (echo -e $'\u1F3B7' | grep -v F3B7) &> /dev/null"
+alias UI.Powerline.IsAvailable="UI.Color.IsAvailable && test -z \$NO_UNICODE && (echo -e $'\u1F3B7' | grep -v F3B7) &> /dev/null"
 if UI.Powerline.IsAvailable
 then
 	alias UI.Powerline.PointingArrow="echo -e $'\u27a1'"
@@ -113,3 +113,39 @@ else
 	alias UI.Powerline.Saxophone="echo '(YEAH)'"
 	alias UI.Powerline.ThumbsUp="echo '(OK)'"
 fi
+
+UI.Color.Print() {
+    local -i colorCode="$1"
+
+    if UI.Color.IsAvailable
+    then
+        local colorString="\$'\033[${colorCode}m'"
+        eval echo "${colorString}"
+    else
+        echo
+    fi
+}
+
+UI.Color.256text() {
+    local -i colorNumber="$1"
+
+    if UI.Color.IsAvailable
+    then
+        local colorString="\$'\033[38;5;${colorNumber}m'"
+        eval echo "${colorString}"
+    else
+        echo
+    fi
+}
+
+UI.Color.256background() {
+    local -i colorNumber="$1"
+
+    if UI.Color.IsAvailable
+    then
+        local colorString="\$'\033[48;5;${colorNumber}m'"
+        eval echo "${colorString}"
+    else
+        echo
+    fi
+}

@@ -44,7 +44,7 @@ de() {
 #    # paramCount = 1
 #
 #    # trapCount = 1
-#    @ @var cos
+#    @ [string] cos
 #    # paramCount = 2
 #
 #    # trapCount = 2
@@ -52,9 +52,9 @@ de() {
 #    # trapCount = 3 -- different, stop trap and release
 #    blabla
 
-#    @var test
-#    @var test2
-#    @var test3
+#    [string] test
+#    [string] test2
+#    [string] test3
     : echo name1
     : echo name2
     : echo name3

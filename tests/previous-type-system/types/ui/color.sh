@@ -16,7 +16,7 @@ UI.Color.IsAvailable && static:UI.Color() {
 #    }
 
     UI.Color.Print() {
-        @var colorCode
+        [string] colorCode
 
         if UI.Color.IsAvailable
         then
@@ -28,7 +28,7 @@ UI.Color.IsAvailable && static:UI.Color() {
     }
 
     UI.Color.256text() {
-        @var colorNumber
+        [string] colorNumber
 
         if UI.Color.IsAvailable
         then
@@ -40,7 +40,7 @@ UI.Color.IsAvailable && static:UI.Color() {
     }
 
     UI.Color.256background() {
-        @var colorNumber
+        [string] colorNumber
 
         if UI.Color.IsAvailable
         then

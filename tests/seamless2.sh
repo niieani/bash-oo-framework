@@ -62,7 +62,7 @@
 
 # something
 
-getDeclaration() {
+Variable::ExportDeclarationAndTypeToVariables() {
   local variableName="$1"
   local targetVariable="$2"
   
@@ -86,9 +86,9 @@ getDeclaration() {
   # __declaration_type=${BASH_REMATCH[1]}
 }
 
-printDeclaration() {
+Variable::PrintDeclaration() {
   local __declaration
-  getDeclaration "$1" __declaration
+  Variable::ExportDeclarationAndTypeToVariables "$1" __declaration
   echo "$__declaration"
 }
 
@@ -97,17 +97,17 @@ printDeclaration() {
 shopt -s expand_aliases
 declare __declaration_type
 
-Console.WriteStdErr() {
+Console::WriteStrErr() {
     # http://stackoverflow.com/questions/2990414/echo-that-outputs-to-stderr
     cat <<< "$*" 1>&2
     return 0
 }
 
-capturePipe() {
+Pipe::Capture() {
   read -r -d '' $1
 }
 
-capturePipeFaithful() {
+Pipe::CaptureFaithful() {
   IFS= read -r -d '' $1
 }
 
@@ -117,15 +117,15 @@ alias @resolveThis="
   local __declaration;
   if [ -z \${this+x} ]; 
   then
-    capturePipe __declaration;
+    Pipe::Capture __declaration;
   else
-    getDeclaration \$this __declaration;
+    Variable::ExportDeclarationAndTypeToVariables \$this __declaration;
     unset this;
   fi;
   local -\${__declaration_type:--} this=\${__declaration};"
 
-alias @return='printDeclaration'
-alias @get='printDeclaration'
+alias @return='Variable::PrintDeclaration'
+alias @get='Variable::PrintDeclaration'
 
 map.set() {
   @resolveThis
@@ -155,8 +155,8 @@ declare -A oldarr=([' escape "1" me ']="me \" too" ["simple"]="123" ["simple'2"]
 
 echo
 echo copying arrays:
-# printDeclaration oldarr
-declare -A cpyarr=$(printDeclaration oldarr)
+# Variable::PrintDeclaration oldarr
+declare -A cpyarr=$(Variable::PrintDeclaration oldarr)
 declare -p oldarr
 declare -p cpyarr
 echo
@@ -164,45 +164,45 @@ echo
 
 echo
 echo nesting arrays:
-declare -A nstarr=([first]=123 [nested]=$(printDeclaration oldarr))
-# printDeclaration nstarr
+declare -A nstarr=([first]=123 [nested]=$(Variable::PrintDeclaration oldarr))
+# Variable::PrintDeclaration nstarr
 declare -A nstarr=${nstarr[nested]}
 declare -p nstarr
 echo
-# printDeclaration outOfArr
+# Variable::PrintDeclaration outOfArr
 
 
-# declare -A addRemArr=$(printDeclaration oldarr | 
+# declare -A addRemArr=$(Variable::PrintDeclaration oldarr |
 #   map.set "info 123  \"hey" "works  yo" |
 #   map.delete "simple")
 
 declare -A simple=()
 
-# declare -A addRemArr=$(printDeclaration simple | 
+# declare -A addRemArr=$(Variable::PrintDeclaration simple |
 # declare -A withEnters=$()
 
 
 
 echo
 echo copy empty:
-  printDeclaration simple
+  Variable::PrintDeclaration simple
 echo
 
 echo
 echo simple addition:
-  printDeclaration simple | 
+  Variable::PrintDeclaration simple |
   map.set "simple" "simple"
 echo
 
 echo
 echo with enters:
-  printDeclaration simple | 
+  Variable::PrintDeclaration simple |
   map.set "enter" "$(printf "a\nb\nc")"
 echo
 
 echo
 echo adding after enters:
-  printDeclaration simple | 
+  Variable::PrintDeclaration simple |
   map.set "enter" "$(printf "a\nb\nc")" |
   map.set "space" "1 space  2" |
   map.set "another" "$(printf "q\nb\nr")"
@@ -210,7 +210,7 @@ echo
 
 echo
 echo deleting:
-  printDeclaration simple | 
+  Variable::PrintDeclaration simple |
   map.set "test" "1234" |
   map.set "enter" "$(printf "a\nb\nc")" |
   map.delete "enter"
@@ -218,7 +218,7 @@ echo
 
 echo
 echo adding and getting:
-  printDeclaration oldarr | 
+  Variable::PrintDeclaration oldarr |
   map.set "sober" "works  yo" |
   map.get "sober"
 echo

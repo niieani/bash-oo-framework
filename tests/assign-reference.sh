@@ -9,8 +9,8 @@ import lib/types/ui
 import lib/types/util/test
 
 reftest() {
-    @reference table
-    @reference retval
+    [reference] table
+    [reference] retval
 
     echo ${table[test]}
     table[ok]=added
@@ -29,9 +29,9 @@ echo ${assoc[ok]}
 ## dynamic references
 
 passingTest() {
-	@var hello
-	@var makownik
-	@var third
+	[string] hello
+	[string] makownik
+	[string] third
 	
 	echo Inside Test Func
 	echo $hello + $makownik + $third

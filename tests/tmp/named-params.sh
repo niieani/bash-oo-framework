@@ -10,8 +10,8 @@ Log.Write() {
 source "$( cd "${BASH_SOURCE[0]%/*}" && pwd )/../lib/system/02_named_parameters.sh"
 
 testPassingParams() {
-    @var hello
-    @var two
+    [string] hello
+    [string] two
 
     true normal code
     true normal code2
@@ -19,11 +19,11 @@ testPassingParams() {
 
     echo $hello $two
 
-    # l=4 @array anArrayWithFourElements
-    # l=2 @array anotherArrayWithTwo
-    # @var anotherSingle
-    # @reference table
-    # @params anArrayOfVariedSize
+    # l=4 [string[]] anArrayWithFourElements
+    # l=2 [string[]] anotherArrayWithTwo
+    # [string] anotherSingle
+    # [reference] table
+    # [...rest] anArrayOfVariedSize
 
     # test "$hello" = "$1"
     # #

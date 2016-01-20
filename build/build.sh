@@ -4,20 +4,20 @@
 source "$( cd "${BASH_SOURCE[0]%/*}/.." && pwd )/lib/oo-framework.sh"
 
 minify() {
-	@var filePath
-	@var outputPath
+	[string] filePath
+	[string] outputPath
 	
 	{
 		local IFS=
 		while read -r line
 		do
-			[[ $line != "System.Bootstrap" ]] && echo "$line"
+			[[ $line != "System::Bootstrap" ]] && echo "$line"
 		done < "$filePath" >> "$outputFile"
 	}
 }
 
 build() {
-	@var outputFile
+	[string] outputFile
 	
 	echo "#!/usr/bin/env bash" > "$outputFile"
 	echo "# oo-framework version: $(git rev-parse --short HEAD)" >> "$outputFile"

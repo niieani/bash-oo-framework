@@ -4,22 +4,22 @@ class:String() {
     extends Var
 
     static String.GetSanitizedVariableName() {
-        @var input
+        [string] input
 
         local clean="${input//[^a-zA-Z0-9]/_}"
         echo "${clean^^}"
     }
 
     static String.TabsForSpaces() {
-        @var input
-        # TODO: @var spaceCount=4
+        [string] input
+        # TODO: [string] spaceCount=4
 
         # hardcoded 1 tab = 4 spaces
         echo "${input//[	]/    }"
     }
 
     static String.RegexMatch() {
-        @var text; @var regex; @var param
+        [string] text; [string] regex; [string] param
 
         if [[ "$text" =~ $regex ]]; then
             if [[ ! -z $param ]]; then
@@ -33,7 +33,7 @@ class:String() {
     }
 
     static String.SpaceCount() {
-        @var text
+        [string] text
 
         # note: you shouldn't mix tabs and spaces, we explicitly don't count tabs here
         local spaces="$(String.RegexMatch "$text" "^[	]*([ ]*)[.]*" 1)"
@@ -41,7 +41,7 @@ class:String() {
     }
 
     static String.Trim() {
-        @var text
+        [string] text
 
         echo "$(String.RegexMatch "$text" "^[ 	]*(.*)" 1)"
         #text="${text#"${text%%[![:space:]]*}"}"   # remove leading whitespace characters
@@ -50,24 +50,24 @@ class:String() {
     }
 
     static String.Contains() {
-        @var string
-        @var match
+        [string] string
+        [string] match
 
         [[ "$string" == *"$match"* ]]
         return $?
     }
 
     static String.StartsWith() {
-        @var string
-        @var match
+        [string] string
+        [string] match
 
         [[ "$string" == "$match"* ]]
         return $?
     }
 
     static String.EndsWith() {
-        @var string
-        @var match
+        [string] string
+        [string] match
 
         [[ "$string" == *"$match" ]]
         return $?
@@ -78,8 +78,8 @@ class:String() {
     }
 
     method String::RegexMatch() {
-        @var regex
-        @var param
+        [string] regex
+        [string] param
 
         String.RegexMatch "$($this)" "$regex" "$param"
     }

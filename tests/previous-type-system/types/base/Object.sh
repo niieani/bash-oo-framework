@@ -37,7 +37,7 @@ class:Object() {
             if [[ $nestedCount -eq 0 ]]
             then
                 local value="$($this)"
-                if String.IsNumber "$value"
+                if String::IsNumber "$value"
                 then
                     echo "$value"
                 else

@@ -20,7 +20,7 @@ class:Number() {
         }
 
         Number::__setter__() {
-            @var newValue
+            [string] newValue
             
             subject=level1 Log "Var: $($this._storedVariableName), New Value: ${newValue}"
 
@@ -39,7 +39,7 @@ class:Number() {
         }
 
         Number::__add__() {
-            @var value
+            [string] value
 
             echo $(( $($this) + $value ))
 
@@ -49,19 +49,19 @@ class:Number() {
         }
 
         Number::__subtract__() {
-            @var value
+            [string] value
 
             echo $(( $($this) - $value ))
         }
 
         Number::__multiply__() {
-            @var value
+            [string] value
 
             echo $(( $($this) * $value ))
         }
 
         Number::__divide__() {
-            @var value
+            [string] value
 
             echo $(( $($this) / $value ))
         }

@@ -71,12 +71,12 @@ Instead of using the unhelpful ```$1```, ```$2``` and so on within functions to 
 ```bash
 testPassingParams() {
 
-    @var hello
-    @array[4] anArrayWithFourElements
-    l=2 @array anotherArrayWithTwo
-    @var anotherSingle
-    @reference table   # references only work in bash >=4.3
-    @params anArrayOfVariedSize
+    [string] hello
+    [string[4]] anArrayWithFourElements
+    l=2 [string[]] anotherArrayWithTwo
+    [string] anotherSingle
+    [reference] table   # references only work in bash >=4.3
+    [...rest] anArrayOfVariedSize
 
     test "$hello" = "$1" && echo correct
     #
@@ -118,7 +118,7 @@ The system will automatically map:
 In other words, not only you can call your parameters by their names (which makes up for a more readable core), you can actually pass arrays easily (and references to variables - this feature needs bash >=4.3 though)! Plus, the mapped variables are all in the local scope. 
 This module is pretty light and works in bash 3 and bash 4 (except for references - bash >=4.3) and if you only want to use it separately from this project, get the file /lib/system/02_named_parameters.sh.
 
-Note: Between 2-10 there are aliases for arrays like ```@array[4]```, after 10 you need to write ```l=LENGTH @array```, like shown in the example. Or, make your own aliases :).
+Note: Between 2-10 there are aliases for arrays like ```[string[4]]```, after 10 you need to write ```l=LENGTH [string[]]```, like shown in the example. Or, make your own aliases :).
 
 Using ```import```
 ==================
@@ -143,7 +143,7 @@ try {
     echo "File: $__BACKTRACE_SOURCE__, Line: $__BACKTRACE_LINE__"
     
     ## printing a caught exception couldn't be simpler, as it's stored in "${__EXCEPTION__[@]}"
-    Exception.PrintException "${__EXCEPTION__[@]}"
+    Exception::PrintException "${__EXCEPTION__[@]}"
 }
 ```
 
@@ -161,20 +161,20 @@ echo "$(UI.Color.Blue)I'm blue...$(UI.Color.Default)"
 
 # enable basic logging for this file
 namespace myApp
-Log.AddOutput myApp DEBUG
+Log::AddOutput myApp DEBUG
 
 # now we can write with the DEBUG output set
 Log "Play me some Jazz, will ya? $(UI.Powerline.Saxophone)"
 
 # redirect error messages to STDERR
-Log.AddOutput error STDERR
+Log::AddOutput error STDERR
 subject=error Log "Something bad happened."
 
 # reset outputs
-Log.ResetAllOutputsAndFilters
+Log::ResetAllOutputsAndFilters
 
 # You may also hardcode the use for the StdErr output directly:
-Console.WriteStdErr "This will be printed to STDERR, no matter what."
+Console::WriteStrErr "This will be printed to STDERR, no matter what."
 ```
 
 Both the colors and the powerline characters fallback gracefully on systems that don't support them.
@@ -269,7 +269,7 @@ Thanks to scopes, you can specify exactly what and how you want to log.
 namespace myApp
 
 ## ADD OUTPUT OF "myApp" TO DELEGATE STDERR
-Log.AddOutput myApp STDERR
+Log::AddOutput myApp STDERR
 
 ## LET'S TRY LOGGING SOMETHING:
 Log "logging to stderr"
@@ -285,14 +285,14 @@ myLoggingDelegate() {
 }
 
 ## WE NEED TO REGISTER IT:
-Log.RegisterLogger MYLOGGER myLoggingDelegate
+Log::RegisterLogger MYLOGGER myLoggingDelegate
 ```
 
 Now, we can set it up so that it direct only logs from a specific function to the our custom logger output:
 
 ```bash
 ## WE WANT TO DIRECT ALL LOGGING WITHIN FUNCTION myFunction OF myApp TO MYLOGGER
-Log.AddOutput myApp/myFunction MYLOGGER
+Log::AddOutput myApp/myFunction MYLOGGER
 
 ## LET'S DECLARE THAT FUNCTION:
 myFunction() {
@@ -315,7 +315,7 @@ As you can see, logging automatically redirected the logger from our function fr
 If you wish to keep logging to both loggers, you can disable the specificity filter:
 
 ```bash
-Log.DisableFilter myApp 
+Log::DisableFilter myApp 
 ```
 
 Now if we run the function ```myFunction```:
@@ -332,9 +332,9 @@ We can be even more specific and redirect messages with specific *subjects* to o
 
 ```bash
 ## Assuming we're in the same file, let's reset first
-Log.ResetAllOutputsAndFilters
+Log::ResetAllOutputsAndFilters
 
-Log.AddOutput myApp/myFunction MYLOGGER
+Log::AddOutput myApp/myFunction MYLOGGER
 
 myFunction() {
     echo "Hey, I am a function!"
@@ -362,19 +362,19 @@ Hurray: unimportant message from myFunction
 To filter (or redirect) messages with subject ```unimportant``` within ```myFunction``` of ```myApp```'s file:
 
 ```bash
-Log.AddOutput myApp/myFunction/unimportant VOID
+Log::AddOutput myApp/myFunction/unimportant VOID
 ```
 
 To filter any messages with subject ```unimportant``` within ```myApp```'s file:
 
 ```bash
-Log.AddOutput myApp/unimportant VOID
+Log::AddOutput myApp/unimportant VOID
 ```
 
 Or any messages with subject ```unimportant``` anywhere:
 
 ```bash
-Log.AddOutput unimportant VOID
+Log::AddOutput unimportant VOID
 ```
 
 Now, running ```myFunction``` will print:
@@ -440,7 +440,7 @@ class:Human() {
     }
 
     method Human::Eat() {
-        @var food
+        [string] food
                 
         $this.Eaten.Add "$food"
         
@@ -454,7 +454,7 @@ class:Human() {
     method Human::Example() {
         @Array      someArray
         @Number     someNumber
-        @params     arrayOfOtherParams
+        [...rest]     arrayOfOtherParams
                 
         echo "Testing $someArray and $someNumber"
         echo Stuff: "${arrayOfOtherParams[*]}"
@@ -471,7 +471,7 @@ class:Human() {
         $this.Name = "$name"
         $this.Height = "$height"
         
-        Console.WriteStdErr "Hello, I am the constructor! You have passed these arguments [ $@ ]"
+        Console::WriteStrErr "Hello, I am the constructor! You have passed these arguments [ $@ ]"
     }
         
     static Human.PlaySomeJazz() {

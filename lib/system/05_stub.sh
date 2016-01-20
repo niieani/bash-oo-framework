@@ -1,13 +1,13 @@
 namespace oo
 
-Array.Contains() {
+Array::Contains() {
     local e
     for e in "${@:2}"; do [[ "$e" = "$1" ]] && return 0; done
     return 1
 }
 
-String.IsNumber() {
-    @var input
+String::IsNumber() {
+    [string] input
 
     local regex='^-?[0-9]+([.][0-9]+)?$'
     if ! [[ "$input" =~ $regex ]]
@@ -17,8 +17,8 @@ String.IsNumber() {
     return 0
 }
 
-String.GetXSpaces() {
-    @var howMany
+String::GenerateSpaces() {
+    [string] howMany
 
     if [[ "$howMany" -gt 0 ]]
     then
@@ -27,8 +27,8 @@ String.GetXSpaces() {
     return 0
 }
 
-String.ReplaceSlashes() {
-    @var stringToMark
+String::ReplaceSlashes() {
+    [string] stringToMark
     
     # Workaround for a Bash bug that causes string replacement to fail when a \ is in the string
     local slash="\\"
@@ -36,8 +36,8 @@ String.ReplaceSlashes() {
     echo "${stringToMark/$slash$slash/$slashReplacement}"
 }
 
-String.BringBackSlashes() {
-    @var stringToMark
+String::RestoreSlashes() {
+    [string] stringToMark
     
     # Workaround for a Bash bug that causes string replacement to fail when a \ is in the string
     local slash="\\"
@@ -45,10 +45,14 @@ String.BringBackSlashes() {
     echo "${stringToMark/$slashReplacement/$slash}"
 }
 
-Function.Exists(){
+#Alias::Exists(){
+#    local name="$1"
+#    local typeMatch=$(type "$name" 2> /dev/null || true)
+#    echo "$typeMatch" | grep "function\|alias" &> /dev/null || return 1
+#    return 0
+#}
+
+Function::Exists(){
     local name="$1"
-    local typeMatch=$(type "$name" 2> /dev/null) || return 1
-    echo "$typeMatch" | grep "function\|alias" &> /dev/null || return 1
-    return 0
+    declare -f "$name" &> /dev/null
 }
-alias Object.Exists="Function.Exists"

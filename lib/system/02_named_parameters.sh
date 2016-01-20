@@ -1,6 +1,6 @@
 namespace oo
 
-Function.AssignParamLocally() {
+Variable::TrapAssignNumberedParameter() {
     # USE DEFAULT IFS IN CASE IT WAS CHANGED - important!
     local IFS=$' \t\n'
     
@@ -17,12 +17,12 @@ Function.AssignParamLocally() {
     if [[ "${commandWithArgs[*]}" == "true" ]]
     then
         __assign_next=true
-        subject="parameters-assign" Log "Will assign next one"
+        DEBUG subject="parameters-assign" Log "Will assign next one"
 
         local nextAssignment=$(( ${__assign_paramNo:-0} + 1 ))
         if [[ "${!nextAssignment}" == "$ref:"* ]]
         then
-            subject="parameters-reference" Log "next param is an object reference: $nextAssignment"
+            DEBUG subject="parameters-reference" Log "next param is an object reference: $nextAssignment"
             __assign_isReference="-n"
         else
             __assign_isReference=""
@@ -43,12 +43,12 @@ Function.AssignParamLocally() {
 
     if [[ ! -z $__assign_varType ]]
     then
-        subject="parameters-setting" Log "SETTING: $__assign_varName = \$$__assign_paramNo"
+        DEBUG subject="parameters-setting" Log "SETTING: $__assign_varName = \$$__assign_paramNo"
         # subject="parameters-setting" Log --
 
         local execute
 
-        if [[ "$__assign_varType" == "array" ]]
+        if [[ "$__assign_varType" == "params" ]]
         then
             # passing array:
             execute="$__assign_varName=( \"\${@:$__assign_paramNo:$__assign_arrLength}\" )"
@@ -56,7 +56,7 @@ Function.AssignParamLocally() {
             __assign_paramNo+=$(($__assign_arrLength - 1))
 
             unset __assign_arrLength
-        elif [[ "$__assign_varType" == "params" ]]
+        elif [[ "$__assign_varType" == "rest" ]]
         then
             execute="$__assign_varName=( \"\${@:$__assign_paramNo}\" )"
             eval "$execute"
@@ -74,19 +74,28 @@ Function.AssignParamLocally() {
                 execute="$__assign_varName=\"\$$__assign_paramNo\""
             fi
 
-            subject="parameters-executing" Log "EXECUTING: $execute"
+            DEBUG subject="parameters-executing" Log "EXECUTING: $execute"
             eval "$execute"
         fi
         unset __assign_varType
         unset __assign_isReference
+
+        if [[ ! -z ${__oo__bootstrapped+x} ]] && declare -f 'Type::CreateHandlerFunction' &> /dev/null
+        then
+            Type::CreateHandlerFunction "$__assign_varName" 2> /dev/null || true
+        fi
+#        if Function::Exists 'Type::CreateHandlerFunction' && [[ ! -z ${__oo__bootstrapped+x} ]]
+#        then
+#            Type::CreateHandlerFunction "$__assign_varName"
+#        fi
     fi
 
     if [[ "$command" != "local" || "$__assign_next" != "true" ]]
     then
         __assign_normalCodeStarted+=1
 
-        subject="parameters-nopass" Log "NOPASS ${commandWithArgs[*]}"
-        subject="parameters-nopass" Log "normal code count ($__assign_normalCodeStarted)"
+        DEBUG subject="parameters-nopass" Log "NOPASS ${commandWithArgs[*]}"
+        DEBUG subject="parameters-nopass" Log "normal code count ($__assign_normalCodeStarted)"
         # subject="parameters-nopass" Log --
     else
         unset __assign_next
@@ -96,37 +105,39 @@ Function.AssignParamLocally() {
         __assign_varType="$__capture_type"
         __assign_arrLength="$__capture_arrLength"
 
-        subject="parameters-pass" Log "PASS ${commandWithArgs[*]}"
+        DEBUG subject="parameters-pass" Log "PASS ${commandWithArgs[*]}"
         # subject="parameters-pass" Log --
 
         __assign_paramNo+=1
     fi
 }
 
-Function.CaptureParams() {
-    subject="parameters" Log "Capturing Type $_type"
+Variable::InTrapCaptureParameters() {
+    DEBUG subject="parameters" Log "Capturing Type $_type"
     # subject="parameters" Log --
 
     __capture_type="$_type"
     __capture_arrLength="$l"
 }
-    
+
 # NOTE: true; true; at the end is required to workaround an edge case where TRAP doesn't behave properly
-alias @trapAssign='Function.CaptureParams; declare -i __assign_normalCodeStarted=0; trap "declare -i __assign_paramNo; Function.AssignParamLocally \"\$BASH_COMMAND\" \"\$@\"; [[ \$__assign_normalCodeStarted -ge 2 ]] && trap - DEBUG && unset __assign_varType && unset __assign_varName && unset __assign_paramNo" DEBUG; true; true; '
-alias @param='@trapAssign local'
-alias @reference='_type=reference @trapAssign local -n'
-alias @var="_type=var @trapAssign local \${__assign_isReference}"
-alias @int='_type=int @trapAssign local -i'
-alias @params='_type=params @param'
-alias @array='_type=array @param'
-alias @array[2]='l=2 _type=array @param'
-alias @array[3]='l=3 _type=array @param'
-alias @array[4]='l=4 _type=array @param'
-alias @array[5]='l=5 _type=array @param'
-alias @array[6]='l=6 _type=array @param'
-alias @array[7]='l=7 _type=array @param'
-alias @array[8]='l=8 _type=array @param'
-alias @array[9]='l=9 _type=array @param'
-alias @array[10]='l=10 _type=array @param'
+alias Variable::TrapAssign='Variable::InTrapCaptureParameters; declare -i __assign_normalCodeStarted=0; trap "declare -i __assign_paramNo; Variable::TrapAssignNumberedParameter \"\$BASH_COMMAND\" \"\$@\"; [[ \$__assign_normalCodeStarted -ge 2 ]] && trap - DEBUG && unset __assign_varType && unset __assign_varName && unset __assign_paramNo" DEBUG; true; true; '
+alias Variable::TrapAssignLocal='Variable::TrapAssign local'
+alias [reference]='_type=reference Variable::TrapAssign local -n'
+alias [string]="_type=string Variable::TrapAssign local \${__assign_isReference}"
+alias [integer]='_type=integer Variable::TrapAssign local -i'
+# TODO: alias [boolean]='_type=boolean Variable::TrapAssignLocal'
+alias [string[]]='_type=params Variable::TrapAssignLocal'
+alias [string[1]]='l=1 _type=params Variable::TrapAssignLocal'
+alias [string[2]]='l=2 _type=params Variable::TrapAssignLocal'
+alias [string[3]]='l=3 _type=params Variable::TrapAssignLocal'
+alias [string[4]]='l=4 _type=params Variable::TrapAssignLocal'
+alias [string[5]]='l=5 _type=params Variable::TrapAssignLocal'
+alias [string[6]]='l=6 _type=params Variable::TrapAssignLocal'
+alias [string[7]]='l=7 _type=params Variable::TrapAssignLocal'
+alias [string[8]]='l=8 _type=params Variable::TrapAssignLocal'
+alias [string[9]]='l=9 _type=params Variable::TrapAssignLocal'
+alias [string[10]]='l=10 _type=params Variable::TrapAssignLocal'
+alias [...rest]='_type=rest Variable::TrapAssignLocal'
 
 declare -g ref=$'\UEFF1A'$'\UEFF1A'
