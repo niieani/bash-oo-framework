@@ -269,14 +269,14 @@ Type::Handle() {
       fi
     elif [[ "$prevMode" == 'property' ]]
     then
-#      if [[ "$currentPropertyVisibility" == 'public' ]]
-#      then
+      if [[ "$currentPropertyVisibility" == 'public' || "$__access_private" == "true" ]]
+      then
         DEBUG subject='property' Log 'print out the property' $variableName
         ## print out the property or run the getter
         Type::RunGetter $variableName $type
-#      else
-#        e="Property is private" throw
-#      fi
+      else
+        e="Property is private" throw
+      fi
     fi
 
     ## TODO: shouldn't this be an elif ?

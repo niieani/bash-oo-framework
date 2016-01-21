@@ -16,7 +16,7 @@ class:Human() {
   public array children
   public Human child
   public boolean hasSomething
-  private string privTest
+  private string privTest = "someVal"
 
   Human.test() {
     @resolve:this
@@ -32,6 +32,13 @@ class:Human() {
 
     @return a
   }
+
+  Human.accessPriv() {
+    @resolve:this
+    this privTest = "$(this privTest) - changed"
+    @return:value $(this privTest)
+  }
+
 }
 
 Type::Initialize Human
@@ -132,4 +139,23 @@ function testArrayMethods() {
   someArr map 'echo $(item toUpper)'
 }
 
-testArrayMethods
+#testArrayMethods
+
+function testPrivate() {
+  Human yeah
+  yeah lastName
+  yeah accessPriv
+  try {
+    yeah privTest = yo
+  }
+  catch {
+    echo private - OK
+  }
+  try {
+    yeah privTest
+  }
+  catch {
+    echo private - OK
+  }
+}
+testPrivate

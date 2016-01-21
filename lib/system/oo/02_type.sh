@@ -5,6 +5,7 @@ __primitive_extension_fingerprint__boolean=${__primitive_extension_declaration}3
 
 # /**
 #   * Code like: Variable::ExportDeclarationAndTypeToVariables
+#   * TODO: Merge parts
 #   */
 Type::GetTypeOfVariable() {
   local variableName="$1"
@@ -41,40 +42,6 @@ Type::GetTypeOfVariable() {
 
       echo "$variableType"
   fi
-
-#	local typeInfo="$(declare -p $1 2> /dev/null || declare -p | grep "^declare -[aAign\-]* $1\(=\|$\)" || true)"
-#
-#	if [[ -z "$typeInfo" ]]
-#	then
-#		echo undefined
-#		return
-#	fi
-#
-#	if [[ "$typeInfo" == "declare -n"* ]]
-#	then
-#		echo reference
-#	elif [[ "$typeInfo" == "declare -a"* ]]
-#	then
-#		echo array
-#	elif [[ "$typeInfo" == "declare -ai"* ]]
-#	then
-#		echo integerArray
-#	elif [[ "$typeInfo" == "declare -A"* ]]
-#	then
-#    local __object_type_ref="$1[__object_type]"
-#    local __object_type="${!__object_type_ref}"
-#    if [[ ! -z "${__object_type}" ]]
-#    then
-#      echo $__object_type
-#    else
-#		  echo map
-#    fi
-#	elif [[ "$typeInfo" == "declare -i"* ]]
-#	then
-#		echo integer
-#	else
-#		echo string
-#	fi
 }
 
 Type::IsPrimitive() {
@@ -126,7 +93,6 @@ Type::CreateHandlerFunction() {
   eval "$variableName() {
     Type::Handle $variableName \"\$@\";
   }"
-
 }
 
 Type::TrapAndCreate() {
