@@ -1,10 +1,11 @@
 namespace oo
 
 declare -ig __oo__insideTryCatch=0
+declare -g __oo__presetShellOpts="$-"
 
 # in case try-catch is nested, we set +e before so the parent handler doesn't catch us instead
-alias try='[[ $__oo__insideTryCatch -eq 0 ]] || set +e; __oo__insideTryCatch+=1; ( set -e; true; '
-alias catch='); declare __oo__tryResult=$?; __oo__insideTryCatch+=-1; [[ $__oo__insideTryCatch -lt 1 ]] || set -e; Exception::Extract $__oo__tryResult || '
+alias try='[[ $__oo__insideTryCatch -eq 0 ]] || set +e; __oo__presetShellOpts="$-"; __oo__insideTryCatch+=1; ( set -e; true; '
+alias catch='); declare __oo__tryResult=$?; __oo__insideTryCatch+=-1; [[ $__oo__insideTryCatch -lt 1 ]] || set -${__oo__presetShellOpts:-e} && Exception::Extract $__oo__tryResult || '
 
 Exception::SetupTemp() {
     declare -g __oo__storedExceptionLineFile="$(mktemp -t stored_exception_line.$$.XXXXXXXXXX)"
@@ -41,6 +42,7 @@ Exception::GetLastException() {
 
 Exception::Extract() {
     local retVal=$1
+    unset __oo__tryResult
 
     if [[ $retVal -gt 0 ]]
     then
