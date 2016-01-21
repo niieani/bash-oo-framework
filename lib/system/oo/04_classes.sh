@@ -3,12 +3,12 @@ namespace oo/type
 # ------------------------ #
 
 Type::DefineProperty() {
-  [string] visibility
-  [string] class
-  [string] type
-  [string] property
-  [string] assignment
-  [string] defaultValue
+  local visibility="$1"
+  local class="$2"
+  local type="$3"
+  local property="$4"
+  local assignment="$5"
+  local defaultValue="$6"
 
   class="${class//[^a-zA-Z0-9]/_}"
 
@@ -43,12 +43,12 @@ Type::Initialize() {
 
   if [[ "$isStatic" == 'true' || "$isStatic" == 'static' ]]
   then
-    declare -Ag __oo_static_instance_${name}=$(Type::Construct $name)
+    declare -Ag __oo_static_instance_${name}="$(Type::Construct $name)"
 
-    eval "${name}\(\) { Type::Handle __oo_static_instance_${name} \"\$@\"; }"
+    eval "${name}"'(){ '"Type::Handle __oo_static_instance_${name}"' "$@"; }'
   else
     ## add alias for parameters
-    alias [$name]='_type=map Variable::TrapAssign declare -A'
+    alias [$name]='_type=map Variable::TrapAssign local -A'
 
     ## add alias for creating vars
     alias $name="_type=$name Type::TrapAssign declare -A"

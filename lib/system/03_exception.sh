@@ -77,8 +77,9 @@ command_not_found_handle() {
 }
 
 Exception::PrintException() {
-    [...rest] exception
-    
+#    [...rest] exception
+    local -a exception=("$@")
+
     local -i backtraceIndentationLevel=${backtraceIndentationLevel:-0}
     
     local -i counter=0
@@ -111,8 +112,10 @@ Exception::PrintException() {
 }
 
 Exception::CanHighlight() {
-    [string] errLine
-    [string] stringToMark
+#    [string] errLine
+#    [string] stringToMark
+    local errLine="$1"
+    local stringToMark="$2"
     
     local stringToMarkWithoutSlash="$(String::ReplaceSlashes "$stringToMark")"
     errLine="$(String::ReplaceSlashes "$errLine")"
@@ -126,8 +129,10 @@ Exception::CanHighlight() {
 }
 
 Exception::HighlightPart() {
-    [string] errLine
-    [string] stringToMark
+#    [string] errLine
+#    [string] stringToMark
+    local errLine="$1"
+    local stringToMark="$2"
     
     # Workaround for a Bash bug that causes string replacement to fail when a \ is in the string
     local stringToMarkWithoutSlash="$(String::ReplaceSlashes "$stringToMark")"
@@ -146,16 +151,21 @@ Exception::HighlightPart() {
 }
 
 Exception::GetUnderlinedPart() {
-    [string] stringToMark
+#    [string] stringToMark
+    local stringToMark="$1"
     
     echo "$(UI.Color.LightGreen)$(UI.Powerline.RefersTo) $(UI.Color.Magenta)$(UI.Color.Underline)$stringToMark$(UI.Color.White)$(UI.Color.NoUnderline)"
 }
 
 Exception::FormatExceptionSegment() {
-    [string] script
-    [integer] lineNo
-    [string] stringToMark
-    [integer] callPosition=1
+    local script="$1"
+    local -i lineNo="$2"
+    local stringToMark="$3"
+    local -i callPosition="${4:-1}"
+#    [string] script
+#    [integer] lineNo
+#    [string] stringToMark
+#    [integer] callPosition=1
 
     local errLine="$(sed "${lineNo}q;d" "$script")"
     local originalErrLine="$errLine"
@@ -211,7 +221,8 @@ Exception::ContinueOrBreak() {
 }
 
 Exception::DumpBacktrace() {
-    [integer] startFrom=1
+    local -i startFrom="${1:-1}"
+#    [integer] startFrom=1
     # inspired by: http://stackoverflow.com/questions/64786/error-handling-in-bash
     
     # USE DEFAULT IFS IN CASE IT WAS CHANGED - important!

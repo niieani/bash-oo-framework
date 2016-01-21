@@ -11,6 +11,8 @@ Variable::TrapAssignNumberedParameter() {
 
     shift
 
+#    Log "TRAP: ${commandWithArgs[@]}"
+
     if [[ "$command" == "trap" || "$command" == "l="* || "$command" == "_type="* ]]
     then
         return 0
@@ -162,14 +164,14 @@ Variable::InTrapCaptureParameters() {
 }
 
 # NOTE: true; true; at the end is required to workaround an edge case where TRAP doesn't behave properly
-alias Variable::TrapAssign='Variable::InTrapCaptureParameters; declare -i __assign_normalCodeStarted=0; trap "declare -i __assign_paramNo; Variable::TrapAssignNumberedParameter \"\$BASH_COMMAND\" \"\$@\"; [[ \$__assign_normalCodeStarted -ge 2 ]] && trap - DEBUG && unset __assign_varType __assign_varName __assign_varValue __assign_paramNo" DEBUG; true; true; '
-alias Variable::TrapAssignLocal='Variable::TrapAssign declare'
-alias [reference]='_type=reference Variable::TrapAssign declare -n'
-alias [string]="_type=string Variable::TrapAssign declare \${__assign_isReference}"
-alias [integer]='_type=integer Variable::TrapAssign declare -i'
-alias [array]='_type=array Variable::TrapAssign declare -a'
-alias [map]='_type=map Variable::TrapAssign declare -A'
-# TODO: alias [integerArray]='_type=array Variable::TrapAssign declare -ai'
+alias Variable::TrapAssign='Variable::InTrapCaptureParameters; local -i __assign_normalCodeStarted=0; trap "declare -i __assign_paramNo; Variable::TrapAssignNumberedParameter \"\$BASH_COMMAND\" \"\$@\"; [[ \$__assign_normalCodeStarted -ge 2 ]] && trap - DEBUG && unset __assign_varType __assign_varName __assign_varValue __assign_paramNo" DEBUG; true; true; '
+alias Variable::TrapAssignLocal='Variable::TrapAssign local'
+alias [reference]='_type=reference Variable::TrapAssign local -n'
+alias [string]="_type=string Variable::TrapAssign local \${__assign_isReference}"
+alias [integer]='_type=integer Variable::TrapAssign local -i'
+alias [array]='_type=array Variable::TrapAssign local -a'
+alias [map]='_type=map Variable::TrapAssign local -A'
+# TODO: alias [integerArray]='_type=array Variable::TrapAssign local -ai'
 alias [boolean]='_type=boolean Variable::TrapAssignLocal'
 alias [string[]]='_type=params Variable::TrapAssignLocal'
 alias [string[1]]='l=1 _type=params Variable::TrapAssignLocal'

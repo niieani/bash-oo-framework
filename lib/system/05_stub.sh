@@ -7,7 +7,7 @@ Array::Contains() {
 }
 
 String::IsNumber() {
-    [string] input
+    local input="$1"
 
     local regex='^-?[0-9]+([.][0-9]+)?$'
     if ! [[ "$input" =~ $regex ]]
@@ -18,7 +18,7 @@ String::IsNumber() {
 }
 
 String::GenerateSpaces() {
-    [string] howMany
+    local howMany="$1"
 
     if [[ "$howMany" -gt 0 ]]
     then
@@ -28,7 +28,7 @@ String::GenerateSpaces() {
 }
 
 String::ReplaceSlashes() {
-    [string] stringToMark
+    local stringToMark="$1"
     
     # Workaround for a Bash bug that causes string replacement to fail when a \ is in the string
     local slash="\\"
@@ -37,8 +37,8 @@ String::ReplaceSlashes() {
 }
 
 String::RestoreSlashes() {
-    [string] stringToMark
-    
+    local stringToMark="$1"
+
     # Workaround for a Bash bug that causes string replacement to fail when a \ is in the string
     local slash="\\"
     local slashReplacement='_%SLASH%_'

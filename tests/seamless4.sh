@@ -34,11 +34,14 @@ class:Human() {
   }
 }
 
-Type::Initialize Human #static
+Type::Initialize Human
+#Type::Initialize Human static
 
 function testStatic() {
-  Human
+  Human lastName
 }
+
+#testStatic
 
 function test2() {
   array hovno
@@ -92,20 +95,41 @@ function testBooleanInClass() {
 
 #testBooleanInClass
 
+function testPassingAsParameterSimple() {
+  [string] str
+  declare -p str
+}
+
+#testPassingAsParameterSimple 'hello!'
+
 function testPassingAsParameter() {
   [map] someMap
   [string] str
   [boolean] bool=true
+  [Human] theHuman
 
   declare -p someMap
   declare -p str
   declare -p bool
+  declare -p theHuman
 }
 
-declare -A aMap=( [hoho]="yes  m'aam" )
-#declare -p aMap
-#testPassingAsParameter "$(@get aMap)" 'string'
+function testPassingAsParameterCall() {
+  declare -A aMap=( [hoho]="yes  m'aam" )
+  declare -p aMap
 
-#somearr forEach 'echo $(item); '
-#array newArr=$(somearr map 'echo yep-$(item)')
-#array newArr=$(somearr map '[string] item; [integer] index; echo $index-yoyo')
+  Human someHuman
+
+  testPassingAsParameter "$(@get aMap)" 'string' false "$(someHuman)"
+}
+
+#testPassingAsParameterCall
+
+function testArrayMethods() {
+  array someArr=( 1 2 three 4 )
+
+  someArr forEach 'echo yep-$(item)'
+  someArr map 'echo $(item toUpper)'
+}
+
+testArrayMethods

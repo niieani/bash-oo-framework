@@ -75,7 +75,7 @@ array.forEach() {
   string item
   integer index
 
-  eval "__array_forEach_temp_method\(\) { $action ; }"
+  eval "__array_forEach_temp_method() { $action ; }"
 
   for index in "${!this[@]}"
   do
@@ -97,7 +97,7 @@ array.map() {
   integer index
   array out
 
-  eval "__array_map_temp_method\(\) { $action ; }"
+  eval "__array_map_temp_method() { $action ; }"
 
   for index in "${!this[@]}"
   do

@@ -1,7 +1,8 @@
 namespace oo
 
 System::LoadFile(){
-    [string] libPath
+    local libPath="$1"
+#    [string] libPath
 
     if [ -f "$libPath" ]
     then
