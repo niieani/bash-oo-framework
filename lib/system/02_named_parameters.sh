@@ -1,4 +1,6 @@
-namespace oo
+namespace oo/type
+
+# TODO: required parameters
 
 Variable::TrapAssignNumberedParameter() {
     # USE DEFAULT IFS IN CASE IT WAS CHANGED - important!
@@ -46,37 +48,75 @@ Variable::TrapAssignNumberedParameter() {
         DEBUG subject="parameters-setting" Log "SETTING: $__assign_varName = \$$__assign_paramNo"
         # subject="parameters-setting" Log --
 
-        local execute
-
-        if [[ "$__assign_varType" == "params" ]]
-        then
+        case "$__assign_varType" in
+          'params')
             # passing array:
-            execute="$__assign_varName=( \"\${@:$__assign_paramNo:$__assign_arrLength}\" )"
-            eval "$execute"
+            eval "$__assign_varName=( \"\${@:$__assign_paramNo:$__assign_arrLength}\" )"
+
             __assign_paramNo+=$(($__assign_arrLength - 1))
-
             unset __assign_arrLength
-        elif [[ "$__assign_varType" == "rest" ]]
-        then
-            execute="$__assign_varName=( \"\${@:$__assign_paramNo}\" )"
-            eval "$execute"
-        elif [[ "$__assign_varType" == "reference" || ! -z "${!__assign_paramNo}" ]]
-        then
-            if [[ "${!__assign_paramNo}" == "$ref:"* ]]
+          ;;
+          'rest')
+            eval "$__assign_varName=( \"\${@:$__assign_paramNo}\" )"
+          ;;
+          'boolean')
+            DEBUG Log passed "${!__assign_paramNo}", default "${__assign_varValue}"
+            if [[ ! -z "${!__assign_paramNo}" ]]
             then
-                local refVarName="${!__assign_paramNo#$ref:}"
-                execute="$__assign_varName=$refVarName"
-            else
-                # escape $__assign_paramNo with \"
-                # local escapedAssignment="${!__assign_paramNo}"
-                # escapedAssignment="${escapedAssignment//\"/\\\"}"
-                # execute="$__assign_varName=\"$escapedAssignment\""
-                execute="$__assign_varName=\"\$$__assign_paramNo\""
+              if [[ "${!__assign_paramNo}" == "${__primitive_extension_fingerprint__boolean}:"* ]]
+              then
+                __assign_varValue="${!__assign_paramNo}"
+              elif [[ "${!__assign_paramNo}" == 'true' || "${!__assign_paramNo}" == 'false' ]]
+              then
+                __assign_varValue="${__primitive_extension_fingerprint__boolean}:${!__assign_paramNo}"
+              else
+                __assign_varValue="${__primitive_extension_fingerprint__boolean}:false"
+              fi
+            elif [[ "${__assign_varValue}" == 'true' || "${__assign_varValue}" == 'false' ]]
+            then
+              __assign_varValue="${__primitive_extension_fingerprint__boolean}:${__assign_varValue}"
+            elif [[ "${__assign_varValue}" != "${__primitive_extension_fingerprint__boolean}:true" && "${__assign_varValue}" != "${__primitive_extension_fingerprint__boolean}:false" ]]
+            then
+              __assign_varValue="${__primitive_extension_fingerprint__boolean}:false"
             fi
+            eval "$__assign_varName=\"${__assign_varValue}\""
+          ;;
+          'array'|'map')
+            if [[ ! -z "${!__assign_paramNo}" ]]
+            then
+              eval "local -$(Variable::GetDeclarationFlagFromType '$__assign_varType') tempMap=\"\$$__assign_paramNo\""
+              local index
+              local value
 
-            DEBUG subject="parameters-executing" Log "EXECUTING: $execute"
-            eval "$execute"
-        fi
+              ## copy the array / map item by item
+              for index in "${!tempMap[@]}"
+              do
+                eval "$__assign_varName[\$index]=\"\${tempMap[\$index]}\""
+              done
+
+              unset index value tempMap
+            fi
+          ;;
+          *)
+            if [[ "$__assign_varType" == "reference" || ! -z "${!__assign_paramNo}" ]]
+            then
+                if [[ "${!__assign_paramNo}" == "$ref:"* ]]
+                then
+                    local refVarName="${!__assign_paramNo#$ref:}"
+                    eval "$__assign_varName=$refVarName"
+                else
+                    # escape $__assign_paramNo with \"
+                    # local escapedAssignment="${!__assign_paramNo}"
+                    # escapedAssignment="${escapedAssignment//\"/\\\"}"
+                    # execute="$__assign_varName=\"$escapedAssignment\""
+                    eval "$__assign_varName=\"\$$__assign_paramNo\""
+                fi
+
+                # DEBUG subject="parameters-executing" Log "EXECUTING: $execute"
+            fi
+          ;;
+        esac
+
         unset __assign_varType
         unset __assign_isReference
 
@@ -102,6 +142,7 @@ Variable::TrapAssignNumberedParameter() {
 
         __assign_normalCodeStarted=0
         __assign_varName="$varName"
+        __assign_varValue="$varValue"
         __assign_varType="$__capture_type"
         __assign_arrLength="$__capture_arrLength"
 
@@ -121,12 +162,15 @@ Variable::InTrapCaptureParameters() {
 }
 
 # NOTE: true; true; at the end is required to workaround an edge case where TRAP doesn't behave properly
-alias Variable::TrapAssign='Variable::InTrapCaptureParameters; declare -i __assign_normalCodeStarted=0; trap "declare -i __assign_paramNo; Variable::TrapAssignNumberedParameter \"\$BASH_COMMAND\" \"\$@\"; [[ \$__assign_normalCodeStarted -ge 2 ]] && trap - DEBUG && unset __assign_varType && unset __assign_varName && unset __assign_paramNo" DEBUG; true; true; '
-alias Variable::TrapAssignLocal='Variable::TrapAssign local'
-alias [reference]='_type=reference Variable::TrapAssign local -n'
-alias [string]="_type=string Variable::TrapAssign local \${__assign_isReference}"
-alias [integer]='_type=integer Variable::TrapAssign local -i'
-# TODO: alias [boolean]='_type=boolean Variable::TrapAssignLocal'
+alias Variable::TrapAssign='Variable::InTrapCaptureParameters; declare -i __assign_normalCodeStarted=0; trap "declare -i __assign_paramNo; Variable::TrapAssignNumberedParameter \"\$BASH_COMMAND\" \"\$@\"; [[ \$__assign_normalCodeStarted -ge 2 ]] && trap - DEBUG && unset __assign_varType __assign_varName __assign_varValue __assign_paramNo" DEBUG; true; true; '
+alias Variable::TrapAssignLocal='Variable::TrapAssign declare'
+alias [reference]='_type=reference Variable::TrapAssign declare -n'
+alias [string]="_type=string Variable::TrapAssign declare \${__assign_isReference}"
+alias [integer]='_type=integer Variable::TrapAssign declare -i'
+alias [array]='_type=array Variable::TrapAssign declare -a'
+alias [map]='_type=map Variable::TrapAssign declare -A'
+# TODO: alias [integerArray]='_type=array Variable::TrapAssign declare -ai'
+alias [boolean]='_type=boolean Variable::TrapAssignLocal'
 alias [string[]]='_type=params Variable::TrapAssignLocal'
 alias [string[1]]='l=1 _type=params Variable::TrapAssignLocal'
 alias [string[2]]='l=2 _type=params Variable::TrapAssignLocal'

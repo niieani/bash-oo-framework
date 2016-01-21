@@ -100,6 +100,7 @@ Type::RunGetter() {
   fi
 }
 
+## TODO: private handling should be reimplemented - only this() should be able to access private entries
 Type::Handle() {
   local variableName="$1"
   local type=$(Type::GetTypeOfVariable "${variableName}")
@@ -116,6 +117,8 @@ Type::Handle() {
 
   local returnValueDefinition
   local returnValueType
+
+  local currentPropertyVisibility=public
 
   local multiExpression=false
 
@@ -143,6 +146,12 @@ Type::Handle() {
 
     while [[ $# -gt 0 ]]
     do
+      if [[ "$__access_private" != "true" && "$currentPropertyVisibility" == "private" ]]
+      then
+        e="Trying to access a private property: $method" throw
+        return
+      fi
+
       prevModeNext=$mode
       # if [[ "$1" == '@' ]]
       # then
@@ -177,13 +186,13 @@ Type::Handle() {
         # Log $(@get __${type}_property_names | array.indexOf $1) $1 idx
         # Log $(@get __${type}_property_names | array.contains $1 && echo t)
 
-#        Log index __${type}_property_names $(@get __${type}_property_names | __return_self_and_result=false array.indexOf ${1})
+        # Log index __${type}_property_names $(@get __${type}_property_names | __return_self_and_result=false array.indexOf ${1})
 
         local typeSanitized=$(string::SanitizeForVariableName ${type})
         # local typeSanitized="${type//[^a-zA-Z0-9]/_}"
 
         if Variable::Exists __${typeSanitized}_property_names &&
-            @get __${typeSanitized}_property_names | array.contains $1
+            @get __${typeSanitized}_property_names | __return_self_and_result=false array.contains $1
         then
           # stack now belongs to selected property:
           local property="$1"
@@ -202,13 +211,16 @@ Type::Handle() {
             type=${!newType}
             local typeParam=$(Variable::GetDeclarationFlagFromType $type)
 
-            ## TODO: check if this preserves spaces correctly
+            local currentPropertyVisibilityIndirect=__${typeSanitized}_property_visibilities[$index]
+            currentPropertyVisibility=${!currentPropertyVisibilityIndirect}
+
             local propertyValueIndirect=$variableName[$property]
 
             if [[ -z "${!propertyValueIndirect}" && "$typeParam" =~ [aA] ]]
             then
               local -$typeParam "__$property=()"
             else
+              ## TODO: check if this preserves spaces correctly
               local -$typeParam "__$property=${!propertyValueIndirect}"
 
               if ! Type::IsPrimitive "$type"
@@ -257,9 +269,14 @@ Type::Handle() {
       fi
     elif [[ "$prevMode" == 'property' ]]
     then
-      DEBUG subject='property' Log 'print out the property' $variableName
-      ## print out the property or run the getter
-      Type::RunGetter $variableName $type
+#      if [[ "$currentPropertyVisibility" == 'public' ]]
+#      then
+        DEBUG subject='property' Log 'print out the property' $variableName
+        ## print out the property or run the getter
+        Type::RunGetter $variableName $type
+#      else
+#        e="Property is private" throw
+#      fi
     fi
 
     ## TODO: shouldn't this be an elif ?
@@ -269,6 +286,7 @@ Type::Handle() {
       echo "$returnValueDefinition"
     fi
 
+    ## UPDATE THE OBJECT RECURSIVELY:
     local -i propertyTreeLength=${#propertyTree[@]}
     if [[ ${#propertyTree[@]} -gt 1 ]]
     then
@@ -303,6 +321,10 @@ Type::Handle() {
     Type::RunGetter $variableName $type
   fi
 }
+
+## TODO: take note of what variables have handler functions in a global variable
+## in @resolve:this save the list and then compare it in a @return
+## "garbage collect", i.e. remove all the new references so they don't pollute the global scope
 
 ## note: declaration needs to be trimmed,
 ## since bash adds an enter at the end, hence %?

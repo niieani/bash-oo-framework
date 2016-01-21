@@ -67,4 +67,47 @@ array.reverse() {
   @return outArray
 }
 
+array.forEach() {
+  @resolve:this
+
+  [string] action
+
+  string item
+  integer index
+
+  eval "__array_forEach_temp_method\(\) { $action ; }"
+
+  for index in "${!this[@]}"
+  do
+    item="${this[$index]}"
+    __array_forEach_temp_method "$item" "$index"
+  done
+
+  unset __array_forEach_temp_method
+
+  @return
+}
+
+array.map() {
+  @resolve:this
+
+  [string] action
+
+  string item
+  integer index
+  array out
+
+  eval "__array_map_temp_method\(\) { $action ; }"
+
+  for index in "${!this[@]}"
+  do
+    item="${this[$index]}"
+    out[$index]=$(__array_map_temp_method "$item" "$index")
+  done
+
+  unset __array_map_temp_method
+
+  @return out
+}
+
 ### /ARRAY

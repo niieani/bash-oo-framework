@@ -75,8 +75,7 @@ Type::Initialize Human
 # class:Human
 # alias Human="_type=Human trapAssign declare -A"
 
-# TODO: required parameters (via named_parameters)
-# TODO: special overriden 'echo' and 'printf' function in methods that saves to a variable
+# DONE: special overriden 'echo' and 'printf' function in methods that saves to a variable
 
 function test1() {
   string justDoIt="yes!"

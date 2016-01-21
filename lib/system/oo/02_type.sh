@@ -126,10 +126,10 @@ Type::CreateHandlerFunction() {
   eval "$variableName() {
     Type::Handle $variableName \"\$@\";
   }"
+
 }
 
 Type::TrapAndCreate() {
-  # set -x
     # USE DEFAULT IFS IN CASE IT WAS CHANGED - important!
     local IFS=$' \t\n'
 
@@ -209,6 +209,7 @@ Type::TrapAndCreate() {
               __typeCreate_varValue='false'
             fi
             eval "$__typeCreate_varName=\"${__primitive_extension_fingerprint__boolean}:${__typeCreate_varValue}\"" ;;
+            ## TODO: add case of setting value already with fingerprint
           *) ;;
         esac
       fi
@@ -270,7 +271,7 @@ Type::CaptureParams() {
 }
 
 # NOTE: true; true; at the end is required to workaround an edge case where TRAP doesn't behave properly
-alias Type::TrapAssign='Type::CaptureParams; declare -i __typeCreate_normalCodeStarted=0; trap "declare -i __typeCreate_paramNo; Type::TrapAndCreate \"\$BASH_COMMAND\" \"\$@\"; [[ \$__typeCreate_normalCodeStarted -ge 2 ]] && trap - DEBUG && unset __typeCreate_varType && unset __typeCreate_varName && unset __typeCreate_varValue && unset __typeCreate_paramNo" DEBUG; true; true; '
+alias Type::TrapAssign='Type::CaptureParams; declare -i __typeCreate_normalCodeStarted=0; trap "declare -i __typeCreate_paramNo; Type::TrapAndCreate \"\$BASH_COMMAND\" \"\$@\"; [[ \$__typeCreate_normalCodeStarted -ge 2 ]] && trap - DEBUG && unset __typeCreate_varType __typeCreate_varName __typeCreate_varValue __typeCreate_paramNo" DEBUG; true; true; '
 alias reference='_type=reference Type::TrapAssign declare -n'
 alias string='_type=string Type::TrapAssign declare'
 alias boolean='_type=boolean Type::TrapAssign declare'
@@ -289,7 +290,7 @@ alias map='_type=map Type::TrapAssign declare -A'
 
 # for use in the object's methods
 this() {
-  Type::Handle this "$@"
+  __access_private=true Type::Handle this "$@"
 }
 
 __return_separator=52A586A48E074BB6812DCFDC790841F5

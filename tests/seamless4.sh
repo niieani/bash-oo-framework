@@ -10,13 +10,13 @@ Log::AddOutput error ERROR
 
 import lib/system/oo
 
-
 class:Human() {
   public string firstName
   public string lastName = 'Lastnameovitch'
   public array children
   public Human child
   public boolean hasSomething
+  private string privTest
 
   Human.test() {
     @resolve:this
@@ -34,8 +34,11 @@ class:Human() {
   }
 }
 
-Type::Initialize Human
+Type::Initialize Human #static
 
+function testStatic() {
+  Human
+}
 
 function test2() {
   array hovno
@@ -87,4 +90,22 @@ function testBooleanInClass() {
 #  guy
 }
 
-testBooleanInClass
+#testBooleanInClass
+
+function testPassingAsParameter() {
+  [map] someMap
+  [string] str
+  [boolean] bool=true
+
+  declare -p someMap
+  declare -p str
+  declare -p bool
+}
+
+declare -A aMap=( [hoho]="yes  m'aam" )
+#declare -p aMap
+#testPassingAsParameter "$(@get aMap)" 'string'
+
+#somearr forEach 'echo $(item); '
+#array newArr=$(somearr map 'echo yep-$(item)')
+#array newArr=$(somearr map '[string] item; [integer] index; echo $index-yoyo')
