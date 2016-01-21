@@ -89,10 +89,11 @@ Type::GetPrimitiveExtensionFingerprint() {
 Type::CreateHandlerFunction() {
   local variableName="$1"
 
+  ## TODO - don't allow creating a handler if a command/function/alias of such name already exists
+  ## unless it is a handler already (keep track?)
+
   ## declare method with the name of the var ##
-  eval "$variableName() {
-    Type::Handle $variableName \"\$@\";
-  }"
+  eval "$variableName() { Type::Handle $variableName \"\$@\"; }"
 }
 
 Type::TrapAndCreate() {

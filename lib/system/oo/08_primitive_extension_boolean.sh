@@ -1,5 +1,4 @@
-### STRING
-
+### BOOLEAN
 
 boolean.__getter__() {
   @resolve:this
@@ -33,4 +32,4 @@ boolean.=() {
   @return
 }
 
-### /STRING
+### /BOOLEAN

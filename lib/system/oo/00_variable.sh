@@ -1,4 +1,4 @@
-namespace oo/variable
+namespace oo/type
 
 declare __declaration_type ## for Variable::ExportDeclarationAndTypeToVariables (?)
 

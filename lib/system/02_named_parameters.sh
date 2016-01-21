@@ -13,7 +13,7 @@ Variable::TrapAssignNumberedParameter() {
 
 #    Log "TRAP: ${commandWithArgs[@]}"
 
-    if [[ "$command" == "trap" || "$command" == "l="* || "$command" == "_type="* ]]
+    if [[ "$command" == "trap" || "$command" == "l="* || "$command" == "_type="* || "$command" == "__capture_valueRequired="* || "$command" == "__capture_valueReadOnly="* ]]
     then
         return 0
     fi
@@ -49,6 +49,14 @@ Variable::TrapAssignNumberedParameter() {
     then
         DEBUG subject="parameters-setting" Log "SETTING: $__assign_varName = \$$__assign_paramNo"
         # subject="parameters-setting" Log --
+        
+        if [[ "$__assign_valueRequired" == 'true' && -z "${!__assign_paramNo}" ]]
+        then
+          e="Value is required for the parameter [$__assign_varType] $__assign_varName ($__assign_paramNo)" throw
+          return
+        fi
+        
+        unset __assign_valueRequired __assign_valueReadOnly
 
         case "$__assign_varType" in
           'params')
@@ -126,10 +134,6 @@ Variable::TrapAssignNumberedParameter() {
         then
             Type::CreateHandlerFunction "$__assign_varName" 2> /dev/null || true
         fi
-#        if Function::Exists 'Type::CreateHandlerFunction' && [[ ! -z ${__oo__bootstrapped+x} ]]
-#        then
-#            Type::CreateHandlerFunction "$__assign_varName"
-#        fi
     fi
 
     if [[ "$command" != "local" || "$__assign_next" != "true" ]]
@@ -147,6 +151,8 @@ Variable::TrapAssignNumberedParameter() {
         __assign_varValue="$varValue"
         __assign_varType="$__capture_type"
         __assign_arrLength="$__capture_arrLength"
+        __assign_valueRequired="$__capture_valueRequired"
+        __assign_valueReadOnly="$__capture_valueReadOnly"
 
         DEBUG subject="parameters-pass" Log "PASS ${commandWithArgs[*]}"
         # subject="parameters-pass" Log --
@@ -164,7 +170,7 @@ Variable::InTrapCaptureParameters() {
 }
 
 # NOTE: true; true; at the end is required to workaround an edge case where TRAP doesn't behave properly
-alias Variable::TrapAssign='Variable::InTrapCaptureParameters; local -i __assign_normalCodeStarted=0; trap "declare -i __assign_paramNo; Variable::TrapAssignNumberedParameter \"\$BASH_COMMAND\" \"\$@\"; [[ \$__assign_normalCodeStarted -ge 2 ]] && trap - DEBUG && unset __assign_varType __assign_varName __assign_varValue __assign_paramNo" DEBUG; true; true; '
+alias Variable::TrapAssign='Variable::InTrapCaptureParameters; local -i __assign_normalCodeStarted=0; trap "declare -i __assign_paramNo; Variable::TrapAssignNumberedParameter \"\$BASH_COMMAND\" \"\$@\"; [[ \$__assign_normalCodeStarted -ge 2 ]] && trap - DEBUG && unset __assign_varType __assign_varName __assign_varValue __assign_paramNo __assign_valueRequired __assign_valueReadOnly" DEBUG; true; true; '
 alias Variable::TrapAssignLocal='Variable::TrapAssign local'
 alias [reference]='_type=reference Variable::TrapAssign local -n'
 alias [string]="_type=string Variable::TrapAssign local \${__assign_isReference}"
@@ -185,5 +191,7 @@ alias [string[8]]='l=8 _type=params Variable::TrapAssignLocal'
 alias [string[9]]='l=9 _type=params Variable::TrapAssignLocal'
 alias [string[10]]='l=10 _type=params Variable::TrapAssignLocal'
 alias [...rest]='_type=rest Variable::TrapAssignLocal'
+alias @required='__capture_valueRequired=true '
+# TODO: alias @readonly='__capture_valueReadOnly=true '
 
 declare -g ref=$'\UEFF1A'$'\UEFF1A'

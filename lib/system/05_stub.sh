@@ -24,7 +24,6 @@ String::GenerateSpaces() {
     then
         ( printf "%*s" "$howMany" )
     fi
-    return 0
 }
 
 String::ReplaceSlashes() {
@@ -45,12 +44,13 @@ String::RestoreSlashes() {
     echo "${stringToMark/$slashReplacement/$slash}"
 }
 
-#Alias::Exists(){
-#    local name="$1"
-#    local typeMatch=$(type "$name" 2> /dev/null || true)
+Alias::Exists(){
+    local name="$1"
+    local typeMatch=$(type -t "$name" 2> /dev/null || true)
+    [[ "$typeMatch" == "alias" ]]
 #    echo "$typeMatch" | grep "function\|alias" &> /dev/null || return 1
 #    return 0
-#}
+}
 
 Function::Exists(){
     local name="$1"

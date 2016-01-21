@@ -65,7 +65,7 @@ System::Import() {
         DEBUG subject=level3 Log "Trying to load from: ${libPath}"
         [ ! -e "$libPath" ] && throw "Cannot import $libPath" && return 1
 
-        libPath="$(File.GetAbsolutePath "$libPath")"
+        libPath="$(File::GetAbsolutePath "$libPath")"
 
         if [ -d "$libPath" ]; then
             local file

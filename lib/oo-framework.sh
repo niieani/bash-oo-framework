@@ -7,7 +7,7 @@ System::Bootstrap(){
     local path
     for file in "$__oo__libPath"/system/*.sh
     do
-        path="$(File.GetAbsolutePath "$file")"
+        path="$(File::GetAbsolutePath "$file")"
         __oo__importedFiles+=( "$path" )
 
         ## note: aliases are visible inside functions only if
@@ -21,7 +21,7 @@ System::Bootstrap(){
     done
 }
 
-File.GetAbsolutePath() {
+File::GetAbsolutePath() {
     # http://stackoverflow.com/questions/3915040/bash-fish-command-to-print-absolute-path-to-a-file
     # $1 : relative filename
     if [[ "$file" == "/"* ]]

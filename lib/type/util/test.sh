@@ -1,10 +1,9 @@
-class:StaticTest(){
-
+class:Test() {
     private UI.Cursor onStartCursor
     private string errors
     private string groupName
 
-    StaticTest.start() {
+    Test.Start() {
         @resolve:this
         [string] verb
         [string] description
@@ -14,7 +13,7 @@ class:StaticTest(){
         @return
     }
 
-    StaticTest.OK() {
+    Test.OK() {
         @resolve:this
         [string] printInPlace=true
 
@@ -24,19 +23,20 @@ class:StaticTest(){
         @return
     }
 
-    StaticTest.echoedOK() {
+    Test.EchoedOK() {
         @resolve:this
+        
         this OK false
     }
 
-    StaticTest.fail() {
+    Test.Fail() {
         @resolve:this
         #Test.OnStartCursor.Restore
         echo "$(UI.Color.Red)$(UI.Powerline.Fail) $(UI.Color.Yellow)[$(UI.Color.Red)$(UI.Color.Bold)FAIL$(UI.Color.NoBold)$(UI.Color.Yellow)]$(UI.Color.Default)"
         @return
     }
 
-    StaticTest.displaySummary() {
+    Test.DisplaySummary() {
         @resolve:this
         if [[ $(this errors) == true ]]
         then
@@ -48,7 +48,7 @@ class:StaticTest(){
         @return
     }
 
-    StaticTest.newGroup() {
+    Test.NewGroup() {
         @resolve:this
         [string] groupName
 
@@ -60,16 +60,16 @@ class:StaticTest(){
     }
 }
 
-Type::Initialize StaticTest
+Type::InitializeStatic Test
 
 ### TODO: special case for static classes
 ### for storage use a generated variable name (hash of class name?)
-### for execution use class' name, e.g. StaticTest Start
+### for execution use class' name, e.g. Test Start
 
-StaticTest Test
-
+alias describe='Test NewGroup'
+alias summary='Test DisplaySummary'
 alias caught="echo \"CAUGHT: $(UI.Color.Red)\$__BACKTRACE_COMMAND__$(UI.Color.Default) in \$__BACKTRACE_SOURCE__:\$__BACKTRACE_LINE__\""
-alias it="Test start it"
-alias expectPass="Test OK; catch { Test errors = true; Test fail; }"
-alias expectOutputPass="Test echoedOK; catch { Test errors = true; Test fail; }"
-alias expectFail='catch { caught; Test echoedOK; }; test $? -eq 1 && Test errors = false; '
+alias it="Test Start it"
+alias expectPass="Test OK; catch { Test errors = true; Test Fail; }"
+alias expectOutputPass="Test EchoedOK; catch { Test errors = true; Test Fail; }"
+alias expectFail='catch { caught; Test EchoedOK; }; test $? -eq 1 && Test errors = false; '

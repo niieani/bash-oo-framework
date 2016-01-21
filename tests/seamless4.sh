@@ -135,16 +135,20 @@ function testPassingAsParameterCall() {
 function testArrayMethods() {
   array someArr=( 1 2 three 4 )
 
+  someArr push '5' 'six'
   someArr forEach 'echo yep-$(item)'
   someArr map 'echo $(item toUpper)'
+
+  someArr : { map 'echo $(item toUpper)' } { forEach 'echo yep-$(item)' }
 }
 
-#testArrayMethods
+testArrayMethods
 
 function testPrivate() {
   Human yeah
   yeah lastName
   yeah accessPriv
+
   try {
     yeah privTest = yo
   }
@@ -158,4 +162,5 @@ function testPrivate() {
     echo private - OK
   }
 }
-testPrivate
+
+#testPrivate

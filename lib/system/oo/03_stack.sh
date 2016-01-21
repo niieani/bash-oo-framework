@@ -18,7 +18,7 @@ Type::RunCurrentStack() {
 
   if [[ ! -z "$returnValueDefinition" && "$affectTheInitialVariable" == 'false' ]]
   then
-    local -$(Variable::GetDeclarationFlagFromType returnValueType)"__self=$returnValueDefinition"
+    local -$(Variable::GetDeclarationFlagFromType $returnValueType) "__self=$returnValueDefinition"
     variableName=__self
   fi
 
@@ -26,7 +26,7 @@ Type::RunCurrentStack() {
   local resultString=$(__return_self_and_result=true Type::ExecuteMethod "$type" "$variableName" "$method" "${params[@]}")
 
   ## TODO: some problem here sometimes
-  DEBUG Log "Result string: $resultString"
+  DEBUG Log "Result string: START | $resultString | END"
 
   # echo everything before the first occurence of the separator
   local echoed="${resultString%%$__return_separator*}"
@@ -188,7 +188,7 @@ Type::Handle() {
 
         # Log index __${type}_property_names $(@get __${type}_property_names | __return_self_and_result=false array.indexOf ${1})
 
-        local typeSanitized=$(string::SanitizeForVariableName ${type})
+        local typeSanitized=$(String::SanitizeForVariableName ${type})
         # local typeSanitized="${type//[^a-zA-Z0-9]/_}"
 
         if Variable::Exists __${typeSanitized}_property_names &&

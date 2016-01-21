@@ -1,11 +1,16 @@
 ### ARRAY
 
 array.push() {
+  [...rest] values
+  
   @resolve:this
-  [string] value
-
-  # subject=array.push Log $(@get this)
-  this+=("$value")
+  
+  local value
+  
+  for value in "${values[@]}"
+  do
+    this+=("$value")
+  done
 
   @return
 }
@@ -17,13 +22,14 @@ array.length() {
   @return value
 }
 
-
 array.contains() {
   @resolve:this
 
   local element
 
   @return # is it required?
+
+  ## TODO: probably should return a [boolean] type, not normal return
 
   for element in "${this[@]}"
   do
@@ -48,7 +54,6 @@ array.indexOf() {
   @return:value -1
 }
 
-
 array.reverse() {
   @resolve:this
 
@@ -68,9 +73,8 @@ array.reverse() {
 }
 
 array.forEach() {
-  @resolve:this
-
   [string] action
+  @resolve:this
 
   string item
   integer index
@@ -89,9 +93,9 @@ array.forEach() {
 }
 
 array.map() {
-  @resolve:this
-
   [string] action
+  
+  @resolve:this
 
   string item
   integer index
@@ -109,5 +113,78 @@ array.map() {
 
   @return out
 }
+
+
+array.concatPush() {
+  @resolve:this
+  
+  @required [array] concatWithArray
+  
+  concatWithArray forEach 'this push "$(item)"'
+  
+  @return this
+}
+
+array.concat() {
+  @resolve:this
+  
+  @required [array] concatWithArray
+  
+  array outArray=$(this)
+  
+  concatWithArray forEach 'outArray push "$(item)"'
+  
+  @return outArray
+}
+
+array.getLastElement() {
+  @resolve:this
+  
+  @return:value "${this[(${#this[@]}-1)]}"
+  # alternative in bash 4.2: ${this[-1]}
+}
+
+array.withoutLastElement() {
+  @resolve:this
+  @return:value "${this[@]:0:(${#this[@]}-1)}"
+}
+
+array.toString() {
+  @resolve:this
+  
+  @return:value "$(Array::List this)"
+}
+
+array.toJSON() {
+  @resolve:this
+  
+  @return:value "$(Array::ToJSON this)"
+}
+
+### STATIC METHODS
+
+## generates a list separated by new lines
+Array::List() {
+  @required [string] variableName
+  
+  local indirectAccess="$variableName[*]"
+  IFS=$'\n' echo "${!indirectAccess}"
+}
+
+Array::ToJSON() {
+  @required [string] variableName
+  
+  ## TODO: escape quotes
+  echo -n "["
+  (
+    local IFS=$'\UFFFFF'
+    local indirectAccess="${variableName}[*]"
+    local list="\"${!indirectAccess}\""
+    local separator='", "'
+    echo -n "${list/$'\UFFFFF'/$separator}"
+  )
+  echo -n "]"
+}
+
 
 ### /ARRAY

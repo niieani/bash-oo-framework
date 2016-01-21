@@ -1,6 +1,5 @@
 ### STRING
 
-
 string.toUpper() {
   @resolve:this
 
@@ -8,8 +7,9 @@ string.toUpper() {
 }
 
 string.=() {
-  @resolve:this
   [string] value
+  
+  @resolve:this
 
   this="$value"
 

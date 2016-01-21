@@ -7,3 +7,5 @@ Pipe::Capture() {
 Pipe::CaptureFaithful() {
   IFS= read -r -d '' $1 || true
 }
+
+alias [pipe]="Pipe::Capture"

@@ -35,18 +35,25 @@ public() {
   Type::DefineProperty public $class "$@"
 }
 
+Type::InitializeStatic() {
+  local name="$1"
+  
+  class:$name
+
+  declare -Ag __oo_static_instance_${name}="$(Type::Construct $name)"
+  eval "${name}"'(){ '"Type::Handle __oo_static_instance_${name}"' "$@"; }'
+}
+
 Type::Initialize() {
   local name="$1"
   local isStatic="${2:-false}"
 
-  class:$name
-
   if [[ "$isStatic" == 'true' || "$isStatic" == 'static' ]]
   then
-    declare -Ag __oo_static_instance_${name}="$(Type::Construct $name)"
-
-    eval "${name}"'(){ '"Type::Handle __oo_static_instance_${name}"' "$@"; }'
+    Type::InitializeStatic "$name"
   else
+    class:$name
+
     ## add alias for parameters
     alias [$name]='_type=map Variable::TrapAssign local -A'
 
@@ -57,7 +64,7 @@ Type::Initialize() {
 
 Type::Construct() {
   local type="$1"
-  local typeSanitized=$(string::SanitizeForVariableName $type)
+  local typeSanitized=$(String::SanitizeForVariableName $type)
   local assignToVariable="$2"
 
   if [[ ! -z "${__constructor_recursion+x}" ]]

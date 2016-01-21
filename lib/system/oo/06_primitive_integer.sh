@@ -1,6 +1,7 @@
 integer.=() {
-  @resolve:this
   [string] value
+  
+  @resolve:this
 
   this="$value"
 
