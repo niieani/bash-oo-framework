@@ -1,5 +1,22 @@
 ### ARRAY
 
+## these three are same as map - make map extend array and merge in the future
+array.get() {
+  @return:value "${this[$1]}"
+}
+
+array.set() {
+  this["$1"]="$2"
+
+  @return #this
+}
+
+array.delete() {
+  unset this["$1"]
+
+  @return #this
+}
+
 array.push() {
   [...rest] values
   
@@ -130,11 +147,35 @@ array.withoutLastElement() {
 }
 
 array.toString() {
-  @return:value "$(Array::List this)"
+  [string] separator=$'\n'
+  @return:value "$(Array::List this "$separator")"
 }
 
 array.toJSON() {
   @return:value "$(Array::ToJSON this)"
+}
+
+
+array.every() {
+	[integer] every
+	[integer] startingIndex
+  
+  array returnArray
+  
+	local -i count=0
+
+	local index
+	for index in "${!this[@]}"
+	do
+		if [[ $index -eq $(( $every * $count + $startingIndex )) ]]
+		then
+			#echo "$index: ${this[$index]}"
+			returnArray+=( "${this[$index]}" )
+			count+=1
+		fi
+	done
+  
+  @return returnArray
 }
 
 Type::Initialize array primitive
@@ -143,24 +184,29 @@ Type::Initialize array primitive
 ## generates a list separated by new lines
 Array::List() {
   @required [string] variableName
+  [string] separator=$'\n'
   
-  local indirectAccess="$variableName[*]"
-  IFS=$'\n' echo "${!indirectAccess}"
+  local indirectAccess="${variableName}[*]"
+  (
+    local IFS="$separator"
+    echo "${!indirectAccess}"
+  )
 }
 
 Array::ToJSON() {
   @required [string] variableName
   
-  ## TODO: escape quotes
-  echo -n "["
+  ## TODO: escape quotes by doing 
+  # foreach and using declare -p for values and unescaping '
+  # echo -n "["
   (
     local IFS=$'\UFFFFF'
     local indirectAccess="${variableName}[*]"
     local list="\"${!indirectAccess}\""
     local separator='", "'
-    echo -n "${list/$'\UFFFFF'/$separator}"
+    echo -n "[${list/$'\UFFFFF'/$separator}]"
   )
-  echo -n "]"
+  # echo -n "]"
 }
 
 Array::Intersect() {
@@ -181,5 +227,22 @@ Array::Intersect() {
   done
 
   @get intersection
+}
+
+Array::Reverse() {
+  [...rest] this
+
+  local -i length=${#this[@]}  #$(this length)
+  local -a outArray
+  local -i indexFromEnd
+  local -i index
+
+  for index in "${!this[@]}"
+  do
+    indexFromEnd=$(( $length - 1 - $index ))
+    outArray+=( "${this[$indexFromEnd]}" )
+  done
+
+  @get outArray
 }
 ### /ARRAY
