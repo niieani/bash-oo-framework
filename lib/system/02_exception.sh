@@ -7,6 +7,14 @@ Exception::CustomCommandHandler() {
   return 1
 }
 
+Exception::FillExceptionWithTraceElements() {
+  local IFS=$'\n'
+  for traceElement in $(Exception::DumpBacktrace ${skipBacktraceCount:-3})
+  do
+    exception+=( "$traceElement" )
+  done
+}
+
 command_not_found_handle() {
     # USE DEFAULT IFS IN CASE IT WAS CHANGED
     local IFS=$' \t\n'
@@ -54,7 +62,7 @@ command_not_found_handle() {
         return 1 # needs to be return 1
     fi
 
-    if [[ $BASH_SUBSHELL -ge 25 ]]
+    if [[ $BASH_SUBSHELL -ge 25 ]] ## TODO: configurable
     then
         echo "ERROR: Call stack exceeded (25)."
         Exception::ContinueOrBreak || exit 1
@@ -62,12 +70,7 @@ command_not_found_handle() {
 
     local -a exception=( "$lineNo" "$undefinedObject" "$script" )
     
-    local IFS=$'\n'
-    for traceElement in $(Exception::DumpBacktrace ${skipBacktraceCount:-2})
-    do
-        exception+=( "$traceElement" )
-    done
-    IFS=$' \t\n'
+    Exception::FillExceptionWithTraceElements
 
     Console::WriteStrErr
     Console::WriteStrErr " $(UI.Color.Red)$(UI.Powerline.Fail) $(UI.Color.Bold)UNCAUGHT EXCEPTION: $(UI.Color.LightRed)${type}$(UI.Color.Default)"
@@ -172,6 +175,8 @@ Exception::FormatExceptionSegment() {
     
     local -i linesTried=0
     
+    ## TODO: when line ends with slash \ it is a multiline statement
+    ## TODO: when eval or alias
     # In case it's a multiline eval, sometimes bash gives a line that's offset by a few
     while [[ $linesTried -lt 5 && $lineNo -gt 0 ]] && ! Exception::CanHighlight "$errLine" "$stringToMark"
     do
@@ -200,7 +205,7 @@ Exception::FormatExceptionSegment() {
     echo "${prefix}$(UI.Color.White)${underlinedObjectInLine}$(UI.Color.Default) [$(UI.Color.Blue)${script}:${lineNo}$(UI.Color.Default)]"
 }
 
-Exception::ContinueOrBreak() {
+Exception::ContinueOrBreak() (
     ## TODO: Exceptions that happen in commands that are piped to others do not HALT the execution
     ## TODO: Add a workaround for this ^
     ## probably it's enough to -pipefail, check for a pipe in command_not_found - and if yes - return 1
@@ -213,12 +218,11 @@ Exception::ContinueOrBreak() {
         read -s
         Console::WriteStrErr " $(UI.Color.Blue)$(UI.Powerline.Cog)$(UI.Color.White) Continuing...$(UI.Color.Default)"
         return 0
-        Console::WriteStrErr
     else
         Console::WriteStrErr
         exit 1
     fi
-}
+)
 
 Exception::DumpBacktrace() {
     local -i startFrom="${1:-1}"
