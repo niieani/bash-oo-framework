@@ -1,14 +1,10 @@
 ### BOOLEAN
 
 boolean.__getter__() {
-  @resolve:this
-
   [[ "$this" == "${__primitive_extension_fingerprint__boolean}:true" ]]
 }
 
 boolean.toString() {
-  @resolve:this
-
   if [[ "$this" == "${__primitive_extension_fingerprint__boolean}:true" ]]
   then
     @return:value true
@@ -18,8 +14,6 @@ boolean.toString() {
 }
 
 boolean.=() {
-  @resolve:this
-
   [string] value
 
   if [[ "$value" == "true" ]]
@@ -32,4 +26,5 @@ boolean.=() {
   @return
 }
 
+Type::Initialize boolean primitive
 ### /BOOLEAN

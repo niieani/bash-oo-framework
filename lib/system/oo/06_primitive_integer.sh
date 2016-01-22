@@ -1,9 +1,9 @@
 integer.=() {
   [string] value
-  
-  @resolve:this
 
   this="$value"
 
   @return
 }
+
+Type::Initialize integer primitive

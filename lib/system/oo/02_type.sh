@@ -118,10 +118,17 @@ Type::InjectThisResolutionIfNeeded() {
 
   local methodBody=$(declare -f "$methodName" || true)
 
-  if [[ "$methodBody" != *'@resolve:this'* ]]
+  if [[ "$methodBody" != *'@resolve:this'* && "$methodBody" != *'__local_return_self_and_result=false'* ]]
   then
-    Log "Injecting @this resolution to: $methodName"
-    Function::InjectCode "$methodName" '@resolve:this'
+    DEBUG Log "Injecting @this resolution to: $methodName"
+    DEBUG [[ "$methodName" == "Human"* ]] && Log "$methodBody"
+
+    if [[ "$methodBody" != *'@return'* ]]
+    then
+      Function::InjectCode "$methodName" '@resolve:this' '@return'
+    else
+      Function::InjectCode "$methodName" '@resolve:this'
+    fi
   fi
 }
 

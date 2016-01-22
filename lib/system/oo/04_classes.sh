@@ -37,23 +37,26 @@ public() {
 
 Type::Initialize() {
   local name="$1"
-  local isStatic="${2:-false}"
+  local style="${2:-default}"
 
-  class:$name
+  Function::Exists class:$name && class:$name || true
 
   Type::ConvertAllOfTypeToMethodsIfNeeded "$name"
 
-  if [[ "$isStatic" == 'true' || "$isStatic" == 'static' ]]
-  then
-    declare -Ag __oo_static_instance_${name}="$(Type::Construct $name)"
-    eval "${name}"'(){ '"Type::Handle __oo_static_instance_${name}"' "$@"; }'
-  else
-    ## add alias for parameters
-    alias [$name]='_type=map Variable::TrapAssign local -A'
+  case "$style" in
+    'primitive') ;;
+    'static')
+      declare -Ag __oo_static_instance_${name}="$(Type::Construct $name)"
+      eval "${name}"'(){ '"Type::Handle __oo_static_instance_${name}"' "$@"; }'
+    ;;
+    *)
+      ## add alias for parameters
+      alias [$name]='_type=map Variable::TrapAssign local -A'
 
-    ## add alias for creating vars
-    alias $name="_type=$name Type::TrapAssign declare -A"
-  fi
+      ## add alias for creating vars
+      alias $name="_type=$name Type::TrapAssign declare -A"
+    ;;
+  esac
 }
 
 Type::InitializeStatic() {

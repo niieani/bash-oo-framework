@@ -3,8 +3,6 @@
 array.push() {
   [...rest] values
   
-  @resolve:this
-  
   local value
   
   for value in "${values[@]}"
@@ -16,18 +14,14 @@ array.push() {
 }
 
 array.length() {
-  @resolve:this
-
 	local value="${#this[@]}"
   @return value
 }
 
 array.contains() {
-  @resolve:this
-
   local element
 
-  @return # is it required?
+  @return # is it required? TODO: test
 
   ## TODO: probably should return a [boolean] type, not normal return
 
@@ -39,8 +33,6 @@ array.contains() {
 }
 
 array.indexOf() {
-  @resolve:this
-
   # Log this: $(declare -p this)
 
   local index
@@ -55,8 +47,6 @@ array.indexOf() {
 }
 
 array.reverse() {
-  @resolve:this
-
   # Log reversing: $(@get this)
   local -i length=${#this[@]}  #$(this length)
   local -a outArray
@@ -74,7 +64,6 @@ array.reverse() {
 
 array.forEach() {
   [string] action
-  @resolve:this
 
   string item
   integer index
@@ -94,8 +83,6 @@ array.forEach() {
 
 array.map() {
   [string] action
-  
-  @resolve:this
 
   string item
   integer index
@@ -116,8 +103,6 @@ array.map() {
 
 
 array.concatPush() {
-  @resolve:this
-  
   @required [array] concatWithArray
   
   concatWithArray forEach 'this push "$(item)"'
@@ -126,8 +111,6 @@ array.concatPush() {
 }
 
 array.concat() {
-  @resolve:this
-  
   @required [array] concatWithArray
   
   array outArray=$(this)
@@ -138,29 +121,23 @@ array.concat() {
 }
 
 array.getLastElement() {
-  @resolve:this
-  
   @return:value "${this[(${#this[@]}-1)]}"
   # alternative in bash 4.2: ${this[-1]}
 }
 
 array.withoutLastElement() {
-  @resolve:this
   @return:value "${this[@]:0:(${#this[@]}-1)}"
 }
 
 array.toString() {
-  @resolve:this
-  
   @return:value "$(Array::List this)"
 }
 
 array.toJSON() {
-  @resolve:this
-  
   @return:value "$(Array::ToJSON this)"
 }
 
+Type::Initialize array primitive
 ### STATIC METHODS
 
 ## generates a list separated by new lines
