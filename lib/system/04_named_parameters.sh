@@ -57,27 +57,48 @@ Variable::TrapAssignNumberedParameter() {
         
         unset __assign_valueRequired __assign_valueReadOnly
 
+        local indirectAccess="$__assign_paramNo"
+
+        if [[ "${!indirectAccess}" == "$var:"* ]]
+        then
+          local realVarName="${!indirectAccess#*$ref:}"
+          if Variable::Exists "$realVarName"
+          then
+            local declaration
+            local declaration_type
+            Variable::ExportDeclarationAndTypeToVariables "$realVarName" declaration
+            indirectAccess=declaration
+            
+            if [[ "$declaration_type" != "$__assign_varType" && "$__assign_varType" != 'params' && "$__assign_varType" != 'rest' ]]
+            then
+              e="Passed in variable: ($__assign_paramNo) $__assign_varName is of different than its required type [required: $__assign_varType] [actual: $declaration_type]" throw
+            fi
+          fi
+        fi
+        
         case "$__assign_varType" in
           'params')
             # passing array:
             eval "$__assign_varName=( \"\${@:$__assign_paramNo:$__assign_arrLength}\" )"
 
+            ## TODO: foreach param expand $var: indirectAccess
             __assign_paramNo+=$(($__assign_arrLength - 1))
             unset __assign_arrLength
           ;;
           'rest')
+            ## TODO: foreach param expand $var: indirectAccess
             eval "$__assign_varName=( \"\${@:$__assign_paramNo}\" )"
           ;;
           'boolean')
-            DEBUG Log passed "${!__assign_paramNo}", default "${__assign_varValue}"
-            if [[ ! -z "${!__assign_paramNo}" ]]
+            DEBUG Log passed "${!indirectAccess}", default "${__assign_varValue}"
+            if [[ ! -z "${!indirectAccess}" ]]
             then
-              if [[ "${!__assign_paramNo}" == "${__primitive_extension_fingerprint__boolean}:"* ]]
+              if [[ "${!indirectAccess}" == "${__primitive_extension_fingerprint__boolean}:"* ]]
               then
-                __assign_varValue="${!__assign_paramNo}"
-              elif [[ "${!__assign_paramNo}" == 'true' || "${!__assign_paramNo}" == 'false' ]]
+                __assign_varValue="${!indirectAccess}"
+              elif [[ "${!indirectAccess}" == 'true' || "${!indirectAccess}" == 'false' ]]
               then
-                __assign_varValue="${__primitive_extension_fingerprint__boolean}:${!__assign_paramNo}"
+                __assign_varValue="${__primitive_extension_fingerprint__boolean}:${!indirectAccess}"
               else
                 __assign_varValue="${__primitive_extension_fingerprint__boolean}:false"
               fi
@@ -90,10 +111,28 @@ Variable::TrapAssignNumberedParameter() {
             fi
             eval "$__assign_varName=\"${__assign_varValue}\""
           ;;
-          'array'|'map')
-            if [[ ! -z "${!__assign_paramNo}" ]]
+          'string'|'integer'|'reference')
+            if [[ "$__assign_varType" == "reference" || ! -z "${!indirectAccess}" ]]
             then
-              eval "local -$(Variable::GetDeclarationFlagFromType '$__assign_varType') tempMap=\"\$$__assign_paramNo\""
+                if [[ "${!indirectAccess}" == "$ref:"* ]]
+                then
+                    local refVarName="${!indirectAccess#*$ref:}"
+                    eval "$__assign_varName=$refVarName"
+                else
+                    # escape $indirectAccess with \"
+                    # local escapedAssignment="${!indirectAccess}"
+                    # escapedAssignment="${escapedAssignment//\"/\\\"}"
+                    # execute="$__assign_varName=\"$escapedAssignment\""
+                    eval "$__assign_varName=\"\$$indirectAccess\""
+                fi
+
+                # DEBUG subject="parameters-executing" Log "EXECUTING: $execute"
+            fi
+          ;;
+          *) # 'array'|'map'|objects
+            if [[ ! -z "${!indirectAccess}" ]]
+            then
+              eval "local -$(Variable::GetDeclarationFlagFromType '$__assign_varType') tempMap=\"\$$indirectAccess\""
               local index
               local value
 
@@ -104,24 +143,6 @@ Variable::TrapAssignNumberedParameter() {
               done
 
               unset index value tempMap
-            fi
-          ;;
-          *)
-            if [[ "$__assign_varType" == "reference" || ! -z "${!__assign_paramNo}" ]]
-            then
-                if [[ "${!__assign_paramNo}" == "$ref:"* ]]
-                then
-                    local refVarName="${!__assign_paramNo#$ref:}"
-                    eval "$__assign_varName=$refVarName"
-                else
-                    # escape $__assign_paramNo with \"
-                    # local escapedAssignment="${!__assign_paramNo}"
-                    # escapedAssignment="${escapedAssignment//\"/\\\"}"
-                    # execute="$__assign_varName=\"$escapedAssignment\""
-                    eval "$__assign_varName=\"\$$__assign_paramNo\""
-                fi
-
-                # DEBUG subject="parameters-executing" Log "EXECUTING: $execute"
             fi
           ;;
         esac
@@ -196,3 +217,4 @@ alias @required='_isRequired=true '
 # TODO: alias @readonly='_isReadOnly=true '
 
 declare -g ref=$'\UEFF1A'$'\UEFF1A'
+declare -g var=$'\UEFF2A'$'\UEFF2A'
