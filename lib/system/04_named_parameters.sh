@@ -11,7 +11,7 @@ Variable::TrapAssignNumberedParameter() {
 
     shift
 
-#    Log "TRAP: ${commandWithArgs[@]}"
+  #  Log "TRAP: ${commandWithArgs[@]}"
 
     if [[ "$command" == "trap" || "$command" == "l="* || "$command" == "_type="* || "$command" == "_isRequired="* || "$command" == "_isReadOnly="* ]]
     then
@@ -26,10 +26,11 @@ Variable::TrapAssignNumberedParameter() {
         local nextAssignment=$(( ${__assign_paramNo:-0} + 1 ))
         if [[ "${!nextAssignment}" == "$ref:"* ]]
         then
-            DEBUG subject="parameters-reference" Log "next param is an object reference: $nextAssignment"
-            __assign_isReference="-n"
+            DEBUG subject="parameters-reference" Log "next param ($nextAssignment) is an object reference"
+            __assign_parameters="-n"
+            ## TODO: type checking
         else
-            __assign_isReference=""
+            __assign_parameters=""
         fi
         return 0
     fi
@@ -47,6 +48,9 @@ Variable::TrapAssignNumberedParameter() {
 
     if [[ ! -z $__assign_varType ]]
     then
+        local requiredType="$__assign_varType" ## TODO: use this information
+        [[ $__assign_parameters == '-n' ]] && __assign_varType="reference"
+        
         DEBUG subject="parameters-setting" Log "SETTING: [$__assign_varType] $__assign_varName = \$$__assign_paramNo [rq:$__assign_valueRequired]" # [val:${!__assign_paramNo}]
         # subject="parameters-setting" Log --
         
@@ -61,17 +65,18 @@ Variable::TrapAssignNumberedParameter() {
 
         if [[ "${!indirectAccess}" == "$var:"* ]]
         then
-          local realVarName="${!indirectAccess#*$ref:}"
+          local realVarName="${!indirectAccess#*$var:}"
           if Variable::Exists "$realVarName"
           then
-            local declaration
-            local declaration_type
-            Variable::ExportDeclarationAndTypeToVariables "$realVarName" declaration
-            indirectAccess=declaration
+            local __declaration
+            local __declaration_type
+            Variable::ExportDeclarationAndTypeToVariables "$realVarName" __declaration
+            # Log realVarName "${!indirectAccess#*$var:}" type "$declaration_type vs $__assign_varType" declaration: "$__declaration" vs "$(Variable::PrintDeclaration "$realVarName")"
+            indirectAccess=__declaration
             
-            if [[ "$declaration_type" != "$__assign_varType" && "$__assign_varType" != 'params' && "$__assign_varType" != 'rest' ]]
+            if [[ "$__declaration_type" != "$__assign_varType" && "$__assign_varType" != 'params' && "$__assign_varType" != 'rest' ]]
             then
-              e="Passed in variable: ($__assign_paramNo) $__assign_varName is of different than its required type [required: $__assign_varType] [actual: $declaration_type]" throw
+              e="Passed in variable: ($__assign_paramNo) $__assign_varName is of different than its required type [required: $__assign_varType] [actual: $__declaration_type]" throw
             fi
           fi
         fi
@@ -119,6 +124,7 @@ Variable::TrapAssignNumberedParameter() {
                     local refVarName="${!indirectAccess#*$ref:}"
                     eval "$__assign_varName=$refVarName"
                 else
+                    DEBUG Log "Will eval $__assign_varName=\"\$$indirectAccess\""
                     # escape $indirectAccess with \"
                     # local escapedAssignment="${!indirectAccess}"
                     # escapedAssignment="${escapedAssignment//\"/\\\"}"
@@ -148,11 +154,12 @@ Variable::TrapAssignNumberedParameter() {
         esac
 
         unset __assign_varType
-        unset __assign_isReference
+        unset __assign_parameters
 
         if [[ ! -z ${__oo__bootstrapped+x} ]] && declare -f 'Type::CreateHandlerFunction' &> /dev/null
         then
-            Type::CreateHandlerFunction "$__assign_varName" 2> /dev/null || true
+          DEBUG Log "Will create handle for $__assign_varName"
+          Type::CreateHandlerFunction "$__assign_varName" # 2> /dev/null || true
         fi
     fi
 
@@ -193,13 +200,14 @@ Variable::InTrapCaptureParameters() {
 
 # NOTE: true; true; at the end is required to workaround an edge case where TRAP doesn't behave properly
 alias Variable::TrapAssign='Variable::InTrapCaptureParameters; local -i __assign_normalCodeStarted=0; trap "declare -i __assign_paramNo; Variable::TrapAssignNumberedParameter \"\$BASH_COMMAND\" \"\$@\"; [[ \$__assign_normalCodeStarted -ge 2 ]] && trap - DEBUG && unset __assign_varType __assign_varName __assign_varValue __assign_paramNo __assign_valueRequired __assign_valueReadOnly" DEBUG; true; true; '
-alias Variable::TrapAssignLocal='Variable::TrapAssign local'
 alias [reference]='_type=reference Variable::TrapAssign local -n'
-alias [string]="_type=string Variable::TrapAssign local \${__assign_isReference}"
-alias [integer]='_type=integer Variable::TrapAssign local -i'
-alias [array]='_type=array Variable::TrapAssign local -a'
-alias [map]='_type=map Variable::TrapAssign local -A'
-# TODO: alias [integerArray]='_type=array Variable::TrapAssign local -ai'
+alias Variable::TrapAssignLocal='Variable::TrapAssign local ${__assign_parameters}'
+alias [string]="_type=string Variable::TrapAssignLocal"
+# alias [string]="_type=string Variable::TrapAssign local \${__assign_parameters}"
+alias [integer]='_type=integer Variable::TrapAssign local ${__assign_parameters:--i}'
+alias [array]='_type=array Variable::TrapAssign local ${__assign_parameters:--a}'
+alias [map]='_type=map Variable::TrapAssign local ${__assign_parameters:--A}'
+# TODO: alias [integerArray]='_type=array Variable::TrapAssign local ${__assign_parameters:--ai}'
 alias [boolean]='_type=boolean Variable::TrapAssignLocal'
 alias [string[]]='_type=params Variable::TrapAssignLocal'
 alias [string[1]]='l=1 _type=params Variable::TrapAssignLocal'

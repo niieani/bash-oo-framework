@@ -51,7 +51,7 @@ Type::Initialize() {
     ;;
     *)
       ## add alias for parameters
-      alias [$name]='_type=map Variable::TrapAssign local -A'
+      alias [$name]="_type=$name Variable::TrapAssign local -A"
 
       ## add alias for creating vars
       alias $name="_type=$name Type::TrapAssign declare -A"
@@ -140,7 +140,7 @@ Type::Construct() {
 
   if [[ -z "$assignToVariable" ]]
   then
-    @get constructedType
+    Variable::PrintDeclaration constructedType
   else
     local constructedIndex
     for constructedIndex in "${!constructedType[@]}"

@@ -44,6 +44,12 @@ String::RestoreSlashes() {
     echo "${stringToMark/$slashReplacement/$slash}"
 }
 
+Command::GetType() {
+    local name="$1"
+    local typeMatch=$(type -t "$name" 2> /dev/null || true)
+    echo "$typeMatch"
+}
+
 Command::Exists(){
     local name="$1"
     local typeMatch=$(type -t "$name" 2> /dev/null || true)

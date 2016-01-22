@@ -11,6 +11,7 @@ __oo_type_handler_functions=()
 #   */
 Type::GetTypeOfVariable() {
   local variableName="$1"
+  local dereferrence="${2:-true}"
 
   local regex="declare -([a-zA-Z-]+) $variableName=(.*)"
   local definition=$(declare -p "${variableName}" 2> /dev/null || true)
@@ -31,6 +32,12 @@ Type::GetTypeOfVariable() {
         DEBUG Log "typeof $variableName: Primitive Type $primitiveType Resolved ${variableType}"
       fi
 
+      if [[ "$variableType" == 'reference' && "$dereferrence" == 'true' ]]
+      then
+        local dereferrencedVariableName=$(Variable::PrintDeclaration "$variableName" false)
+        variableType=$(Type::GetTypeOfVariable "$dereferrencedVariableName")
+      fi
+      
       if [[ "$variableType" == 'string' ]]
       then
         local extensionType=$(Type::GetPrimitiveExtensionFromVariable "${variableName}")
@@ -50,7 +57,7 @@ Type::IsPrimitive() {
   local type="$1"
 
   case "$type" in
-    'array'|'map'|'string'|'integer'|'boolean'|'integerArray')
+    'array'|'map'|'string'|'integer'|'boolean'|'integerArray'|'reference') ## TODO: reference should be resolved
       return 0 ;;
     * )
       return 1 ;;
@@ -88,6 +95,33 @@ Type::GetPrimitiveExtensionFingerprint() {
   printf "${!fingerprintVariable}"
 }
 
+Type::CreateHandlerFunction() {
+  local variableName="$1"
+  
+  if [[ -z $variableName ]]
+  then
+    subject=WARN Log "No variable specified when trying to create a handle."
+    return
+  fi
+  
+  ## don't allow creating a handler if a command/function/alias of such name already exists
+  ## unless it is a handler already (keeps track)
+  
+  if ! Command::Exists "$variableName"
+  then
+    DEBUG Log "creating handler for $variableName"
+    ## declare method with the name of the var ##
+    eval "$variableName() { Type::Handle $variableName \"\$@\"; }"
+    __oo_type_handler_functions+=( "$variableName" )
+
+  elif ! Array::Contains "$variableName" "${__oo_type_handler_functions[@]}"
+  then
+    subject=WARN Log "Unable to create a handle for '$variableName'. A command of the same name already exists."
+  fi
+
+  Type::RunFunctionGarbageCollector
+}
+
 Type::RunFunctionGarbageCollector() {
   local -a variables=( $(compgen -A 'variable' || true) )
 
@@ -100,7 +134,7 @@ Type::RunFunctionGarbageCollector() {
     local exists=
     for variable in "${variables[@]}"
     do
-#      Log "comparing: ${variable} == $handler"
+      # Log "comparing: ${variable} == $handler"
       [[ "$variable" == "$handler" ]] && { exists=1; break; }
     done
     ## unset all the functions that don't have corresponding variables
@@ -109,6 +143,8 @@ Type::RunFunctionGarbageCollector() {
       DEBUG Log "Unsetting handler for $handler"
       unset -f "$handler"
       unset __oo_type_handler_functions[$index]
+    else
+      DEBUG Log "not deleting: handler and variable exists: ${variable}"
     fi
   done
 }
@@ -118,6 +154,12 @@ Type::InjectThisResolutionIfNeeded() {
 
   local methodBody=$(declare -f "$methodName" || true)
 
+  if [[ -z "$methodBody" ]]
+  then
+    e="Method $methodName is not defined." throw
+    return
+  fi
+  
   if [[ "$methodBody" != *'@resolve:this'* && "$methodBody" != *'__local_return_self_and_result=false'* ]]
   then
     DEBUG Log "Injecting @this resolution to: $methodName"
@@ -130,26 +172,6 @@ Type::InjectThisResolutionIfNeeded() {
       Function::InjectCode "$methodName" '@resolve:this'
     fi
   fi
-}
-
-Type::CreateHandlerFunction() {
-  local variableName="$1"
-
-  ## TODO - don't allow creating a handler if a command/function/alias of such name already exists
-  ## unless it is a handler already (keep track?)
-
-  if ! Command::Exists "$variableName"
-  then
-    ## declare method with the name of the var ##
-    eval "$variableName() { Type::Handle $variableName \"\$@\"; }"
-    __oo_type_handler_functions+=( "$variableName" )
-
-  elif ! Array::Contains "$variableName" "${__oo_type_handler_functions[@]}"
-  then
-    subject=WARN Log "Unable to create a handle for '$variableName'. A command of the same name already exists."
-  fi
-
-  Type::RunFunctionGarbageCollector
 }
 
 Type::TrapAndCreate() {
@@ -234,7 +256,7 @@ Type::TrapAndCreate() {
 
       Type::CreateHandlerFunction "$__typeCreate_varName"
 
-      ## IMPORTANT: TRAP won't work inside a TRAP
+      ## IMPORTANT: TRAP won't work inside a TRAP, so such a constructor couldn't
 
       # case "$__typeCreate_varType" in
       #   'array'|'map'|'string'|'integer') ;;

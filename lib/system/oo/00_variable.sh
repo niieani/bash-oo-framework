@@ -76,7 +76,9 @@ Variable::GetPrimitiveTypeFromDeclarationFlag() {
 Variable::ExportDeclarationAndTypeToVariables() {
   local variableName="$1"
   local targetVariable="$2"
+  local dereferrence="${3:-true}"
 
+  # TODO: rename for a safer, less common variablename so parents can output to declaration
   local declaration
   local regexArray="declare -([a-zA-Z-]+) $variableName='(.*)'"
   local regex="declare -([a-zA-Z-]+) $variableName=\"(.*)\""
@@ -129,14 +131,23 @@ Variable::ExportDeclarationAndTypeToVariables() {
 
   DEBUG Log "Variable $variableName is typeof $variableType"
 
-  eval "$targetVariable=\$declaration"
-  eval "${targetVariable}_type=\$variableType"
-  # eval "${targetVariable}_type=\${BASH_REMATCH[1]}"
+  if [[ "$variableType" == 'reference' && "$dereferrence" == 'true' ]]
+  then
+    local dereferrencedVariableName="$declaration"
+    Variable::ExportDeclarationAndTypeToVariables "$dereferrencedVariableName" "$targetVariable" "$dereferrence"
+  else
+    eval "$targetVariable=\"\$declaration\""
+    eval "${targetVariable}_type=\$variableType"
+  fi
 }
 
 Variable::PrintDeclaration() {
+  local variableName="${1}"
+  local dereferrence="${2:-true}"
+  
   local __declaration
-  Variable::ExportDeclarationAndTypeToVariables "$1" __declaration
+  local __declaration_type
+  Variable::ExportDeclarationAndTypeToVariables "$variableName" __declaration "$dereferrence"
   echo "$__declaration"
 }
 

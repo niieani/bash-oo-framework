@@ -45,7 +45,6 @@ Type::RunCurrentStack() {
 
     # the result is everything after the first occurrence of the separator
     resultString="${resultString#*$__return_separator}"
-#    else
 
     # Log "wtf $resultString"
     local -a result=$resultString
