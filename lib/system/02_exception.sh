@@ -3,20 +3,20 @@ namespace oo
 alias throw="__EXCEPTION_TYPE__=\${e:-Manually invoked} command_not_found_handle"
 
 Exception::CustomCommandHandler() {
-    return 1
+  ## this method can be overridden to create a custom, unknown command handler
+  return 1
 }
 
 command_not_found_handle() {
-    # USE DEFAULT IFS IN CASE IT WAS CHANGED - important!
+    # USE DEFAULT IFS IN CASE IT WAS CHANGED
     local IFS=$' \t\n'
     
     # ignore the error from the catch subshell itself
-    if [[ "$*" = '( set -e; true'* ]]
+    if [[ "$*" = '( set -'*'; true'* ]] ## TODO: refine with a regex and test
     then
         return 0
     fi
 
-    # WTF WAS THIS GOOD FOR?
     Exception::CustomCommandHandler "$@" && return 0 || true
 
     local script="${BASH_SOURCE[1]#./}"
@@ -225,7 +225,7 @@ Exception::DumpBacktrace() {
 #    [integer] startFrom=1
     # inspired by: http://stackoverflow.com/questions/64786/error-handling-in-bash
     
-    # USE DEFAULT IFS IN CASE IT WAS CHANGED - important!
+    # USE DEFAULT IFS IN CASE IT WAS CHANGED
     local IFS=$' \t\n'
     
     local -i i=0

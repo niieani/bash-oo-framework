@@ -114,6 +114,7 @@ function testPassingAsParameter() {
   [string] str
   [boolean] bool=true
   [Human] theHuman
+#  @required [string] last
 
   declare -p someMap
   declare -p str
@@ -126,11 +127,14 @@ function testPassingAsParameterCall() {
   declare -p aMap
 
   Human someHuman
-
+#  declare -p someHuman
+#  declare -f someHuman || true
   testPassingAsParameter "$(@get aMap)" 'string' false "$(someHuman)"
+
+  string after # GC
 }
 
-#testPassingAsParameterCall
+testPassingAsParameterCall
 
 function testArrayMethods() {
   array someArr=( 1 2 three 4 )
@@ -140,12 +144,17 @@ function testArrayMethods() {
   someArr map 'echo $(item toUpper)'
 
   someArr : { map 'echo $(item toUpper)' } { forEach 'echo yep-$(item)' }
+
+  someArr : \
+    { map 'echo $(item toUpper)' } \
+    { forEach 'echo yep-$(item)' }
 }
 
-testArrayMethods
+#testArrayMethods
 
 function testPrivate() {
   Human yeah
+
   yeah lastName
   yeah accessPriv
 

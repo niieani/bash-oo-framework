@@ -2,6 +2,8 @@ namespace oo/type
 
 __primitive_extension_declaration=2D6A822E
 __primitive_extension_fingerprint__boolean=${__primitive_extension_declaration}36884C70843578D37E6773C4
+__return_separator=52A586A48E074BB6812DCFDC790841F5
+__oo_type_handler_functions=()
 
 # /**
 #   * Code like: Variable::ExportDeclarationAndTypeToVariables
@@ -86,18 +88,69 @@ Type::GetPrimitiveExtensionFingerprint() {
   printf "${!fingerprintVariable}"
 }
 
+Type::RunFunctionGarbageCollector() {
+  local -a variables=( $(compgen -A 'variable' || true) )
+
+  local index
+  local handler
+  for index in "${!__oo_type_handler_functions[@]}"
+  do
+    handler="${__oo_type_handler_functions[$index]}"
+
+    local exists=
+    for variable in "${variables[@]}"
+    do
+#      Log "comparing: ${variable} == $handler"
+      [[ "$variable" == "$handler" ]] && { exists=1; break; }
+    done
+    ## unset all the functions that don't have corresponding variables
+    if [[ ! -n $exists ]]
+    then
+      DEBUG Log "Unsetting handler for $handler"
+      unset -f "$handler"
+      unset __oo_type_handler_functions[$index]
+    fi
+  done
+}
+
+Type::InjectThisResolutionIfNeeded() {
+  local methodName="$1"
+
+  local methodBody=$(declare -f "$methodName" || true)
+
+  if [[ "$methodBody" != *'@resolve:this'* ]]
+  then
+    Log "Injecting @this resolution to: $methodName"
+    Function::InjectCode "$methodName" '@resolve:this'
+  fi
+}
+
 Type::CreateHandlerFunction() {
   local variableName="$1"
 
   ## TODO - don't allow creating a handler if a command/function/alias of such name already exists
   ## unless it is a handler already (keep track?)
 
-  ## declare method with the name of the var ##
-  eval "$variableName() { Type::Handle $variableName \"\$@\"; }"
+  if ! Command::Exists "$variableName"
+  then
+    ## declare method with the name of the var ##
+    eval "$variableName() { Type::Handle $variableName \"\$@\"; }"
+    __oo_type_handler_functions+=( "$variableName" )
+
+    ## not already a handler
+#    if ! Array::Contains "$variableName" "${__oo_type_handler_functions[@]}"
+#    then
+#    fi
+  elif ! Array::Contains "$variableName" "${__oo_type_handler_functions[@]}"
+    then
+      subject=WARN Log "Unable to create a handle for '$variableName'. A command of the same name already exists."
+  fi
+
+  Type::RunFunctionGarbageCollector
 }
 
 Type::TrapAndCreate() {
-    # USE DEFAULT IFS IN CASE IT WAS CHANGED - important!
+    # USE DEFAULT IFS IN CASE IT WAS CHANGED
     local IFS=$' \t\n'
 
     local commandWithArgs=( $1 )
@@ -131,7 +184,7 @@ Type::TrapAndCreate() {
     # var value is only important if making an object later on from it
     local varValue="${varDeclaration#*=}"
 
-    # TODO: make this better:
+    # TODO: make this better, otherwise edge case bug:
     if [[ "$varValue" == "$varName" ]]
     then
       # Log "equal $varName=$varValue"
@@ -158,14 +211,9 @@ Type::TrapAndCreate() {
           * )
             # Log "constructing: $__typeCreate_varName ($__typeCreate_varType) = $(__constructor_recursion=0 Type::Construct $__typeCreate_varType)"
 
-            # eval "$__typeCreate_varName=\$(__constructor_recursion=0 Type::Construct \$__typeCreate_varType)"
             __constructor_recursion=0 Type::Construct "$__typeCreate_varType" "$__typeCreate_varName"
 
             DEBUG Log "constructed: $(@get $__typeCreate_varName)"
-
-            # Type::Construct w
-            ## TODO: initialize all the sub-objects recursively
-            # eval "$__typeCreate_varName=([__object_type]=$__typeCreate_varType)" ;;
           ;;
         esac
       else
@@ -252,7 +300,6 @@ alias map='_type=map Type::TrapAssign declare -A'
 #alias global:array='_type=array Type::TrapAssign declare -ag'
 #alias global:map='_type=map Type::TrapAssign declare -Ag'
 
-
 ##############################
 
 # for use in the object's methods
@@ -260,10 +307,9 @@ this() {
   __access_private=true Type::Handle this "$@"
 }
 
-__return_separator=52A586A48E074BB6812DCFDC790841F5
-
 @return() {
   local variableName="$1"
+  local thisName="${2:-this}"
 
   local __return_declaration
   local __return_declaration_type
@@ -274,13 +320,13 @@ __return_separator=52A586A48E074BB6812DCFDC790841F5
     Variable::ExportDeclarationAndTypeToVariables $variableName __return_declaration
   elif [[ ! -z "${monad+x}" ]]
   then
-    Variable::ExportDeclarationAndTypeToVariables this __return_declaration
+    Variable::ExportDeclarationAndTypeToVariables $thisName __return_declaration
   fi
 
   if [[ "${__local_return_self_and_result}" == "true" || "${__return_self_and_result}" == "true" ]]
   then
     # Log "returning heavy"
-    local -a __return=("$(Variable::PrintDeclaration this)" "$__return_declaration" "$__return_declaration_type")
+    local -a __return=("$(Variable::PrintDeclaration $thisName)" "$__return_declaration" "$__return_declaration_type")
 
     printf ${__return_separator:-52A586A48E074BB6812DCFDC790841F5}
     Variable::PrintDeclaration __return

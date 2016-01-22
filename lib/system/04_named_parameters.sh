@@ -3,7 +3,7 @@ namespace oo/type
 # TODO: required parameters
 
 Variable::TrapAssignNumberedParameter() {
-    # USE DEFAULT IFS IN CASE IT WAS CHANGED - important!
+    # USE DEFAULT IFS IN CASE IT WAS CHANGED
     local IFS=$' \t\n'
     
     local commandWithArgs=( $1 )
@@ -13,7 +13,7 @@ Variable::TrapAssignNumberedParameter() {
 
 #    Log "TRAP: ${commandWithArgs[@]}"
 
-    if [[ "$command" == "trap" || "$command" == "l="* || "$command" == "_type="* || "$command" == "__capture_valueRequired="* || "$command" == "__capture_valueReadOnly="* ]]
+    if [[ "$command" == "trap" || "$command" == "l="* || "$command" == "_type="* || "$command" == "_isRequired="* || "$command" == "_isReadOnly="* ]]
     then
         return 0
     fi
@@ -35,7 +35,7 @@ Variable::TrapAssignNumberedParameter() {
     fi
 
     local varDeclaration="${commandWithArgs[*]:1}"
-    if [[ $varDeclaration == '-'* || $varDeclaration == '${'* ]]
+    if [[ $varDeclaration == '-'* || $varDeclaration == '${__assign'* ]]
     then
         varDeclaration="${commandWithArgs[*]:2}"
     fi
@@ -43,17 +43,16 @@ Variable::TrapAssignNumberedParameter() {
 
     # var value is only important if making an object later on from it
     local varValue="${varDeclaration#*=}"
-    # TODO: checking for parameter existance or default value
+    # TODO: checking for parameter existence or default value
 
     if [[ ! -z $__assign_varType ]]
     then
-        DEBUG subject="parameters-setting" Log "SETTING: $__assign_varName = \$$__assign_paramNo"
+        DEBUG subject="parameters-setting" Log "SETTING: [$__assign_varType] $__assign_varName = \$$__assign_paramNo [rq:$__assign_valueRequired]" # [val:${!__assign_paramNo}]
         # subject="parameters-setting" Log --
         
-        if [[ "$__assign_valueRequired" == 'true' && -z "${!__assign_paramNo}" ]]
+        if [[ "$__assign_valueRequired" == 'true' && -z "${!__assign_paramNo+x}" ]]
         then
-          e="Value is required for the parameter [$__assign_varType] $__assign_varName ($__assign_paramNo)" throw
-          return
+          e="Value is required for the parameter $__assign_varName ($__assign_paramNo) of type [$__assign_varType]" throw
         fi
         
         unset __assign_valueRequired __assign_valueReadOnly
@@ -167,6 +166,8 @@ Variable::InTrapCaptureParameters() {
 
     __capture_type="$_type"
     __capture_arrLength="$l"
+    __capture_valueRequired="$_isRequired"
+    __capture_valueReadOnly="$_isReadOnly"
 }
 
 # NOTE: true; true; at the end is required to workaround an edge case where TRAP doesn't behave properly
@@ -191,7 +192,7 @@ alias [string[8]]='l=8 _type=params Variable::TrapAssignLocal'
 alias [string[9]]='l=9 _type=params Variable::TrapAssignLocal'
 alias [string[10]]='l=10 _type=params Variable::TrapAssignLocal'
 alias [...rest]='_type=rest Variable::TrapAssignLocal'
-alias @required='__capture_valueRequired=true '
-# TODO: alias @readonly='__capture_valueReadOnly=true '
+alias @required='_isRequired=true '
+# TODO: alias @readonly='_isReadOnly=true '
 
 declare -g ref=$'\UEFF1A'$'\UEFF1A'

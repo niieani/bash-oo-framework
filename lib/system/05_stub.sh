@@ -44,12 +44,16 @@ String::RestoreSlashes() {
     echo "${stringToMark/$slashReplacement/$slash}"
 }
 
+Command::Exists(){
+    local name="$1"
+    local typeMatch=$(type -t "$name" 2> /dev/null || true)
+    [[ "$typeMatch" == "alias" || "$typeMatch" == "function" || "$typeMatch" == "builtin" ]]
+}
+
 Alias::Exists(){
     local name="$1"
     local typeMatch=$(type -t "$name" 2> /dev/null || true)
     [[ "$typeMatch" == "alias" ]]
-#    echo "$typeMatch" | grep "function\|alias" &> /dev/null || return 1
-#    return 0
 }
 
 Function::Exists(){

@@ -7,6 +7,8 @@ Type::ExecuteMethod() {
 
   shift; shift; shift;
 
+  Type::InjectThisResolutionIfNeeded "$type.$method"
+
   thisReference=$variableName thisReferenceType="$type" $type.$method "$@"
 }
 
@@ -23,22 +25,28 @@ Type::RunCurrentStack() {
   fi
 
   # Log "Will assign: result=$(__return_self_and_result=true Type::ExecuteMethod "$type" "$variableName" "$method" "${params[@]}")"
-  local resultString=$(__return_self_and_result=true Type::ExecuteMethod "$type" "$variableName" "$method" "${params[@]}")
+  local resultString=$(__return_self_and_result=true Type::ExecuteMethod "$type" "$variableName" "$method" "${params[@]}" || { local falseBool="${__primitive_extension_fingerprint__boolean}:false"; __return_self_and_result=true @return falseBool $variableName; })
 
   ## TODO: some problem here sometimes
   DEBUG Log "Result string: START | $resultString | END"
 
-  # echo everything before the first occurence of the separator
-  local echoed="${resultString%%$__return_separator*}"
+  local echoed=
 
-  # the result is everything after the first occurence of the separator
-  resultString="${resultString#*$__return_separator}"
-
-  if [[ -z "$resultString" ]]
+  if [[ -z "$resultString" || "$resultString" != *"$__return_separator"* ]]
   then
-    ## TODO: debug these situations
-    local -a result=( "$(@get $variableName)" "" "" )
+    ## if resultString does not contain return_separator, use all as returnString and nothing as echo
+    ## TODO: debug these situations if all ok.
+    # theoretically, this is when no @return is present
+    # or when no return separator provided - we use the echoed output as the result
+    local -a result=( "$(@get $variableName)" "$(@get resultString)" "string" )
   else
+    # echo everything before the first occurrence of the separator
+    echoed="${resultString%%$__return_separator*}"
+
+    # the result is everything after the first occurrence of the separator
+    resultString="${resultString#*$__return_separator}"
+#    else
+
     # Log "wtf $resultString"
     local -a result=$resultString
     # eval "local -a result=$resultString"
@@ -140,7 +148,6 @@ Type::Handle() {
     local mode=method
     local prevMode
     local prevModeNext
-    local treatTheRestAsParams=true
     local bracketsStarted=false
     local -i closingBracketCount=0
 
@@ -153,11 +160,7 @@ Type::Handle() {
       fi
 
       prevModeNext=$mode
-      # if [[ "$1" == '@' ]]
-      # then
-      #   # mode=method
-      #   treatTheRestAsParams=true
-      # el
+
       if [[ $multiExpression == 'true' ]] && [[ "$1" == '{' ]]
       then
         if [[ $bracketsStarted == 'true' ]]
@@ -171,7 +174,6 @@ Type::Handle() {
           Type::RunCurrentStack
         fi
         bracketsStarted=true
-        # treatTheRestAsParams=false
         # mode=params
       elif [[ $multiExpression == 'true' ]] && [[ "$1" == '}' ]]
       then
@@ -243,15 +245,8 @@ Type::Handle() {
           fi
           ### /selectProperty
         else
-          if [[ "$treatTheRestAsParams" == 'true' ]]
-          then
-            mode=params
-          elif [[ "$prevMode" == 'method' ]]
-          then
-            Type::RunCurrentStack
-          fi
+          mode=params
           method="$1"
-
         fi
       fi
       prevMode=$prevModeNext
@@ -263,10 +258,7 @@ Type::Handle() {
 
     if [[ "${#method}" -gt 0 ]]
     then
-      if [[ "$mode" == 'method' || "$treatTheRestAsParams" == 'true' ]]
-      then
-        Type::RunCurrentStack
-      fi
+      Type::RunCurrentStack
     elif [[ "$prevMode" == 'property' ]]
     then
       if [[ "$currentPropertyVisibility" == 'public' || "$__access_private" == "true" ]]
@@ -324,6 +316,11 @@ Type::Handle() {
 
 ## TODO: take note of what variables have handler functions in a global variable
 ## in @resolve:this save the list and then compare it in a @return
+## -- or better yet -- to it in the parent that executes the method
+## before and after execution
+
+## question - how to add @resolve:this to all methods without explicitly stating it?
+
 ## "garbage collect", i.e. remove all the new references so they don't pollute the global scope
 
 ## note: declaration needs to be trimmed,
@@ -332,7 +329,7 @@ alias @resolve:this="
   local __local_return_self_and_result=false
   [[ \$__return_self_and_result == 'true' ]] && local __local_return_self_and_result=true && local __return_self_and_result=false
   # TODO: local __access_private_members_of=
-  if [[ -z \${__use_this_natively+x} ]];
+  if [[ -z \${__use_this_transparently+x} ]];
   then
     local __declaration;
     local __declaration_type;
@@ -340,20 +337,17 @@ alias @resolve:this="
     if [[ ! -z \"\${useReturnValueDefinition}\" ]];
     then
       # subject='@resolve:this' Log 'using: ReturnValueDefinition'
-      # local __declaration_type;
       __declaration=\"\$returnValueDefinition\"
       __declaration_type=\$returnValueType
-    elif [[ -z \${thisReference+x} ]];
+    elif [[ -z \${thisReference+x} && ! -t 0 ]];
     then
       # subject='@resolve:this' Log 'using: pipe'
       Pipe::Capture __declaration;
-      # local
       __declaration_type=\${FUNCNAME[0]%.*}
       DEBUG Log capturing via pipe \${__declaration_type}
     else
       # subject='@resolve:this' Log 'using: thisReference:' $ \$thisReference type: \$thisReferenceType
       Variable::ExportDeclarationAndTypeToVariables \$thisReference __declaration;
-      # local
       __declaration_type=\"\$thisReferenceType\"
       unset thisReference;
     fi;
@@ -361,6 +355,7 @@ alias @resolve:this="
     local typeParam=\$(Variable::GetDeclarationFlagFromType \"\${__declaration_type}\" '-');
     # subject='@resolve:this' Log \$__declaration_type = \$typeParam = \$__declaration
 
+    # TODO: does it preserve spaces properly?
     local -\$typeParam this=\${__declaration};
 
     ## add type for objects that don't have them set explicitly

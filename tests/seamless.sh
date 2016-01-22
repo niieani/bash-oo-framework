@@ -16,7 +16,7 @@ declare -Ag __oo__objectToName
 obj=OBJECT
 
 Type.CreateVar() {
-    # USE DEFAULT IFS IN CASE IT WAS CHANGED - important!
+    # USE DEFAULT IFS IN CASE IT WAS CHANGED
     local IFS=$' \t\n'
 
     local commandWithArgs=( $1 )
