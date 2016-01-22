@@ -4,7 +4,6 @@ class:Test() {
     private string groupName
 
     Test.Start() {
-        @resolve:this
         [string] verb
         [string] description
 
@@ -14,7 +13,6 @@ class:Test() {
     }
 
     Test.OK() {
-        @resolve:this
         [string] printInPlace=true
 
         [[ $printInPlace == true ]] && this onStartCursor restore
@@ -24,20 +22,15 @@ class:Test() {
     }
 
     Test.EchoedOK() {
-        @resolve:this
-        
         this OK false
     }
 
     Test.Fail() {
-        @resolve:this
-        #Test.OnStartCursor.Restore
         echo "$(UI.Color.Red)$(UI.Powerline.Fail) $(UI.Color.Yellow)[$(UI.Color.Red)$(UI.Color.Bold)FAIL$(UI.Color.NoBold)$(UI.Color.Yellow)]$(UI.Color.Default)"
         @return
     }
 
     Test.DisplaySummary() {
-        @resolve:this
         if [[ $(this errors) == true ]]
         then
           echo "$(UI.Powerline.ArrowLeft) $(UI.Color.Magenta)Completed [$(Test groupName)]: $(UI.Color.Default)$(UI.Color.Red)There were errors $(UI.Color.Default)$(UI.Powerline.Lightning)"
@@ -49,7 +42,6 @@ class:Test() {
     }
 
     Test.NewGroup() {
-        @resolve:this
         [string] groupName
 
         echo "$(UI.Powerline.ArrowRight)" $(UI.Color.Magenta)Testing [$groupName]: $(UI.Color.Default)

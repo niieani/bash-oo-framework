@@ -6,8 +6,6 @@ class:UI.Cursor() {
 	private integer y
 
   UI.Cursor.capture() {
-    @resolve:this
-
     local x
     local y
     IFS=';' read -sdR -p $'\E[6n' y x
@@ -28,7 +26,6 @@ class:UI.Cursor() {
   }
 
   UI.Cursor.restore() {
-    @resolve:this
     [integer] shift=1
 
     local -i totalHeight=$(tput lines)

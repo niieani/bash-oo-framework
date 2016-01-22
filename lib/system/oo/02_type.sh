@@ -144,13 +144,9 @@ Type::CreateHandlerFunction() {
     eval "$variableName() { Type::Handle $variableName \"\$@\"; }"
     __oo_type_handler_functions+=( "$variableName" )
 
-    ## not already a handler
-#    if ! Array::Contains "$variableName" "${__oo_type_handler_functions[@]}"
-#    then
-#    fi
   elif ! Array::Contains "$variableName" "${__oo_type_handler_functions[@]}"
-    then
-      subject=WARN Log "Unable to create a handle for '$variableName'. A command of the same name already exists."
+  then
+    subject=WARN Log "Unable to create a handle for '$variableName'. A command of the same name already exists."
   fi
 
   Type::RunFunctionGarbageCollector
@@ -299,7 +295,7 @@ alias string='_type=string Type::TrapAssign declare'
 alias boolean='_type=boolean Type::TrapAssign declare'
 alias integer='_type=integer Type::TrapAssign declare -i'
 alias array='_type=array Type::TrapAssign declare -a'
-alias array[integer]='_type=integerArray Type::TrapAssign declare -ai'
+alias integerArray='_type=integerArray Type::TrapAssign declare -ai'
 alias map='_type=map Type::TrapAssign declare -A'
 #alias global:reference='_type=reference Type::TrapAssign declare -ng'
 #alias global:string='_type=string Type::TrapAssign declare -g'

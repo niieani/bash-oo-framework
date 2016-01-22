@@ -9,6 +9,9 @@ Log::AddOutput oo/type CUSTOM
 Log::AddOutput error ERROR
 
 import lib/system/oo
+import lib/type/util/test
+
+## TODO: import github:niieani/whatever/lalala
 
 class:Human() {
   public string firstName
