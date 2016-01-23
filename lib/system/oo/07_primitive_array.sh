@@ -1,3 +1,4 @@
+namespace oo/type
 ### ARRAY
 
 ## these three are same as map - make map extend array and merge in the future
@@ -85,15 +86,19 @@ array.forEach() {
   string item
   integer index
 
-  eval "__array_forEach_temp_method() { $action ; }"
+  string methodName=__array_forEach_temp_method
+  eval "$methodName() { $action ; }"
+  
+  # DEBUG Console::WriteStdErr "escaping: $methodName() { $action ; }"
 
   for index in "${!this[@]}"
   do
     item="${this[$index]}"
-    __array_forEach_temp_method "$item" "$index"
+    $methodName "$item" "$index"
+    
   done
 
-  unset __array_forEach_temp_method
+  unset -f $methodName
 
   @return
 }
@@ -105,15 +110,17 @@ array.map() {
   integer index
   array out
 
-  eval "__array_map_temp_method() { $action ; }"
+  string methodName=__array_map_temp_method
+  
+  eval "$methodName() { $action ; }"
 
   for index in "${!this[@]}"
   do
     item="${this[$index]}"
-    out[$index]=$(__array_map_temp_method "$item" "$index")
+    out[$index]=$($methodName "$item" "$index")
   done
 
-  unset __array_map_temp_method
+  unset -f $methodName
 
   @return out
 }
@@ -152,9 +159,9 @@ array.toString() {
 }
 
 array.toJSON() {
-  @return:value "$(Array::ToJSON this)"
+  string json=$(this forEach 'printf %s "$(item toJSON), "')
+  @return:value "[${json%,*}]"
 }
-
 
 array.every() {
 	[integer] every
@@ -198,15 +205,15 @@ Array::ToJSON() {
   
   ## TODO: escape quotes by doing 
   # foreach and using declare -p for values and unescaping '
-  # echo -n "["
+  echo -n "["
   (
     local IFS=$'\UFFFFF'
     local indirectAccess="${variableName}[*]"
     local list="\"${!indirectAccess}\""
     local separator='", "'
-    echo -n "[${list/$'\UFFFFF'/$separator}]"
+    echo -n "${list/$'\UFFFFF'/$separator}"
   )
-  # echo -n "]"
+  echo -n "]"
 }
 
 Array::Intersect() {

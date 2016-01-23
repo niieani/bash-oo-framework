@@ -1,3 +1,4 @@
+namespace oo/type
 ### STRING
 
 string.toUpper() {
@@ -37,43 +38,82 @@ string.toArray() {
 }
 
 ## test this:
-string.matchGroups() {
-	@required [string] regex
+string.getMatchGroups() {
+	@handleless @required [string] regex
 	[string] returnMatchNumber='@' # @ means all
   
   array returnArray
 
-	DEBUG subject="matchGroups" Log "string to match on: $this"
-  
+	subject="matchGroups" Log "string to match on: $this"
+
 	local -i matchNo=0
 	local string="$this"
 	while [[ "$string" =~ $regex ]]
 	do
-		DEBUG subject="regex" Log "match $matchNo: ${BASH_REMATCH[*]}"
+		subject="regex" Log "match $matchNo: ${BASH_REMATCH[*]}"
 
 		if [[ "$returnMatchNumber" == "@" || $matchNo -eq "$returnMatchNumber" ]]
 		then
 			returnArray+=( "${BASH_REMATCH[@]}" )
-			[[ "$returnMatchNumber" == "@" ]] || @return returnArray && return 0
+			[[ "$returnMatchNumber" == "@" ]] || { @return returnArray && return 0; }
 		fi
 		# cut out the match so we may continue
 		string="${string/"${BASH_REMATCH[0]}"}" # "
 		matchNo+=1
 	done
+  
+  @return returnArray
 }
 
 string.match() {
-	[string] regex
-	[integer] capturingGroup
-	[string] returnMatchNumber
-
+	@handleless @required [string] regex
+	[integer] capturingGroup=0
+	[string] returnMatchNumber=0 # @ means all
+  
 	DEBUG subject="string.match" Log "string to match on: $this"
 
-	array allMatches=$(this matchGroups "$regex" "$returnMatchNumber")
+	array allMatches=$(this getMatchGroups "$regex" "$returnMatchNumber")
 
 	@return:value "${allMatches[$capturingGroup]}"
 }
 
+string.toJSON() {
+  ## http://stackoverflow.com/a/3020108/595157
+  
+  string escaped="$this"
+  escaped=$(escaped forEachChar '(( 16#$(char getCharCode) < 20 )) && printf "\\${char}" || printf "$char"')
+  
+  escaped="${escaped//\\/\\\\}" ## slashes
+  escaped="\"${escaped//\"/\\\"}\"" ## quotes
+  
+  @return escaped
+}
+
+string.forEachChar() {
+  [string] action
+
+  string char
+  integer index
+
+  string methodName=__string_forEachChar_temp_method
+
+  eval "$methodName() { $action ; }"
+
+  for (( index=0; index<${#this}; index++ ))
+  do
+    char="${this:$index:1}"
+    $methodName "$char" "$index"
+  done
+
+  unset -f $methodName
+
+  @return
+}
+
+string.getCharCode() {
+  ## returns char code of the first character
+  @return:value $(printf %x "'$this")
+}
 
 Type::Initialize string primitive
 
