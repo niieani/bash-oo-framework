@@ -38,11 +38,15 @@ Type::RunCurrentStack() {
     ## TODO: debug these situations if all ok.
     # theoretically, this is when no @return is present
     # or when no return separator provided - we use the echoed output as the result
+    #
+    ## implicit "string"
     local -a result=( "$(@get $variableName)" "$(@get resultString)" "string" )
   else
     # echo everything before the first occurrence of the separator
     echoed="${resultString%%$__return_separator*}"
-
+    
+    DEBUG [[ ! -z "$echoed" ]] && Log "Echoed: START | $(@get echoed) | END"
+    
     # the result is everything after the first occurrence of the separator
     resultString="${resultString#*$__return_separator}"
 
@@ -85,7 +89,7 @@ Type::RunCurrentStack() {
     type="$returnValueType" # $(Variable::GetPrimitiveTypeFromDeclarationFlag $returnValueType)
   fi
 
-  printf "$echoed"
+  printf %s "$echoed"
 
   ## cleanup vars:
   method=''
