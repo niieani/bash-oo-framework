@@ -335,8 +335,13 @@ this() {
   __access_private=true Type::Handle this "$@"
 }
 
-@() {
-  Type::Handle $1 "${@:2}";
+var:this() {
+  __access_private=true Type::Handle this "$@"
+}
+
+var:() {
+  Type::Handle "$@"
+  # Type::Handle $1 "${@:2}"
 }
 
 @return() {

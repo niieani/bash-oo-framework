@@ -20,9 +20,9 @@ array.delete() {
 
 array.push() {
   [...rest] values
-  
+
   local value
-  
+
   for value in "${values[@]}"
   do
     this+=("$value")
@@ -88,14 +88,14 @@ array.forEach() {
 
   string methodName=__array_forEach_temp_method
   eval "$methodName() { $action ; }"
-  
+
   # DEBUG Console::WriteStdErr "escaping: $methodName() { $action ; }"
 
   for index in "${!this[@]}"
   do
     item="${this[$index]}"
     $methodName "$item" "$index"
-    
+
   done
 
   unset -f $methodName
@@ -111,7 +111,7 @@ array.map() {
   array out
 
   string methodName=__array_map_temp_method
-  
+
   eval "$methodName() { $action ; }"
 
   for index in "${!this[@]}"
@@ -128,19 +128,19 @@ array.map() {
 
 array.concatPush() {
   @required [array] concatWithArray
-  
-  @ concatWithArray forEach 'this push "$(item)"'
-  
+
+  var: concatWithArray forEach 'this push "$(item)"'
+
   @return this
 }
 
 array.concat() {
   @required [array] concatWithArray
-  
+
   array outArray=$(this)
-  
-  @ concatWithArray forEach 'outArray push "$(item)"'
-  
+
+  var: concatWithArray forEach 'var: outArray push "$(item)"'
+
   @return outArray
 }
 
@@ -159,16 +159,16 @@ array.toString() {
 }
 
 array.toJSON() {
-  string json=$(this forEach 'printf %s "$(@ item toJSON), "')
+  string json=$(this forEach 'printf %s "$(var: item toJSON), "')
   @return:value "[${json%,*}]"
 }
 
 array.every() {
 	[integer] every
 	[integer] startingIndex
-  
+
   array returnArray
-  
+
 	local -i count=0
 
 	local index
@@ -181,7 +181,7 @@ array.every() {
 			count+=1
 		fi
 	done
-  
+
   @return returnArray
 }
 
@@ -192,7 +192,7 @@ Type::Initialize array primitive
 Array::List() {
   @required [string] variableName
   [string] separator=$'\n'
-  
+
   local indirectAccess="${variableName}[*]"
   (
     local IFS="$separator"

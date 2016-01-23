@@ -144,12 +144,12 @@ function testArrayMethods() {
 
   someArr push '5' 'six'
   someArr forEach 'echo yep-$(item)'
-  someArr map 'echo $(item toUpper)'
+  someArr map 'echo $($var:item toUpper)'
 
-  someArr : { map 'echo $(item toUpper)' } { forEach 'echo yep-$(item)' }
+  someArr : { map 'echo $($var:item toUpper)' } { forEach 'echo yep-$($var:item)' }
 
   someArr : \
-    { map 'echo $(item toUpper)' } \
+    { map 'echo $($var:item toUpper)' } \
     { forEach 'echo yep-$(item)' }
 }
 

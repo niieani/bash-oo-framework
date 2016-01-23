@@ -18,7 +18,7 @@ Variable::GetDeclarationFlagFromType() {
   local typeInfo="$1"
   local fallback="$2"
 
-  if [[ "$typeInfo" == "map" ]] || Function::Exists class:${typeInfo}
+  if [[ "$typeInfo" == "map" ]] || Function::Exists "class:${typeInfo}"
   then
     echo A
   else
@@ -48,33 +48,29 @@ Variable::GetDeclarationFlagFromType() {
 Variable::GetPrimitiveTypeFromDeclarationFlag() {
   local typeInfo="$1"
 
-  if [[ "$typeInfo" == "n"* ]]
-  then
-    echo reference
-
-  elif [[ "$typeInfo" == "ai"* ]]
-  then
-    echo integerArray
-
-  elif [[ "$typeInfo" == "a"* ]]
-  then
-    echo array
-
-  elif [[ "$typeInfo" == "Ai"* ]]
-  then
-    echo integerMap
-
-  elif [[ "$typeInfo" == "A"* ]]
-  then
-    echo map
-
-  elif [[ "$typeInfo" == "i"* ]]
-  then
-    echo integer
-
-  else
-    echo string
-  fi
+  case "$typeInfo" in
+    "n"*)
+      echo reference
+    ;;
+    "a"*)
+      echo array
+    ;;
+    "A"*)
+      echo map
+    ;;
+    "i"*)
+      echo integer
+    ;;
+    "ai"*)
+      echo integerArray
+    ;;
+    "Ai"*)
+      echo integerMap
+    ;;
+    *)
+      echo string
+    ;;
+  esac
 }
 
 Variable::ExportDeclarationAndTypeToVariables() {

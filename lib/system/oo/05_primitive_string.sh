@@ -15,9 +15,9 @@ string.toUpper() {
 
 string.toArray() {
   [string] separationCharacter=$'\n' # $'\UFAFAF'
-  
+
   array returnArray
-  
+
 	local newLine=$'\n'
 	local string="${this//"$newLine"/"$separationCharacter"}"
 	local IFS=$separationCharacter
@@ -33,7 +33,7 @@ string.toArray() {
 	do
 		returnArray+=( "" )
 	done
-  
+
   @return returnArray
 }
 
@@ -41,7 +41,7 @@ string.toArray() {
 string.getMatchGroups() {
 	@handleless @required [string] regex
 	[string] returnMatchNumber='@' # @ means all
-  
+
   array returnArray
 
 	subject="matchGroups" Log "string to match on: $this"
@@ -61,7 +61,7 @@ string.getMatchGroups() {
 		string="${string/"${BASH_REMATCH[0]}"}" # "
 		matchNo+=1
 	done
-  
+
   @return returnArray
 }
 
@@ -69,7 +69,7 @@ string.match() {
 	@handleless @required [string] regex
 	[integer] capturingGroup=0
 	[string] returnMatchNumber=0 # @ means all
-  
+
 	DEBUG subject="string.match" Log "string to match on: $this"
 
 	array allMatches=$(this getMatchGroups "$regex" "$returnMatchNumber")
@@ -79,13 +79,13 @@ string.match() {
 
 string.toJSON() {
   ## http://stackoverflow.com/a/3020108/595157
-  
+
   string escaped="$this"
-  escaped=$(@ escaped forEachChar '(( 16#$(@ char getCharCode) < 20 )) && printf "\\${char}" || printf "$char"')
+  escaped=$(var: escaped forEachChar '(( 16#$(var: char getCharCode) < 20 )) && printf "\\${char}" || printf "$char"')
   
   escaped="${escaped//\\/\\\\}" ## slashes
   escaped="\"${escaped//\"/\\\"}\"" ## quotes
-  
+
   @return escaped
 }
 
