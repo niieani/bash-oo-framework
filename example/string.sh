@@ -14,13 +14,13 @@ regex() {
   array matchGroups=$(someString getMatchGroups '([0-9]+) [a-zA-Z]+')
   
   # lists all matches in group 1:
-  matchGroups every 2 1
+  @ matchGroups every 2 1
   
   ## group 0, match 1
-  someString match '([0-9]+) [a-zA-Z]+' 0 1
+  @ someString match '([0-9]+) [a-zA-Z]+' 0 1
   
   # calls the getter - here it prints the value
-  someString
+  @ someString
 }
 
 regex

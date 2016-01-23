@@ -44,9 +44,9 @@ Type::RunCurrentStack() {
   else
     # echo everything before the first occurrence of the separator
     echoed="${resultString%%$__return_separator*}"
-    
+
     DEBUG [[ ! -z "$echoed" ]] && Log "Echoed: START | $(@get echoed) | END"
-    
+
     # the result is everything after the first occurrence of the separator
     resultString="${resultString#*$__return_separator}"
 
@@ -107,7 +107,7 @@ Type::RunGetter() {
   then
     __return_self_and_result=false Type::ExecuteMethod "$type" "$variableName" "__getter__"
   else
-    @get $variableName
+    @get "$variableName"
   fi
 }
 

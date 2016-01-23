@@ -81,7 +81,7 @@ string.toJSON() {
   ## http://stackoverflow.com/a/3020108/595157
   
   string escaped="$this"
-  escaped=$(escaped forEachChar '(( 16#$(char getCharCode) < 20 )) && printf "\\${char}" || printf "$char"')
+  escaped=$(@ escaped forEachChar '(( 16#$(@ char getCharCode) < 20 )) && printf "\\${char}" || printf "$char"')
   
   escaped="${escaped//\\/\\\\}" ## slashes
   escaped="\"${escaped//\"/\\\"}\"" ## quotes

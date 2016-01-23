@@ -227,5 +227,8 @@ alias @required='_isRequired=true'
 alias @handleless='_noHandle=true'
 # TODO: alias @readonly='_isReadOnly=true '
 
-declare -g ref=$'\UEFF1A'$'\UEFF1A'
-declare -g var=$'\UEFF2A'$'\UEFF2A'
+#declare -g ref=$'\UEFF1A'$'\UEFF1A'
+#declare -g var=$'\UEFF2A'$'\UEFF2A'
+
+declare -g ref=D10F7FB728364261BB50A7E818D537C4
+declare -g var=A04FB7D7594E479B8CD8D90C5014E37A

@@ -129,7 +129,7 @@ array.map() {
 array.concatPush() {
   @required [array] concatWithArray
   
-  concatWithArray forEach 'this push "$(item)"'
+  @ concatWithArray forEach 'this push "$(item)"'
   
   @return this
 }
@@ -139,7 +139,7 @@ array.concat() {
   
   array outArray=$(this)
   
-  concatWithArray forEach 'outArray push "$(item)"'
+  @ concatWithArray forEach 'outArray push "$(item)"'
   
   @return outArray
 }
@@ -159,7 +159,7 @@ array.toString() {
 }
 
 array.toJSON() {
-  string json=$(this forEach 'printf %s "$(item toJSON), "')
+  string json=$(this forEach 'printf %s "$(@ item toJSON), "')
   @return:value "[${json%,*}]"
 }
 
@@ -198,22 +198,6 @@ Array::List() {
     local IFS="$separator"
     echo "${!indirectAccess}"
   )
-}
-
-Array::ToJSON() {
-  @required [string] variableName
-  
-  ## TODO: escape quotes by doing 
-  # foreach and using declare -p for values and unescaping '
-  echo -n "["
-  (
-    local IFS=$'\UFFFFF'
-    local indirectAccess="${variableName}[*]"
-    local list="\"${!indirectAccess}\""
-    local separator='", "'
-    echo -n "${list/$'\UFFFFF'/$separator}"
-  )
-  echo -n "]"
 }
 
 Array::Intersect() {

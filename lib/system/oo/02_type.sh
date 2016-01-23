@@ -3,8 +3,8 @@ namespace oo/type
 __primitive_extension_declaration=2D6A822E
 __primitive_extension_fingerprint__boolean=${__primitive_extension_declaration}36884C70843578D37E6773C4
 __return_separator=52A586A48E074BB6812DCFDC790841F5
-__oo_type_handler_functions=()
-__oo__variableMethodPrefix= # "$var:"
+__oo__type_handler_functions=()
+__oo__variableMethodPrefix="$var:"
 
 # /**
 #   * Code like: Variable::ExportDeclarationAndTypeToVariables
@@ -113,9 +113,9 @@ Type::CreateHandlerFunction() {
     DEBUG Log "creating handler for $variableName"
     ## declare method with the name of the var ##
     eval "${__oo__variableMethodPrefix}${variableName}() { Type::Handle $variableName \"\$@\"; }"
-    __oo_type_handler_functions+=( "${__oo__variableMethodPrefix}${variableName}" )
+    __oo__type_handler_functions+=( "${variableName}" )
 
-  elif ! Array::Contains "${__oo__variableMethodPrefix}${variableName}" "${__oo_type_handler_functions[@]}"
+  elif ! Array::Contains "${variableName}" "${__oo__type_handler_functions[@]}"
   then
     ## TODO: a way to solve this is to store the original functions
     ## and temporairly override it, returning back to the old formula in @return
@@ -130,9 +130,9 @@ Type::RunFunctionGarbageCollector() {
 
   local index
   local handler
-  for index in "${!__oo_type_handler_functions[@]}"
+  for index in "${!__oo__type_handler_functions[@]}"
   do
-    handler="${__oo_type_handler_functions[$index]}"
+    handler="${__oo__type_handler_functions[$index]}"
 
     local exists=
     for variable in "${variables[@]}"
@@ -144,8 +144,8 @@ Type::RunFunctionGarbageCollector() {
     if [[ ! -n $exists ]]
     then
       DEBUG Log "Unsetting handler for $handler"
-      unset -f "$handler"
-      unset __oo_type_handler_functions[$index]
+      unset -f "${__oo__variableMethodPrefix}${handler}"
+      unset __oo__type_handler_functions[$index]
     else
       DEBUG Log "not deleting: handler and variable exists: ${variable}"
     fi
@@ -162,7 +162,7 @@ Type::InjectThisResolutionIfNeeded() {
     e="Method $methodName is not defined." throw
     return
   fi
-  
+
   if [[ "$methodBody" != *'@resolve:this'* && "$methodBody" != *'__local_return_self_and_result=false'* ]]
   then
     DEBUG Log "Injecting @this resolution to: $methodName"
@@ -342,7 +342,7 @@ this() {
 @return() {
   local variableName="$1"
   local thisName="${2:-this}"
- 
+
   local __return_declaration
   local __return_declaration_type
 
@@ -367,7 +367,7 @@ this() {
   then
     echo "$__return_declaration"
   fi
-  
+
   Type::RunFunctionGarbageCollector
 }
 
@@ -377,4 +377,3 @@ this() {
 }
 
 # ------------------------ #
-

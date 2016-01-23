@@ -9,24 +9,24 @@ Log::AddOutput oo/type CUSTOM
 manipulatingArrays() {
   array exampleArrayA
   array exampleArrayB
-  
-  exampleArrayA push 'one'
-  exampleArrayA push 'two'
-  
-  exampleArrayA toString
-  exampleArrayA toJSON
+
+  $var:exampleArrayA push 'one'
+  $var:exampleArrayA push 'two'
+
+  $var:exampleArrayA toString
+  $var:exampleArrayA toJSON
 }
 
 passingArrays() {
   
   passingArraysInput() {
     [array] passedInArray
-    
-    passedInArray : \
-      { map 'echo "${index} - $(item)"' } \
-      { forEach 'item toUpper' }
-      
-    passedInArray push 'will work only for references'
+
+    $var:passedInArray : \
+      { map 'echo "${index} - $($var:item)"' } \
+      { forEach '@ item toUpper' }
+
+    $var:passedInArray push 'will work only for references'
   }
   
   array someArray=( 'one' 'two' )
@@ -37,7 +37,7 @@ passingArrays() {
   passingArraysInput $var:someArray
   
   ## no changes yet
-  someArray toJSON
+  $var:someArray toJSON
   
   echo
   echo 'passing by $ref:'
@@ -47,9 +47,9 @@ passingArrays() {
   passingArraysInput $ref:someArray
   
   ## should show changes
-  someArray toJSON
+  $var:someArray toJSON
 }
 
 ## RUN IT:
 manipulatingArrays
-passingArrays
+#passingArrays
