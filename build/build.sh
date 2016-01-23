@@ -5,21 +5,46 @@
 # import lib/system/oo
 declare -g __oo__libPath="$( cd "${BASH_SOURCE[0]%/*}/../lib" && pwd )"
 
-evalIntoMain() {
+concat() {
+	local outputPath="$1"
+	local -a inputFiles=("${@:2}")
+
 	local blob
 	local file
-	
-	for file in "$__oo__libPath"/oo-framework.sh "$__oo__libPath"/system/*.sh "$__oo__libPath"/system/oo/*.sh
+
+	for file in "${inputFiles[@]}"
 	do
 		blob+=$'\n'
 		blob+=$(<"$file")
 	done
 
 	eval "main() { ${blob} " $'\n' " }"
+
+	[[ ! -z "${replaceAliases+x}" ]] && main
+
+	local body=$(declare -f main)
+	body="${body#*{}" # trim start definition
+	body="${body%\}}" # trim end definition
+
+	printf %s "#!/usr/bin/env bash" > "$outputPath"
+
+	while IFS= read -r line
+	do
+		## NOTE: might mess up herestrings that start with spaces
+		[[ "$line" == '    '* ]] && line="${line:4}"
+		[[ "$line" == 'namespace '* ]] && continue
+	  printf %s "$line" >> "$outputPath"
+		printf "\n" >> "$outputPath"
+	done <<< "$body"
+
+	# printf %s "#!/usr/bin/env bash${body}" > "$outputPath"
 }
 
-evalIntoMain
-declare -f main > out-$(git rev-parse --short HEAD).sh
+concat "out-$(git rev-parse --short HEAD).sh" "$__oo__libPath"/oo-framework.sh "$__oo__libPath"/system/*.sh "$__oo__libPath"/system/oo/*.sh
+
+
+# evalIntoMain
+# declare -f main > out-$(git rev-parse --short HEAD).sh
 
 # minify() {
 # 	[string] filePath
