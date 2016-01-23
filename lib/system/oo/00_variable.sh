@@ -18,59 +18,59 @@ Variable::GetDeclarationFlagFromType() {
   local typeInfo="$1"
   local fallback="$2"
 
-	if [[ "$typeInfo" == "reference" ]]
-	then
-		echo n
-	elif [[ "$typeInfo" == "map" ]] || Function::Exists class:${typeInfo}
-	then
-		echo A
-	elif [[ "$typeInfo" == "array" ]]
-	then
-		echo a
-	elif [[ "$typeInfo" == "string" || "$typeInfo" == "boolean" ]]
-	then
-		echo -
-	elif [[ "$typeInfo" == "integer" ]]
-	then
-		echo i
-	elif [[ "$typeInfo" == "integerArray" ]]
-	then
-		echo ai
-	else
-		echo ${fallback:-A}
-	fi
+  if [[ "$typeInfo" == "reference" ]]
+  then
+    echo n
+  elif [[ "$typeInfo" == "map" ]] || Function::Exists class:${typeInfo}
+  then
+    echo A
+  elif [[ "$typeInfo" == "array" ]]
+  then
+    echo a
+  elif [[ "$typeInfo" == "string" || "$typeInfo" == "boolean" ]]
+  then
+    echo -
+  elif [[ "$typeInfo" == "integer" ]]
+  then
+    echo i
+  elif [[ "$typeInfo" == "integerArray" ]]
+  then
+    echo ai
+  else
+    echo ${fallback:-A}
+  fi
 }
 
 Variable::GetPrimitiveTypeFromDeclarationFlag() {
   local typeInfo="$1"
 
-	if [[ "$typeInfo" == "n"* ]]
-	then
-		echo reference
+  if [[ "$typeInfo" == "n"* ]]
+  then
+    echo reference
 
-	elif [[ "$typeInfo" == "ai"* ]]
-	then
-		echo integerArray
+  elif [[ "$typeInfo" == "ai"* ]]
+  then
+    echo integerArray
 
-	elif [[ "$typeInfo" == "a"* ]]
-	then
-		echo array
+  elif [[ "$typeInfo" == "a"* ]]
+  then
+    echo array
 
-	elif [[ "$typeInfo" == "Ai"* ]]
-	then
-		echo integerMap
+  elif [[ "$typeInfo" == "Ai"* ]]
+  then
+    echo integerMap
 
-	elif [[ "$typeInfo" == "A"* ]]
-	then
-		echo map
+  elif [[ "$typeInfo" == "A"* ]]
+  then
+    echo map
 
-	elif [[ "$typeInfo" == "i"* ]]
-	then
-		echo integer
+  elif [[ "$typeInfo" == "i"* ]]
+  then
+    echo integer
 
-	else
-		echo string
-	fi
+  else
+    echo string
+  fi
 }
 
 Variable::ExportDeclarationAndTypeToVariables() {
@@ -143,7 +143,7 @@ Variable::ExportDeclarationAndTypeToVariables() {
 Variable::PrintDeclaration() {
   local variableName="${1}"
   local dereferrence="${2:-true}"
-  
+
   local __declaration
   local __declaration_type
   Variable::ExportDeclarationAndTypeToVariables "$variableName" __declaration "$dereferrence"

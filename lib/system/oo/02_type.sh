@@ -20,37 +20,37 @@ Type::GetTypeOfVariable() {
   [[ -z "$definition" ]] && e="Variable not defined" throw
   if [[ "$definition" =~ $regex ]]
   then
-      local variableType
-      local primitiveType=${BASH_REMATCH[1]}
+    local variableType
+    local primitiveType=${BASH_REMATCH[1]}
 
-      local objectTypeIndirect="$variableName[__object_type]"
-      if [[ "$primitiveType" =~ [A] && ! -z "${!objectTypeIndirect}" ]]
+    local objectTypeIndirect="$variableName[__object_type]"
+    if [[ "$primitiveType" =~ [A] && ! -z "${!objectTypeIndirect}" ]]
+    then
+      DEBUG Log "typeof $variableName: Object Type $variableName[__object_type] = ${!objectTypeIndirect}"
+      variableType="${!objectTypeIndirect}"
+    else
+      variableType="$(Variable::GetPrimitiveTypeFromDeclarationFlag "$primitiveType")"
+      DEBUG Log "typeof $variableName: Primitive Type $primitiveType Resolved ${variableType}"
+    fi
+
+    if [[ "$variableType" == 'reference' && "$dereferrence" == 'true' ]]
+    then
+      local dereferrencedVariableName=$(Variable::PrintDeclaration "$variableName" false)
+      variableType=$(Type::GetTypeOfVariable "$dereferrencedVariableName")
+    fi
+
+    if [[ "$variableType" == 'string' ]]
+    then
+      local extensionType=$(Type::GetPrimitiveExtensionFromVariable "${variableName}")
+      if [[ ! -z "$extensionType" ]]
       then
-        DEBUG Log "typeof $variableName: Object Type $variableName[__object_type] = ${!objectTypeIndirect}"
-        variableType="${!objectTypeIndirect}"
-      else
-        variableType="$(Variable::GetPrimitiveTypeFromDeclarationFlag "$primitiveType")"
-        DEBUG Log "typeof $variableName: Primitive Type $primitiveType Resolved ${variableType}"
+        variableType="$extensionType"
       fi
+    fi
 
-      if [[ "$variableType" == 'reference' && "$dereferrence" == 'true' ]]
-      then
-        local dereferrencedVariableName=$(Variable::PrintDeclaration "$variableName" false)
-        variableType=$(Type::GetTypeOfVariable "$dereferrencedVariableName")
-      fi
-      
-      if [[ "$variableType" == 'string' ]]
-      then
-        local extensionType=$(Type::GetPrimitiveExtensionFromVariable "${variableName}")
-        if [[ ! -z "$extensionType" ]]
-        then
-          variableType="$extensionType"
-        fi
-      fi
+    DEBUG Log "Variable $variableName is typeof $variableType"
 
-      DEBUG Log "Variable $variableName is typeof $variableType"
-
-      echo "$variableType"
+    echo "$variableType"
   fi
 }
 
@@ -98,16 +98,16 @@ Type::GetPrimitiveExtensionFingerprint() {
 
 Type::CreateHandlerFunction() {
   local variableName="$1"
-  
+
   if [[ -z $variableName ]]
   then
     subject=WARN Log "No variable specified when trying to create a handle."
     return
   fi
-  
+
   ## don't allow creating a handler if a command/function/alias of such name already exists
   ## unless it is a handler already (keeps track)
-  
+
   if ! Command::Exists "${__oo__variableMethodPrefix}${variableName}"
   then
     DEBUG Log "creating handler for $variableName"
@@ -178,132 +178,132 @@ Type::InjectThisResolutionIfNeeded() {
 }
 
 Type::TrapAndCreate() {
-    # USE DEFAULT IFS IN CASE IT WAS CHANGED
-    local IFS=$' \t\n'
+  # USE DEFAULT IFS IN CASE IT WAS CHANGED
+  local IFS=$' \t\n'
 
-    local commandWithArgs=( $1 )
-    local command="${commandWithArgs[0]}"
+  local commandWithArgs=( $1 )
+  local command="${commandWithArgs[0]}"
 
-    shift
+  shift
 
-    # Log "${commandWithArgs[*]}"
+  # Log "${commandWithArgs[*]}"
 
-    if [[ "$command" == "trap" || "$command" == "l="* || "$command" == "_type="* ]]
-    then
-        # set +x
-        return 0
-    fi
-
-    if [[ "${commandWithArgs[*]}" == "true" ]]
-    then
-        __typeCreate_next=true
-        # Console::WriteStdErr "Will assign next one"
-        # set +x
-        return 0
-    fi
-
-    local varDeclaration="${commandWithArgs[*]:1}"
-    if [[ $varDeclaration == '-'* ]]
-    then
-        varDeclaration="${commandWithArgs[*]:2}"
-    fi
-    local varName="${varDeclaration%%=*}"
-
-    # var value is only important if making an object later on from it
-    local varValue="${varDeclaration#*=}"
-
-    # TODO: make this better, otherwise edge case bug:
-    if [[ "$varValue" == "$varName" ]]
-    then
-      # Log "equal $varName=$varValue"
-    	local varValue=""
-    fi
-
-    if [[ ! -z $__typeCreate_varType ]]
-    then
-
-      local __primitive_extension_fingerprint__boolean=${__primitive_extension_fingerprint__boolean:-2D6A822E36884C70843578D37E6773C4}
-      # Console::WriteStdErr "SETTING $__typeCreate_varName = \$$__typeCreate_paramNo"
-      # Console::WriteStdErr --
-      #Console::WriteStdErr $tempName
-
-    	DEBUG Log "creating: $__typeCreate_varName ($__typeCreate_varType) = $__typeCreate_varValue"
-
-    	if [[ -z "$__typeCreate_varValue" ]]
-      then
-        case "$__typeCreate_varType" in
-          'array'|'map') eval "$__typeCreate_varName=()" ;;
-          'string') eval "$__typeCreate_varName=''" ;;
-          'integer') eval "$__typeCreate_varName=0" ;;
-          'boolean') eval "$__typeCreate_varName=${__primitive_extension_fingerprint__boolean}:false" ;;
-          * )
-            # Log "constructing: $__typeCreate_varName ($__typeCreate_varType) = $(__constructor_recursion=0 Type::Construct $__typeCreate_varType)"
-
-            __constructor_recursion=0 Type::Construct "$__typeCreate_varType" "$__typeCreate_varName"
-
-            DEBUG Log "constructed: $(@get $__typeCreate_varName)"
-          ;;
-        esac
-      else
-        case "$__typeCreate_varType" in
-          'boolean')
-            if [[ "${__typeCreate_varValue}" != 'true' && "${__typeCreate_varValue}" != 'false' ]]
-            then
-              __typeCreate_varValue='false'
-            fi
-            eval "$__typeCreate_varName=\"${__primitive_extension_fingerprint__boolean}:${__typeCreate_varValue}\"" ;;
-            ## TODO: add case of setting value already with fingerprint
-          *) ;;
-        esac
-      fi
-
-      Type::CreateHandlerFunction "$__typeCreate_varName"
-
-      ## IMPORTANT: TRAP won't work inside a TRAP, so such a constructor couldn't
-
-      # case "$__typeCreate_varType" in
-      #   'array'|'map'|'string'|'integer') ;;
-      #   *)
-      #     if Function::Exists ${__typeCreate_varType}.constructor
-      #     then
-      #       # __typeCreate_runConstructor=${__typeCreate_varName}
-      #       # Log __typeCreate_runConstructor $__typeCreate_runConstructor
-      #       ${__typeCreate_varName} constructor
-      #     fi
-      #     # local return
-      #     # Object.New $__typeCreate_varType $__typeCreate_varName
-      #     # eval "$__typeCreate_varName=$return"
-      #   ;;
-      # esac
-
-    	# __oo__objects+=( $__typeCreate_varName )
-
-      unset __typeCreate_varType
-      unset __typeCreate_varValue
-    fi
-
-    if [[ "$command" != "declare" || "$__typeCreate_next" != "true" ]]
-    then
-        __typeCreate_normalCodeStarted+=1
-
-        # Console::WriteStdErr "NOPASS ${commandWithArgs[*]}"
-        # Console::WriteStdErr "normal code count ($__typeCreate_normalCodeStarted)"
-        # Console::WriteStdErr --
-    else
-        unset __typeCreate_next
-
-        __typeCreate_normalCodeStarted=0
-        __typeCreate_varName="$varName"
-        __typeCreate_varValue="$varValue"
-        __typeCreate_varType="$__capture_type"
-        __typeCreate_arrLength="$__capture_arrLength"
-
-        # Console::WriteStdErr "PASS ${commandWithArgs[*]}"
-        # Console::WriteStdErr --
-
-        __typeCreate_paramNo+=1
-    fi
+  if [[ "$command" == "trap" || "$command" == "l="* || "$command" == "_type="* ]]
+  then
     # set +x
+    return 0
+  fi
+
+  if [[ "${commandWithArgs[*]}" == "true" ]]
+  then
+    __typeCreate_next=true
+    # Console::WriteStdErr "Will assign next one"
+    # set +x
+    return 0
+  fi
+
+  local varDeclaration="${commandWithArgs[*]:1}"
+  if [[ $varDeclaration == '-'* ]]
+  then
+    varDeclaration="${commandWithArgs[*]:2}"
+  fi
+  local varName="${varDeclaration%%=*}"
+
+  # var value is only important if making an object later on from it
+  local varValue="${varDeclaration#*=}"
+
+  # TODO: make this better, otherwise edge case bug:
+  if [[ "$varValue" == "$varName" ]]
+  then
+    # Log "equal $varName=$varValue"
+    local varValue=""
+  fi
+
+  if [[ ! -z $__typeCreate_varType ]]
+  then
+
+    local __primitive_extension_fingerprint__boolean=${__primitive_extension_fingerprint__boolean:-2D6A822E36884C70843578D37E6773C4}
+    # Console::WriteStdErr "SETTING $__typeCreate_varName = \$$__typeCreate_paramNo"
+    # Console::WriteStdErr --
+    #Console::WriteStdErr $tempName
+
+    DEBUG Log "creating: $__typeCreate_varName ($__typeCreate_varType) = $__typeCreate_varValue"
+
+    if [[ -z "$__typeCreate_varValue" ]]
+    then
+      case "$__typeCreate_varType" in
+        'array'|'map') eval "$__typeCreate_varName=()" ;;
+        'string') eval "$__typeCreate_varName=''" ;;
+        'integer') eval "$__typeCreate_varName=0" ;;
+        'boolean') eval "$__typeCreate_varName=${__primitive_extension_fingerprint__boolean}:false" ;;
+        * )
+        # Log "constructing: $__typeCreate_varName ($__typeCreate_varType) = $(__constructor_recursion=0 Type::Construct $__typeCreate_varType)"
+
+          __constructor_recursion=0 Type::Construct "$__typeCreate_varType" "$__typeCreate_varName"
+
+          DEBUG Log "constructed: $(@get $__typeCreate_varName)"
+        ;;
+      esac
+    else
+      case "$__typeCreate_varType" in
+        'boolean')
+          if [[ "${__typeCreate_varValue}" != 'true' && "${__typeCreate_varValue}" != 'false' ]]
+          then
+            __typeCreate_varValue='false'
+          fi
+          eval "$__typeCreate_varName=\"${__primitive_extension_fingerprint__boolean}:${__typeCreate_varValue}\"" ;;
+      ## TODO: add case of setting value already with fingerprint
+        *) ;;
+      esac
+    fi
+
+    Type::CreateHandlerFunction "$__typeCreate_varName"
+
+    ## IMPORTANT: TRAP won't work inside a TRAP, so such a constructor couldn't
+
+    # case "$__typeCreate_varType" in
+    #   'array'|'map'|'string'|'integer') ;;
+    #   *)
+    #     if Function::Exists ${__typeCreate_varType}.constructor
+    #     then
+    #       # __typeCreate_runConstructor=${__typeCreate_varName}
+    #       # Log __typeCreate_runConstructor $__typeCreate_runConstructor
+    #       ${__typeCreate_varName} constructor
+    #     fi
+    #     # local return
+    #     # Object.New $__typeCreate_varType $__typeCreate_varName
+    #     # eval "$__typeCreate_varName=$return"
+    #   ;;
+    # esac
+
+    # __oo__objects+=( $__typeCreate_varName )
+
+    unset __typeCreate_varType
+    unset __typeCreate_varValue
+  fi
+
+  if [[ "$command" != "declare" || "$__typeCreate_next" != "true" ]]
+  then
+    __typeCreate_normalCodeStarted+=1
+
+  # Console::WriteStdErr "NOPASS ${commandWithArgs[*]}"
+  # Console::WriteStdErr "normal code count ($__typeCreate_normalCodeStarted)"
+  # Console::WriteStdErr --
+  else
+    unset __typeCreate_next
+
+    __typeCreate_normalCodeStarted=0
+    __typeCreate_varName="$varName"
+    __typeCreate_varValue="$varValue"
+    __typeCreate_varType="$__capture_type"
+    __typeCreate_arrLength="$__capture_arrLength"
+
+    # Console::WriteStdErr "PASS ${commandWithArgs[*]}"
+    # Console::WriteStdErr --
+
+    __typeCreate_paramNo+=1
+  fi
+  # set +x
 }
 
 Type::CaptureParams() {

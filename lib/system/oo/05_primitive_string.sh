@@ -1,16 +1,16 @@
 namespace oo/type
 ### STRING
 
-string.toUpper() {
-  @return:value "${this^^}"
-}
-
 string.=() {
   [string] value
 
   this="$value"
 
   @return
+}
+
+string.toUpper() {
+  @return:value "${this^^}"
 }
 
 string.toArray() {

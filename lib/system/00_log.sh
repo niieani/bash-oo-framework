@@ -4,97 +4,97 @@ declare -Ag __oo__logDisabledFilter
 declare -Ag __oo__loggers
 
 Log::NameScope() {
-    local scopeName="$1"
-    local script="${BASH_SOURCE[1]}"
-    __oo__logScopes["$script"]="$scopeName"
+  local scopeName="$1"
+  local script="${BASH_SOURCE[1]}"
+  __oo__logScopes["$script"]="$scopeName"
 }
 
 Log::AddOutput() {
-    local scopeName="$1"
-    local outputType="${2:-STDERR}"
-    __oo__logScopeOutputs["$scopeName"]+="$outputType;"
+  local scopeName="$1"
+  local outputType="${2:-STDERR}"
+  __oo__logScopeOutputs["$scopeName"]+="$outputType;"
 }
 
 Log::ResetOutputsAndFilters() {
-    local scopeName="$1"
-    unset __oo__logScopeOutputs["$scopeName"]
-    unset __oo__logDisabledFilter["$scopeName"]
+  local scopeName="$1"
+  unset __oo__logScopeOutputs["$scopeName"]
+  unset __oo__logDisabledFilter["$scopeName"]
 }
 
 Log::ResetAllOutputsAndFilters() {
-    unset __oo__logScopeOutputs
-    unset __oo__logDisabledFilter
-    declare -Ag __oo__logScopeOutputs
-    declare -Ag __oo__logDisabledFilter
+  unset __oo__logScopeOutputs
+  unset __oo__logDisabledFilter
+  declare -Ag __oo__logScopeOutputs
+  declare -Ag __oo__logDisabledFilter
 }
 
 Log::DisableFilter() {
-    __oo__logDisabledFilter["$1"]=true
+  __oo__logDisabledFilter["$1"]=true
 }
 
 Log() {
-    local callingFunction="${FUNCNAME[1]}"
-    local callingScript="${BASH_SOURCE[1]}"
-    local scope
-    if [[ ! -z "${__oo__logScopes["$callingScript"]}" ]]
+  local callingFunction="${FUNCNAME[1]}"
+  local callingScript="${BASH_SOURCE[1]}"
+  local scope
+  if [[ ! -z "${__oo__logScopes["$callingScript"]}" ]]
+  then
+    scope="${__oo__logScopes["$callingScript"]}"
+  else # just the filename without extension
+    scope="${callingScript##*/}"
+    scope="${scope%.*}"
+  fi
+  local loggerList
+  local loggers
+  local logger
+  local logged
+
+  if [[ ! -z "$subject" ]]
+  then
+    if [[ ! -z "${__oo__logScopeOutputs["$scope/$callingFunction/$subject"]}" ]]
     then
-        scope="${__oo__logScopes["$callingScript"]}"
-    else # just the filename without extension
-        scope="${callingScript##*/}"
-        scope="${scope%.*}"
-    fi
-    local loggerList
-    local loggers
-    local logger
-    local logged
-    
-    if [[ ! -z "$subject" ]]
+      loggerList="${__oo__logScopeOutputs["$scope/$callingFunction/$subject"]}"
+    elif [[ ! -z "${__oo__logScopeOutputs["$scope/$subject"]}" ]]
     then
-        if [[ ! -z "${__oo__logScopeOutputs["$scope/$callingFunction/$subject"]}" ]]
-        then
-            loggerList="${__oo__logScopeOutputs["$scope/$callingFunction/$subject"]}"
-        elif [[ ! -z "${__oo__logScopeOutputs["$scope/$subject"]}" ]]
-        then
-            loggerList="${__oo__logScopeOutputs["$scope/$subject"]}"
-        elif [[ ! -z "${__oo__logScopeOutputs["$subject"]}" ]]
-        then
-            loggerList="${__oo__logScopeOutputs["$subject"]}"
-        fi
-        
-        loggers=( ${loggerList//;/ } )
-        for logger in "${loggers[@]}"
-        do
-            subject="${subject:-LOG}" Log::Using "$logger" "$@"
-            logged=true
-        done
-    fi
-    
-    if [[ ! -z "${__oo__logScopeOutputs["$scope/$callingFunction"]}" ]]
+      loggerList="${__oo__logScopeOutputs["$scope/$subject"]}"
+    elif [[ ! -z "${__oo__logScopeOutputs["$subject"]}" ]]
     then
-        if [[ -z $logged ]] || [[ ${__oo__logDisabledFilter["$scope/$callingFunction"]} == true || ${__oo__logDisabledFilter["$scope"]} == true ]]
-        then
-            loggerList="${__oo__logScopeOutputs["$scope/$callingFunction"]}"
-            loggers=( ${loggerList//;/ } )
-            for logger in "${loggers[@]}"
-            do
-                subject="${subject:-LOG}" Log::Using "$logger" "$@"
-                logged=true
-            done
-        fi
+      loggerList="${__oo__logScopeOutputs["$subject"]}"
     fi
-    
-    if [[ ! -z "${__oo__logScopeOutputs["$scope"]}" ]]
+
+    loggers=( ${loggerList//;/ } )
+    for logger in "${loggers[@]}"
+    do
+      subject="${subject:-LOG}" Log::Using "$logger" "$@"
+      logged=true
+    done
+  fi
+
+  if [[ ! -z "${__oo__logScopeOutputs["$scope/$callingFunction"]}" ]]
+  then
+    if [[ -z $logged ]] || [[ ${__oo__logDisabledFilter["$scope/$callingFunction"]} == true || ${__oo__logDisabledFilter["$scope"]} == true ]]
     then
-        if [[ -z $logged ]] || [[ ${__oo__logDisabledFilter["$scope"]} == true ]]
-        then
-            loggerList="${__oo__logScopeOutputs["$scope"]}"
-            loggers=( ${loggerList//;/ } )
-            for logger in "${loggers[@]}"
-            do
-                subject="${subject:-LOG}" Log::Using "$logger" "$@"
-            done
-        fi
+      loggerList="${__oo__logScopeOutputs["$scope/$callingFunction"]}"
+      loggers=( ${loggerList//;/ } )
+      for logger in "${loggers[@]}"
+      do
+          subject="${subject:-LOG}" Log::Using "$logger" "$@"
+          logged=true
+      done
     fi
+  fi
+
+  if [[ ! -z "${__oo__logScopeOutputs["$scope"]}" ]]
+  then
+    if [[ -z $logged ]] || [[ ${__oo__logDisabledFilter["$scope"]} == true ]]
+    then
+      loggerList="${__oo__logScopeOutputs["$scope"]}"
+      loggers=( ${loggerList//;/ } )
+      for logger in "${loggers[@]}"
+      do
+        subject="${subject:-LOG}" Log::Using "$logger" "$@"
+      done
+    fi
+  fi
 }
 
 Log::RegisterLogger() {

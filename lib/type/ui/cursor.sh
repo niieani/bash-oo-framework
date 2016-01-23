@@ -9,18 +9,9 @@ class:UI.Cursor() {
     local x
     local y
     IFS=';' read -sdR -p $'\E[6n' y x
+
     this y = $(( ${y#*[} - 1 ))
     this x = $(( ${x} - 1 ))
-
-    # exec < /dev/tty
-    # local oldstty=$(stty -g)
-    # stty raw -echo min 0
-    # echo -en "\033[6n" > /dev/tty
-    # IFS=';' read -r -d R -a pos
-    # stty $oldstty
-
-    # this x = $((${pos[0]:2} - 2)) # TODO: needs to be - 2
-    # this y = $((${pos[1]} - 1))
 
     @return
   }

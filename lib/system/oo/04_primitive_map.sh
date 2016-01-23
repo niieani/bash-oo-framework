@@ -25,7 +25,7 @@ Type::Initialize map primitive
 
 
 ## TODO:
-#array::Assign() {
+#Array::Assign() {
 #  local source="$1"
 #  local target="$2"
 #
@@ -42,7 +42,7 @@ Type::Initialize map primitive
 #  unset index value tempMap
 #}
 #
-#map::Assign() {
+#Map::Assign() {
 #  ## TODO: test this
 #  eval "local -$(Variable::GetDeclarationFlagFromType '$__assign_varType') tempMap=\"\$$__assign_paramNo\""
 #  local index
