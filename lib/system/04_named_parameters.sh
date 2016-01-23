@@ -13,7 +13,7 @@ Variable::TrapAssignNumberedParameter() {
 
   #  Log "TRAP: ${commandWithArgs[@]}"
 
-    if [[ "$command" == "trap" || "$command" == "l="* || "$command" == "_type="* || "$command" == "_isRequired="* || "$command" == "_isReadOnly="* ]]
+    if [[ "$command" == "trap" || "$command" == "l="* || "$command" == "_type="* || "$command" == "_isRequired="* || "$command" == "_isReadOnly="*  || "$command" == "_noHandle="* ]]
     then
         return 0
     fi
@@ -156,7 +156,7 @@ Variable::TrapAssignNumberedParameter() {
         unset __assign_varType
         unset __assign_parameters
 
-        if [[ ! -z ${__oo__bootstrapped+x} ]] && declare -f 'Type::CreateHandlerFunction' &> /dev/null
+        if [[ "$__assign_noHandle" != 'true' && ! -z ${__oo__bootstrapped+x} ]] && declare -f 'Type::CreateHandlerFunction' &> /dev/null
         then
           DEBUG Log "Will create handle for $__assign_varName"
           Type::CreateHandlerFunction "$__assign_varName" # 2> /dev/null || true
@@ -180,6 +180,7 @@ Variable::TrapAssignNumberedParameter() {
         __assign_arrLength="$__capture_arrLength"
         __assign_valueRequired="$__capture_valueRequired"
         __assign_valueReadOnly="$__capture_valueReadOnly"
+        __assign_noHandle="$__capture_noHandle"
 
         DEBUG subject="parameters-pass" Log "PASS ${commandWithArgs[*]}"
         # subject="parameters-pass" Log --
@@ -196,10 +197,11 @@ Variable::InTrapCaptureParameters() {
     __capture_arrLength="$l"
     __capture_valueRequired="$_isRequired"
     __capture_valueReadOnly="$_isReadOnly"
+    __capture_noHandle="$_noHandle"
 }
 
 # NOTE: true; true; at the end is required to workaround an edge case where TRAP doesn't behave properly
-alias Variable::TrapAssign='Variable::InTrapCaptureParameters; local -i __assign_normalCodeStarted=0; trap "declare -i __assign_paramNo; Variable::TrapAssignNumberedParameter \"\$BASH_COMMAND\" \"\$@\"; [[ \$__assign_normalCodeStarted -ge 2 ]] && trap - DEBUG && unset __assign_varType __assign_varName __assign_varValue __assign_paramNo __assign_valueRequired __assign_valueReadOnly" DEBUG; true; true; '
+alias Variable::TrapAssign='Variable::InTrapCaptureParameters; local -i __assign_normalCodeStarted=0; trap "declare -i __assign_paramNo; Variable::TrapAssignNumberedParameter \"\$BASH_COMMAND\" \"\$@\"; [[ \$__assign_normalCodeStarted -ge 2 ]] && trap - DEBUG && unset __assign_varType __assign_varName __assign_varValue __assign_paramNo __assign_valueRequired __assign_valueReadOnly __assign_noHandle" DEBUG; true; true; '
 alias [reference]='_type=reference Variable::TrapAssign local -n'
 alias Variable::TrapAssignLocal='Variable::TrapAssign local ${__assign_parameters}'
 alias [string]="_type=string Variable::TrapAssignLocal"
@@ -221,7 +223,8 @@ alias [string[8]]='l=8 _type=params Variable::TrapAssignLocal'
 alias [string[9]]='l=9 _type=params Variable::TrapAssignLocal'
 alias [string[10]]='l=10 _type=params Variable::TrapAssignLocal'
 alias [...rest]='_type=rest Variable::TrapAssignLocal'
-alias @required='_isRequired=true '
+alias @required='_isRequired=true'
+alias @handleless='_noHandle=true'
 # TODO: alias @readonly='_isReadOnly=true '
 
 declare -g ref=$'\UEFF1A'$'\UEFF1A'
