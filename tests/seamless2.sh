@@ -97,7 +97,7 @@ Variable::PrintDeclaration() {
 shopt -s expand_aliases
 declare __declaration_type
 
-Console::WriteStrErr() {
+Console::WriteStdErr() {
     # http://stackoverflow.com/questions/2990414/echo-that-outputs-to-stderr
     cat <<< "$*" 1>&2
     return 0

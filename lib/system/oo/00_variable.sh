@@ -96,7 +96,6 @@ Variable::ExportDeclarationAndTypeToVariables() {
   if [[ "$definition" =~ $regexArray ]]
   then
     declaration="${BASH_REMATCH[2]//$escaped/}"
-    # declaration="${declaration//$doubleSlashes/$singleSlash}"
   elif [[ "$definition" =~ $regex ]]
   then
     declaration="${BASH_REMATCH[2]//$escaped/}" ## TODO: is this transformation needed?

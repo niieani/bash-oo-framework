@@ -32,7 +32,7 @@ Type.CreateVar() {
     if [[ "${commandWithArgs[*]}" == "true" ]]
     then
         __typeCreate_next=true
-        # Console::WriteStrErr "Will assign next one"
+        # Console::WriteStdErr "Will assign next one"
         return 0
     fi
 
@@ -54,9 +54,9 @@ Type.CreateVar() {
 
     if [[ ! -z $__typeCreate_varType ]]
     then
-      # Console::WriteStrErr "SETTING $__typeCreate_varName = \$$__typeCreate_paramNo"
-      # Console::WriteStrErr --
-      #Console::WriteStrErr $tempName
+      # Console::WriteStdErr "SETTING $__typeCreate_varName = \$$__typeCreate_paramNo"
+      # Console::WriteStdErr --
+      #Console::WriteStdErr $tempName
 
     	DEBUG Log "creating $__typeCreate_varName ($__typeCreate_varType) = $__typeCreate_varValue"
 
@@ -89,9 +89,9 @@ Type.CreateVar() {
     then
         __typeCreate_normalCodeStarted+=1
 
-        # Console::WriteStrErr "NOPASS ${commandWithArgs[*]}"
-        # Console::WriteStrErr "normal code count ($__typeCreate_normalCodeStarted)"
-        # Console::WriteStrErr --
+        # Console::WriteStdErr "NOPASS ${commandWithArgs[*]}"
+        # Console::WriteStdErr "normal code count ($__typeCreate_normalCodeStarted)"
+        # Console::WriteStdErr --
     else
         unset __typeCreate_next
 
@@ -101,16 +101,16 @@ Type.CreateVar() {
         __typeCreate_varType="$__capture_type"
         __typeCreate_arrLength="$__capture_arrLength"
 
-        # Console::WriteStrErr "PASS ${commandWithArgs[*]}"
-        # Console::WriteStrErr --
+        # Console::WriteStdErr "PASS ${commandWithArgs[*]}"
+        # Console::WriteStdErr --
 
         __typeCreate_paramNo+=1
     fi
 }
 
 Type::CaptureParams() {
-    # Console::WriteStrErr "Capturing Type $_type"
-    # Console::WriteStrErr --
+    # Console::WriteStdErr "Capturing Type $_type"
+    # Console::WriteStdErr --
 
     __capture_type="$_type"
 }

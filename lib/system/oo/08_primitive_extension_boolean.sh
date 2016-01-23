@@ -1,3 +1,4 @@
+namespace oo/type
 ### BOOLEAN
 
 boolean.__getter__() {

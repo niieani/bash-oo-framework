@@ -4,6 +4,7 @@ __primitive_extension_declaration=2D6A822E
 __primitive_extension_fingerprint__boolean=${__primitive_extension_declaration}36884C70843578D37E6773C4
 __return_separator=52A586A48E074BB6812DCFDC790841F5
 __oo_type_handler_functions=()
+__oo__variableMethodPrefix= # "$var:"
 
 # /**
 #   * Code like: Variable::ExportDeclarationAndTypeToVariables
@@ -107,15 +108,17 @@ Type::CreateHandlerFunction() {
   ## don't allow creating a handler if a command/function/alias of such name already exists
   ## unless it is a handler already (keeps track)
   
-  if ! Command::Exists "$variableName"
+  if ! Command::Exists "${__oo__variableMethodPrefix}${variableName}"
   then
     DEBUG Log "creating handler for $variableName"
     ## declare method with the name of the var ##
-    eval "$variableName() { Type::Handle $variableName \"\$@\"; }"
-    __oo_type_handler_functions+=( "$variableName" )
+    eval "${__oo__variableMethodPrefix}${variableName}() { Type::Handle $variableName \"\$@\"; }"
+    __oo_type_handler_functions+=( "${__oo__variableMethodPrefix}${variableName}" )
 
-  elif ! Array::Contains "$variableName" "${__oo_type_handler_functions[@]}"
+  elif ! Array::Contains "${__oo__variableMethodPrefix}${variableName}" "${__oo_type_handler_functions[@]}"
   then
+    ## TODO: a way to solve this is to store the original functions
+    ## and temporairly override it, returning back to the old formula in @return
     subject=WARN Log "Unable to create a handle for '$variableName'. A command of the same name already exists."
   fi
 
@@ -194,7 +197,7 @@ Type::TrapAndCreate() {
     if [[ "${commandWithArgs[*]}" == "true" ]]
     then
         __typeCreate_next=true
-        # Console::WriteStrErr "Will assign next one"
+        # Console::WriteStdErr "Will assign next one"
         # set +x
         return 0
     fi
@@ -220,9 +223,9 @@ Type::TrapAndCreate() {
     then
 
       local __primitive_extension_fingerprint__boolean=${__primitive_extension_fingerprint__boolean:-2D6A822E36884C70843578D37E6773C4}
-      # Console::WriteStrErr "SETTING $__typeCreate_varName = \$$__typeCreate_paramNo"
-      # Console::WriteStrErr --
-      #Console::WriteStrErr $tempName
+      # Console::WriteStdErr "SETTING $__typeCreate_varName = \$$__typeCreate_paramNo"
+      # Console::WriteStdErr --
+      #Console::WriteStdErr $tempName
 
     	DEBUG Log "creating: $__typeCreate_varName ($__typeCreate_varType) = $__typeCreate_varValue"
 
@@ -283,9 +286,9 @@ Type::TrapAndCreate() {
     then
         __typeCreate_normalCodeStarted+=1
 
-        # Console::WriteStrErr "NOPASS ${commandWithArgs[*]}"
-        # Console::WriteStrErr "normal code count ($__typeCreate_normalCodeStarted)"
-        # Console::WriteStrErr --
+        # Console::WriteStdErr "NOPASS ${commandWithArgs[*]}"
+        # Console::WriteStdErr "normal code count ($__typeCreate_normalCodeStarted)"
+        # Console::WriteStdErr --
     else
         unset __typeCreate_next
 
@@ -295,8 +298,8 @@ Type::TrapAndCreate() {
         __typeCreate_varType="$__capture_type"
         __typeCreate_arrLength="$__capture_arrLength"
 
-        # Console::WriteStrErr "PASS ${commandWithArgs[*]}"
-        # Console::WriteStrErr --
+        # Console::WriteStdErr "PASS ${commandWithArgs[*]}"
+        # Console::WriteStdErr --
 
         __typeCreate_paramNo+=1
     fi
@@ -304,8 +307,8 @@ Type::TrapAndCreate() {
 }
 
 Type::CaptureParams() {
-    # Console::WriteStrErr "Capturing Type $_type"
-    # Console::WriteStrErr --
+    # Console::WriteStdErr "Capturing Type $_type"
+    # Console::WriteStdErr --
 
     __capture_type="$_type"
 }
@@ -332,10 +335,14 @@ this() {
   __access_private=true Type::Handle this "$@"
 }
 
+@() {
+  Type::Handle $1 "${@:2}";
+}
+
 @return() {
   local variableName="$1"
   local thisName="${2:-this}"
-
+ 
   local __return_declaration
   local __return_declaration_type
 
@@ -360,6 +367,8 @@ this() {
   then
     echo "$__return_declaration"
   fi
+  
+  Type::RunFunctionGarbageCollector
 }
 
 @return:value() {

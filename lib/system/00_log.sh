@@ -112,42 +112,42 @@ Log::Using() {
     fi
 }
 
-Console::WriteStrErr() {
+Console::WriteStdErr() {
     # http://stackoverflow.com/questions/2990414/echo-that-outputs-to-stderr
     cat <<< "$*" 1>&2
     return 0
 }
 
-Console::WriteStrErrAnnotated() {
+Console::WriteStdErrAnnotated() {
     local script="$1"
     local lineNo=$2
     local color=$3
     local type=$4
     shift; shift; shift; shift
 
-    Console::WriteStrErr "$color[$type] $(UI.Color.Blue)[${script}:${lineNo}]$(UI.Color.Default) $* "
+    Console::WriteStdErr "$color[$type] $(UI.Color.Blue)[${script}:${lineNo}]$(UI.Color.Default) $* "
 }
 
 Logger::DEBUG() {
-    Console::WriteStrErrAnnotated "${BASH_SOURCE[3]##*/}" ${BASH_LINENO[2]} $(UI.Color.Yellow) DEBUG "$@"
+    Console::WriteStdErrAnnotated "${BASH_SOURCE[3]##*/}" ${BASH_LINENO[2]} $(UI.Color.Yellow) DEBUG "$@"
 }
 Logger::ERROR() {
-    Console::WriteStrErrAnnotated "${BASH_SOURCE[3]##*/}" ${BASH_LINENO[2]} $(UI.Color.Red) ERROR "$@"
+    Console::WriteStdErrAnnotated "${BASH_SOURCE[3]##*/}" ${BASH_LINENO[2]} $(UI.Color.Red) ERROR "$@"
 }
 Logger::INFO() {
-    Console::WriteStrErrAnnotated "${BASH_SOURCE[3]##*/}" ${BASH_LINENO[2]} $(UI.Color.Blue) INFO "$@"
+    Console::WriteStdErrAnnotated "${BASH_SOURCE[3]##*/}" ${BASH_LINENO[2]} $(UI.Color.Blue) INFO "$@"
 }
 Logger::WARN() {
-    Console::WriteStrErrAnnotated "${BASH_SOURCE[3]##*/}" ${BASH_LINENO[2]} $(UI.Color.Yellow) WARN "$@"
+    Console::WriteStdErrAnnotated "${BASH_SOURCE[3]##*/}" ${BASH_LINENO[2]} $(UI.Color.Yellow) WARN "$@"
 }
 Logger::CUSTOM() {
-    Console::WriteStrErr "$(UI.Color.Yellow)[${subject^^}] $(UI.Color.Default)$* "
+    Console::WriteStdErr "$(UI.Color.Yellow)[${subject^^}] $(UI.Color.Default)$* "
 }
 Logger::DETAILED() {
-    Console::WriteStrErrAnnotated "${BASH_SOURCE[3]##*/}" ${BASH_LINENO[2]} $(UI.Color.Yellow) "${subject^^}" "$@"
+    Console::WriteStdErrAnnotated "${BASH_SOURCE[3]##*/}" ${BASH_LINENO[2]} $(UI.Color.Yellow) "${subject^^}" "$@"
 }
 
-Log::RegisterLogger STDERR Console::WriteStrErr
+Log::RegisterLogger STDERR Console::WriteStdErr
 Log::RegisterLogger DEBUG Logger::DEBUG
 Log::RegisterLogger ERROR Logger::ERROR
 Log::RegisterLogger INFO Logger::INFO

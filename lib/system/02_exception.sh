@@ -72,8 +72,8 @@ command_not_found_handle() {
     
     Exception::FillExceptionWithTraceElements
 
-    Console::WriteStrErr
-    Console::WriteStrErr " $(UI.Color.Red)$(UI.Powerline.Fail) $(UI.Color.Bold)UNCAUGHT EXCEPTION: $(UI.Color.LightRed)${type}$(UI.Color.Default)"
+    Console::WriteStdErr
+    Console::WriteStdErr " $(UI.Color.Red)$(UI.Powerline.Fail) $(UI.Color.Bold)UNCAUGHT EXCEPTION: $(UI.Color.LightRed)${type}$(UI.Color.Default)"
     Exception::PrintException "${exception[@]}"
 
     Exception::ContinueOrBreak
@@ -109,7 +109,7 @@ Exception::PrintException() {
     
     while [[ $index -lt $backtraceNo ]]
     do
-        Console::WriteStrErr "$(Exception::FormatExceptionSegment "${backtraceFile[$index]}" "${backtraceLine[$index]}" "${backtraceCommand[($index - 1)]}" $(( $index + $backtraceIndentationLevel )) )"
+        Console::WriteStdErr "$(Exception::FormatExceptionSegment "${backtraceFile[$index]}" "${backtraceLine[$index]}" "${backtraceCommand[($index - 1)]}" $(( $index + $backtraceIndentationLevel )) )"
         index+=1
     done
 }
@@ -213,13 +213,13 @@ Exception::ContinueOrBreak() (
     # if in a terminal
     if [ -t 0 ]
     then
-        Console::WriteStrErr
-        Console::WriteStrErr " $(UI.Color.Yellow)$(UI.Powerline.Lightning)$(UI.Color.White) Press $(UI.Color.Bold)[CTRL+C]$(UI.Color.White) to exit or $(UI.Color.Bold)[Return]$(UI.Color.White) to continue execution."
+        Console::WriteStdErr
+        Console::WriteStdErr " $(UI.Color.Yellow)$(UI.Powerline.Lightning)$(UI.Color.White) Press $(UI.Color.Bold)[CTRL+C]$(UI.Color.White) to exit or $(UI.Color.Bold)[Return]$(UI.Color.White) to continue execution."
         read -s
-        Console::WriteStrErr " $(UI.Color.Blue)$(UI.Powerline.Cog)$(UI.Color.White) Continuing...$(UI.Color.Default)"
+        Console::WriteStdErr " $(UI.Color.Blue)$(UI.Powerline.Cog)$(UI.Color.White) Continuing...$(UI.Color.Default)"
         return 0
     else
-        Console::WriteStrErr
+        Console::WriteStdErr
         exit 1
     fi
 )

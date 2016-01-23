@@ -174,7 +174,7 @@ subject=error Log "Something bad happened."
 Log::ResetAllOutputsAndFilters
 
 # You may also hardcode the use for the StdErr output directly:
-Console::WriteStrErr "This will be printed to STDERR, no matter what."
+Console::WriteStdErr "This will be printed to STDERR, no matter what."
 ```
 
 Both the colors and the powerline characters fallback gracefully on systems that don't support them.
@@ -471,7 +471,7 @@ class:Human() {
         $this.Name = "$name"
         $this.Height = "$height"
         
-        Console::WriteStrErr "Hello, I am the constructor! You have passed these arguments [ $@ ]"
+        Console::WriteStdErr "Hello, I am the constructor! You have passed these arguments [ $@ ]"
     }
         
     static Human.PlaySomeJazz() {

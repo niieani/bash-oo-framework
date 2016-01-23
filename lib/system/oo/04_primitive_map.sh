@@ -1,3 +1,5 @@
+namespace oo/type
+
 ### MAP
 ## TODO: use vars, not $1-9 so $ref: references are resolved
 
