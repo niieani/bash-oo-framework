@@ -18,26 +18,30 @@ Variable::GetDeclarationFlagFromType() {
   local typeInfo="$1"
   local fallback="$2"
 
-  if [[ "$typeInfo" == "reference" ]]
-  then
-    echo n
-  elif [[ "$typeInfo" == "map" ]] || Function::Exists class:${typeInfo}
+  if [[ "$typeInfo" == "map" ]] || Function::Exists class:${typeInfo}
   then
     echo A
-  elif [[ "$typeInfo" == "array" ]]
-  then
-    echo a
-  elif [[ "$typeInfo" == "string" || "$typeInfo" == "boolean" ]]
-  then
-    echo -
-  elif [[ "$typeInfo" == "integer" ]]
-  then
-    echo i
-  elif [[ "$typeInfo" == "integerArray" ]]
-  then
-    echo ai
   else
-    echo ${fallback:-A}
+    case "$typeInfo" in
+      "reference")
+        echo n
+      ;;
+      "array")
+        echo a
+      ;;
+      "string" | "boolean")
+        echo -
+      ;;
+      "integer")
+        echo i
+      ;;
+      "integerArray")
+        echo ai
+      ;;
+      *)
+        echo "${fallback:-A}"
+      ;;
+    esac
   fi
 }
 
