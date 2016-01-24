@@ -144,7 +144,7 @@ You can also load all the files inside of a directory by simply including the pa
 Using `try & catch`
 =======================
 
-```
+```bash
 import util/tryCatch
 import util/exception # needed only for Exception::PrintException
 ```
@@ -424,18 +424,6 @@ class:Human() {
     echo "I'm a human called $(this name), $(this height) cm tall."
   }
 
-  Human.Eat() {
-    [string] food
-
-    this eaten push "$food"
-
-    echo "$this just ate $food, which is the same as $1"
-  }
-
-  Human.WhatDidHeEat() {
-    this eaten toString
-  }
-
   Human.Example() {
     [array]     someArray
     [integer]   someNumber
@@ -443,6 +431,22 @@ class:Human() {
 
     echo "Testing $(var: someArray toString) and $someNumber"
     echo "Stuff: ${arrayOfOtherParams[*]}"
+
+    # returning the first passed in array
+    @return someArray
+  }
+
+  Human.Eat() {
+    [string] food
+
+    this eaten push "$food"
+
+    # will return a string with the value:
+    @return:value "$this just ate $food, which is the same as $1"
+  }
+
+  Human.WhatDidHeEat() {
+    this eaten toString
   }
 
   # this is a static method, hence the :: in definition
@@ -451,6 +455,7 @@ class:Human() {
   }
 }
 
+# required to initialize the class
 Type::Initialize Human
 
 class:SingletonExample() {
@@ -461,6 +466,7 @@ class:SingletonExample() {
   }
 }
 
+# required to initialize the static class
 Type::InitializeStatic SingletonExample
 ```
 
@@ -468,12 +474,19 @@ Now you can use both the `Human` and the `SingletonExample` classes:
 
 ```bash
 # create an object called 'Mark' of type Human
-
 Human Mark
+
+# call the string.= (setter) method
 Mark name = 'Mark'
+
+# call the integer.= (setter) method
 Mark height = 180
+
+# adds 'corn' to the Mark.eaten array and echoes the output
 Mark Eat 'corn'
-Mark Eat 'blueberries'
+
+# adds 'blueberries' to the Mark.eaten array and echoes the uppercased output
+Mark : { Eat 'blueberries' } { toUpper }
 
 # invoke the getter
 Mark
@@ -498,7 +511,7 @@ Test cases consist of standard shell commands. Like Bats, Infinity Framework use
 
 If you need to do more advanced testing, or need to be able to run your tests on shells other than bash 4, I'd still recommend Bats.
 
-Example usage (taken from tests/run-tests.sh):
+Example usage:
 
 ```bash
 it 'should make a number and change its value'
@@ -713,7 +726,7 @@ Acknowledgments
 
 If a function's been adapted or copied from the web or any other libraries out there, I always mention it in a comment within the code.
 
-Additionally, I took some inspiration from other object-oriented bash libraries:
+Additionally, in the making of the first version of Bash Infinity I took some inspiration from object-oriented bash libraries:
 
 * https://github.com/tomas/skull/
 * https://github.com/domachine/oobash/
@@ -725,6 +738,7 @@ Additionally, I took some inspiration from other object-oriented bash libraries:
 
 More bash goodness:
 
+* http://wiki.bash-hackers.org
 * http://kvz.io/blog/2013/11/21/bash-best-practices/
 * http://www.davidpashley.com/articles/writing-robust-shell-scripts/
 * http://qntm.org/bash
