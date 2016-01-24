@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 ## BOOTSTRAP ##
-# source "$( cd "${BASH_SOURCE[0]%/*}/.." && pwd )/lib/oo-framework.sh"
+# source "$( cd "${BASH_SOURCE[0]%/*}/.." && pwd )/lib/oo-bootstrap.sh"
 # import lib/system/oo
 declare -g __oo__libPath="$( cd "${BASH_SOURCE[0]%/*}/../lib" && pwd )"
 
@@ -40,7 +40,7 @@ concat() {
 	# printf %s "#!/usr/bin/env bash${body}" > "$outputPath"
 }
 
-concat "out-$(git rev-parse --short HEAD).sh" "$__oo__libPath"/oo-framework.sh "$__oo__libPath"/system/*.sh "$__oo__libPath"/system/oo/*.sh
+concat "out-$(git rev-parse --short HEAD).sh" "$__oo__libPath"/oo-bootstrap.sh "$__oo__libPath"/system/*.sh "$__oo__libPath"/system/oo/*.sh
 
 
 # evalIntoMain
@@ -66,7 +66,7 @@ concat "out-$(git rev-parse --short HEAD).sh" "$__oo__libPath"/oo-framework.sh "
 # 	echo "#!/usr/bin/env bash" > "$outputFile"
 # 	echo "# oo-framework version: $(git rev-parse --short HEAD)" >> "$outputFile"
 #
-# 	minify "$__oo__libPath"/oo-framework.sh "$outputFile"
+# 	minify "$__oo__libPath"/oo-bootstrap.sh "$outputFile"
 #
 # 	local file
 # 	local path
@@ -78,4 +78,4 @@ concat "out-$(git rev-parse --short HEAD).sh" "$__oo__libPath"/oo-framework.sh "
 # 	done
 # }
 
-# build ./oo-framework.sh
+# build ./oo-bootstrap.sh

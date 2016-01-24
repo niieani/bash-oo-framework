@@ -1,4 +1,4 @@
-namespace oo/pipe
+# no dependencies
 
 Pipe::Capture() {
   read -r -d '' $1 || true
@@ -7,5 +7,3 @@ Pipe::Capture() {
 Pipe::CaptureFaithful() {
   IFS= read -r -d '' $1 || true
 }
-
-alias [pipe]="Pipe::Capture"

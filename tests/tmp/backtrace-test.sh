@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-source "$( cd "${BASH_SOURCE[0]%/*}" && pwd )/../lib/oo-framework.sh"
+source "$( cd "${BASH_SOURCE[0]%/*}" && pwd )/../lib/oo-bootstrap.sh"
 
 #trap "previous_command=\$this_command; this_command=\$BASH_COMMAND" DEBUG
 #trap "throw \$previous_command" ERR

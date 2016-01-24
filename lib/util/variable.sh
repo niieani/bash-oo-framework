@@ -1,6 +1,5 @@
-namespace oo/type
-
 import util/command
+namespace util/variable
 
 declare __declaration_type ## for Variable::ExportDeclarationAndTypeToVariables (?)
 

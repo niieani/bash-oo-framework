@@ -1,5 +1,3 @@
-namespace oo
-
 # no dependencies
 declare -ig __oo__insideTryCatch=0
 declare -g __oo__presetShellOpts="$-"

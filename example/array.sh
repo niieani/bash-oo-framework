@@ -1,10 +1,9 @@
 #!/usr/bin/env bash
 
-source "$( cd "${BASH_SOURCE[0]%/*}" && pwd )/../lib/oo-framework.sh"
+source "$( cd "${BASH_SOURCE[0]%/*}" && pwd )/../lib/oo-bootstrap.sh"
 
 import lib/system/oo
-
-Log::AddOutput oo/type CUSTOM
+Log::AddOutput util/type CUSTOM
 
 manipulatingArrays() {
   array exampleArrayA
@@ -12,6 +11,11 @@ manipulatingArrays() {
 
   $var:exampleArrayA push 'one'
   $var:exampleArrayA push 'two'
+  
+  # above is equivalent to calling:
+  #   var: exampleArrayA push 'two'
+  # or using native bash
+  #   exampleArrayA+=( 'two' )
 
   $var:exampleArrayA toString
   $var:exampleArrayA toJSON
@@ -23,7 +27,7 @@ passingArrays() {
     [array] passedInArray
 
     $var:passedInArray : \
-      { map 'echo "${index} - $($var:item)"' } \
+      { map 'echo "${index} - $(var: item)"' } \
       { forEach 'var: item toUpper' }
 
     $var:passedInArray push 'will work only for references'
@@ -52,4 +56,4 @@ passingArrays() {
 
 ## RUN IT:
 manipulatingArrays
-#passingArrays
+passingArrays

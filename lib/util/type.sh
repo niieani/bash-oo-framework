@@ -1,4 +1,4 @@
-namespace oo/type
+namespace util/type
 
 import util/bash4
 import Array/Contains String/SanitizeForVariable

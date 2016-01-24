@@ -1,4 +1,5 @@
 namespace oo/type
+import util/variable
 
 # depends on modules: variable, exception
 

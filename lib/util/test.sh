@@ -1,4 +1,4 @@
-import util/classes util/tryCatch
+import util/class util/tryCatch
 
 class:Test() {
   private UI.Cursor onStartCursor

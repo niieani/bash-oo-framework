@@ -1,10 +1,9 @@
 #!/usr/bin/env bash
 
-source "$( cd "${BASH_SOURCE[0]%/*}" && pwd )/../lib/oo-framework.sh"
+source "$( cd "${BASH_SOURCE[0]%/*}" && pwd )/../lib/oo-bootstrap.sh"
 
-import lib/system/oo
-
-Log::AddOutput oo/type CUSTOM
+import util/type
+Log::AddOutput util/type CUSTOM
 
 regex() {
   # create a string someString

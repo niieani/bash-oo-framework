@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 ## BOOTSTRAP ##
-NO_UNICODE=true source "$( cd "${BASH_SOURCE[0]%/*}" && pwd )/../lib/oo-framework.sh"
+NO_UNICODE=true source "$( cd "${BASH_SOURCE[0]%/*}" && pwd )/../lib/oo-bootstrap.sh"
 
 ## MAIN ##
 

@@ -1,5 +1,4 @@
-namespace oo
-
+namespace util/exception
 import String/GetSpaces String/SlashReplacement UI/Color UI/Console
 
 #########################

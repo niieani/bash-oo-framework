@@ -1,5 +1,4 @@
-namespace oo/type
-
+namespace util/type
 import util/type String/SanitizeForVariable
 # ------------------------ #
 
