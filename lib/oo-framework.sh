@@ -5,10 +5,10 @@
 System::Bootstrap() {
   local file
   local path
-  for file in "$__oo__libPath"/system/*.sh
+  for file in "$__oo__libPath"/util/import.sh
   do
     path="$(File::GetAbsolutePath "$file")"
-    __oo__importedFiles+=( "$path" )
+    # __oo__importedFiles+=( "$path" )
 
     ## note: aliases are visible inside functions only if
     ## they were initialized AFTER they were created
@@ -24,6 +24,7 @@ System::Bootstrap() {
 File::GetAbsolutePath() {
   # http://stackoverflow.com/questions/3915040/bash-fish-command-to-print-absolute-path-to-a-file
   # $1 : relative filename
+  local file="$1"
   if [[ "$file" == "/"* ]]
   then
     echo "$file"
@@ -54,13 +55,10 @@ else
   alias DEBUG=":; #"
 fi
 
+## stubs in case either exception or log is not loaded
+namespace() { :; }
+throw() { eval 'echo "Exception: $e ($*)"; read -s;'; }
+
 System::Bootstrap
 
 declare -g __oo__bootstrapped=true
-
-#########################
-### HANDLE EXCEPTIONS ###
-#########################
-
-trap "__EXCEPTION_TYPE__=\"\$_\" command_not_found_handle \$BASH_COMMAND" ERR
-set -o errtrace  # trace ERR through 'time command' and other functions

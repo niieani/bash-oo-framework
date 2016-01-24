@@ -1,3 +1,5 @@
+import util/namedParameters util/type
+
 namespace oo/type
 ## Awaiting pull requests for this one!
 
@@ -9,4 +11,4 @@ integer.=() {
   @return
 }
 
-Type::Initialize integer primitive
+Type::InitializePrimitive integer

@@ -1,5 +1,6 @@
 namespace oo/type
 
+import util/type String/SanitizeForVariable
 # ------------------------ #
 
 Type::DefineProperty() {
@@ -63,18 +64,6 @@ Type::InitializeStatic() {
   local name="$1"
 
   Type::Initialize "$name" static
-}
-
-Type::ConvertAllOfTypeToMethodsIfNeeded() {
-  local type="$1"
-
-  local -a methods=( $(Function::GetAllStartingWith "${type}.") )
-  local method
-
-  for method in "${methods[@]}"
-  do
-    Type::InjectThisResolutionIfNeeded "$method"
-  done
 }
 
 Type::Construct() {

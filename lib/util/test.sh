@@ -1,3 +1,5 @@
+import util/classes util/tryCatch
+
 class:Test() {
   private UI.Cursor onStartCursor
   private string errors

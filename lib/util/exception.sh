@@ -1,5 +1,16 @@
 namespace oo
 
+import String/GetSpaces String/SlashReplacement UI/Color UI/Console
+
+#########################
+### HANDLE EXCEPTIONS ###
+#########################
+
+trap "__EXCEPTION_TYPE__=\"\$_\" command_not_found_handle \$BASH_COMMAND" ERR
+set -o errtrace  # trace ERR through 'time command' and other functions
+
+# unalias throw 2> /dev/null || true
+unset -f throw 2> /dev/null || true
 alias throw="__EXCEPTION_TYPE__=\${e:-Manually invoked} command_not_found_handle"
 
 Exception::CustomCommandHandler() {
@@ -188,7 +199,7 @@ Exception::FormatExceptionSegment() {
   # Cut out the path, leave the script name
   script="${script##*/}"
 
-  local prefix="   $(UI.Powerline.Branch)$(String::GenerateSpaces $(($callPosition * 3 - 3)) || true) "
+  local prefix="   $(UI.Powerline.Branch)$(String::GetSpaces $(($callPosition * 3 - 3)) || true) "
 
   if [[ $linesTried -ge 5 ]]
   then

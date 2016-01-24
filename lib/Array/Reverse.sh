@@ -1,10 +1,12 @@
+import util/namedParameters
+
 ## TODO: consider making Parameters::Methods
 ## since this actually modifies parameters, not arrays
 
 ## static methods should be Array::Method, with capital letter
 
 # static version
-array::Reverse() {
+Array::Reverse() {
   [...rest] this
 
   local -i length=${#this[@]}  #$(this length)

@@ -1,3 +1,6 @@
+import util/bash4
+import UI/Color UI/Console
+
 declare -Ag __oo__logScopes
 declare -Ag __oo__logScopeOutputs
 declare -Ag __oo__logDisabledFilter
@@ -98,34 +101,18 @@ Log() {
 }
 
 Log::RegisterLogger() {
-    local logger="$1"
-    local method="$2"
-    __oo__loggers["$logger"]="$method"
+  local logger="$1"
+  local method="$2"
+  __oo__loggers["$logger"]="$method"
 }
 
 Log::Using() {
-    local logger="$1"
-    shift
-    if [[ ! -z ${__oo__loggers["$logger"]} ]]
-    then
-        ${__oo__loggers["$logger"]} "$@"
-    fi
-}
-
-Console::WriteStdErr() {
-    # http://stackoverflow.com/questions/2990414/echo-that-outputs-to-stderr
-    cat <<< "$*" 1>&2
-    return 0
-}
-
-Console::WriteStdErrAnnotated() {
-    local script="$1"
-    local lineNo=$2
-    local color=$3
-    local type=$4
-    shift; shift; shift; shift
-
-    Console::WriteStdErr "$color[$type] $(UI.Color.Blue)[${script}:${lineNo}]$(UI.Color.Default) $* "
+  local logger="$1"
+  shift
+  if [[ ! -z ${__oo__loggers["$logger"]} ]]
+  then
+      ${__oo__loggers["$logger"]} "$@"
+  fi
 }
 
 Logger::DEBUG() {

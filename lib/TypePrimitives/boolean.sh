@@ -1,3 +1,5 @@
+import util/namedParameters util/type
+
 namespace oo/type
 ### BOOLEAN
 
@@ -27,5 +29,5 @@ boolean.=() {
   @return
 }
 
-Type::Initialize boolean primitive
+Type::InitializePrimitive boolean
 ### /BOOLEAN

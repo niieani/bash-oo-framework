@@ -1,7 +1,11 @@
 namespace oo/type
 
-# TODO: required parameters
+# depends on modules: variable, exception
 
+declare -g ref=D10F7FB728364261BB50A7E818D537C4
+declare -g var=A04FB7D7594E479B8CD8D90C5014E37A
+
+# TODO: required parameters
 Variable::TrapAssignNumberedParameter() {
   # USE DEFAULT IFS IN CASE IT WAS CHANGED
   local IFS=$' \t\n'
@@ -10,7 +14,6 @@ Variable::TrapAssignNumberedParameter() {
   local command="${commandWithArgs[0]}"
 
   shift
-
   #  Log "TRAP: ${commandWithArgs[@]}"
 
   if [[ "$command" == "trap" || "$command" == "l="* || "$command" == "_type="* || "$command" == "_isRequired="* || "$command" == "_isReadOnly="*  || "$command" == "_noHandle="* ]]
@@ -226,9 +229,3 @@ alias [...rest]='_type=rest Variable::TrapAssignLocal'
 alias @required='_isRequired=true'
 alias @handleless='_noHandle=true'
 # TODO: alias @readonly='_isReadOnly=true '
-
-#declare -g ref=$'\UEFF1A'$'\UEFF1A'
-#declare -g var=$'\UEFF2A'$'\UEFF2A'
-
-declare -g ref=D10F7FB728364261BB50A7E818D537C4
-declare -g var=A04FB7D7594E479B8CD8D90C5014E37A

@@ -1,3 +1,5 @@
+import util/classes
+
 class:UI.Cursor() {
   # http://askubuntu.com/questions/366103/saving-more-corsor-positions-with-tput-in-bash-terminal
 	# http://unix.stackexchange.com/questions/88296/get-vertical-cursor-position

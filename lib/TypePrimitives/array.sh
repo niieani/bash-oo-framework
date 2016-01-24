@@ -1,3 +1,5 @@
+import util/namedParameters util/type array
+
 namespace oo/type
 ### ARRAY
 
@@ -185,55 +187,6 @@ array.every() {
   @return returnArray
 }
 
-Type::Initialize array primitive
-### STATIC METHODS
+Type::InitializePrimitive array
 
-## generates a list separated by new lines
-Array::List() {
-  @required [string] variableName
-  [string] separator=$'\n'
-
-  local indirectAccess="${variableName}[*]"
-  (
-    local IFS="$separator"
-    echo "${!indirectAccess}"
-  )
-}
-
-Array::Intersect() {
-  @required [array] arrayA
-  @required [array] arrayB
-
-  array intersection
-
-  # http://stackoverflow.com/questions/2312762/compare-difference-of-two-arrays-in-bash
-  for i in "${arrayA[@]}"
-  do
-    local skip=
-    for j in "${arrayB[@]}"
-    do
-      [[ "$i" == "$j" ]] && { skip=1; break; }
-    done
-    [[ -n $skip ]] || intersection+=("$i")
-  done
-
-  @get intersection
-}
-
-Array::Reverse() {
-  [...rest] this
-
-  local -i length=${#this[@]}  #$(this length)
-  local -a outArray
-  local -i indexFromEnd
-  local -i index
-
-  for index in "${!this[@]}"
-  do
-    indexFromEnd=$(( $length - 1 - $index ))
-    outArray+=( "${this[$indexFromEnd]}" )
-  done
-
-  @get outArray
-}
 ### /ARRAY

@@ -1,5 +1,7 @@
 namespace oo
 
+# depends on: bootstrap, Array/Contains
+
 System::LoadFile(){
   local libPath="$1"
   #    [string] libPath
@@ -7,7 +9,8 @@ System::LoadFile(){
   if [ -f "$libPath" ]
   then
     ## if already imported let's return
-    if Array::Contains "$file" "${__oo__importedFiles[@]}"
+    # if declare -f "Array::Contains" &> /dev/null &&
+    if [[ ! -z "${__oo__importedFiles[*]}" ]] && Array::Contains "$file" "${__oo__importedFiles[@]}"
     then
       DEBUG subject=level3 Log "File previously imported: ${libPath}"
       return 0
@@ -17,6 +20,7 @@ System::LoadFile(){
 
     __oo__importedFiles+=( "$libPath" )
 
+    # eval "$(<"$libPath")"
     source "$libPath" || throw "Unable to load $libPath"
 
   # TODO: maybe only Type.Load when the filename starts with a capital?
@@ -28,7 +32,6 @@ System::LoadFile(){
   #            DEBUG subject=level3 Log "Loading Types..."
   #        fi
   else
-    :
     DEBUG subject=level2 Log "File doesn't exist when importing: $libPath"
   fi
 }
@@ -38,12 +41,15 @@ System::Import() {
   for libPath in "$@"; do
     local requestedPath="$libPath"
 
-    ## correct path if relative
+    [ ! -e "$libPath" ] && libPath="${__oo__libPath}/${libPath}"
+    [ ! -e "$libPath" ] && libPath="${libPath}.sh"
+
     [ ! -e "$libPath" ] && libPath="${__oo__path}/${libPath}"
     [ ! -e "$libPath" ] && libPath="${libPath}.sh"
 
     DEBUG subject=level4 Log "Trying to load from: ${__oo__path} / ${requestedPath}"
 
+    ## correct path if relative
     if [ ! -e "$libPath" ]
     then
       # try a relative reference
@@ -57,9 +63,10 @@ System::Import() {
     fi
 
     DEBUG subject=level3 Log "Trying to load from: ${libPath}"
-    [ ! -e "$libPath" ] && throw "Cannot import $libPath" && return 1
+    [ ! -e "$libPath" ] && e="Cannot import $libPath" throw && return 1
 
     libPath="$(File::GetAbsolutePath "$libPath")"
+    # [ -e "$libPath" ] && echo "Trying to load from: ${libPath}"
 
     if [ -d "$libPath" ]; then
       local file
@@ -75,3 +82,5 @@ System::Import() {
 }
 
 alias import="System::Import"
+
+import Array/Contains

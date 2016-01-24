@@ -1,3 +1,5 @@
+import util/namedParameters util/type
+
 namespace oo/type
 
 ### MAP
@@ -19,7 +21,7 @@ map.get() {
   @return:value "${this[$1]}"
 }
 
-Type::Initialize map primitive
+Type::InitializePrimitive map
 
 ### /MAP
 

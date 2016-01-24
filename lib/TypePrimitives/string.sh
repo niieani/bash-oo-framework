@@ -1,3 +1,5 @@
+import util/namedParameters util/type string
+
 namespace oo/type
 ### STRING
 
@@ -82,7 +84,7 @@ string.toJSON() {
 
   string escaped="$this"
   escaped=$(var: escaped forEachChar '(( 16#$(var: char getCharCode) < 20 )) && printf "\\${char}" || printf "$char"')
-  
+
   escaped="${escaped//\\/\\\\}" ## slashes
   escaped="\"${escaped//\"/\\\"}\"" ## quotes
 
@@ -115,7 +117,7 @@ string.getCharCode() {
   @return:value $(printf %x "'$this")
 }
 
-Type::Initialize string primitive
+Type::InitializePrimitive string
 
 ### /STRING
 

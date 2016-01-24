@@ -1,5 +1,7 @@
 namespace oo/type
 
+import util/command
+
 declare __declaration_type ## for Variable::ExportDeclarationAndTypeToVariables (?)
 
 Variable::Exists() {
@@ -119,7 +121,7 @@ Variable::ExportDeclarationAndTypeToVariables() {
     DEBUG Log "Primitive Type $primitiveType Resolved ${variableType}"
   fi
 
-  if [[ "$variableType" == 'string' ]]
+  if [[ "$variableType" == 'string' ]] && Function::Exists 'Type::GetPrimitiveExtensionFromVariable'
   then
     local extensionType=$(Type::GetPrimitiveExtensionFromVariable "${variableName}")
     if [[ ! -z "$extensionType" ]]
