@@ -1,4 +1,4 @@
-import util/namedParameters util/type string
+import util/namedParameters util/type String
 
 namespace oo/type
 ### STRING

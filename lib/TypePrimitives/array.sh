@@ -1,4 +1,4 @@
-import util/namedParameters util/type array
+import util/namedParameters util/type Array
 
 namespace oo/type
 ### ARRAY
