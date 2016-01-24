@@ -2,11 +2,14 @@
 
 source "$( cd "${BASH_SOURCE[0]%/*}" && pwd )/../lib/oo-framework.sh"
 
+import util/exception util/classes
+# import util
+
 echoedEscapes() {
   string escapes='hey \" dude \" \"   cool \\ \\ awesome \\'
   array someArray=( "$escapes" )
-  
-  [[ "$(someArray forEach 'printf %s "$escapes"')" == "$escapes" ]]
+
+  [[ "$(var: someArray forEach 'printf %s "$escapes"')" == "$escapes" ]]
 
   # printf %s "${escapes}"
   # someArray forEach 'printf "$item"'
@@ -15,14 +18,14 @@ echoedEscapes() {
 
 strings() {
   string temp='this is a "string"  to be \jsonized\.'
-  temp getCharCode
+  $var:temp getCharCode
   echo
-  temp forEachChar 'printf "$char"'
+  $var:temp forEachChar 'printf "$char"'
   echo
-  temp toJSON
+  $var:temp toJSON
   echo
 }
 
-# strings
+strings
 
-echoedEscapes
+# echoedEscapes
