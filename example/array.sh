@@ -2,7 +2,7 @@
 
 source "$( cd "${BASH_SOURCE[0]%/*}" && pwd )/../lib/oo-bootstrap.sh"
 
-import lib/system/oo
+import util/log util/type
 Log::AddOutput util/type CUSTOM
 
 manipulatingArrays() {
@@ -11,7 +11,7 @@ manipulatingArrays() {
 
   $var:exampleArrayA push 'one'
   $var:exampleArrayA push 'two'
-  
+
   # above is equivalent to calling:
   #   var: exampleArrayA push 'two'
   # or using native bash
@@ -37,7 +37,7 @@ passingArrays() {
 
   echo 'passing by $var:'
   ## 2 ways of passing a copy of an array (passing by it's definition)
-  passingArraysInput "$(someArray)"
+  passingArraysInput "$(var: someArray)"
   passingArraysInput $var:someArray
 
   ## no changes yet

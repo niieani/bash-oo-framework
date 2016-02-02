@@ -2,7 +2,7 @@
 
 source "$( cd "${BASH_SOURCE[0]%/*}" && pwd )/../lib/oo-bootstrap.sh"
 
-import util/type
+import util/log util/type
 Log::AddOutput util/type CUSTOM
 
 regex() {

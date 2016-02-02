@@ -204,6 +204,8 @@ Variable::InTrapCaptureParameters() {
   __capture_noHandle="$_noHandle"
 }
 
+## ARGUMENT RESOLVERS ##
+
 # NOTE: true; true; at the end is required to workaround an edge case where TRAP doesn't behave properly
 alias Variable::TrapAssign='Variable::InTrapCaptureParameters; local -i __assign_normalCodeStarted=0; trap "declare -i __assign_paramNo; Variable::TrapAssignNumberedParameter \"\$BASH_COMMAND\" \"\$@\"; [[ \$__assign_normalCodeStarted -ge 2 ]] && trap - DEBUG && unset __assign_varType __assign_varName __assign_varValue __assign_paramNo __assign_valueRequired __assign_valueReadOnly __assign_noHandle" DEBUG; true; true; '
 alias [reference]='_type=reference Variable::TrapAssign local -n'

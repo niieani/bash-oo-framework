@@ -7,7 +7,9 @@ The Infinity Framework is also plug & play: include it at the beginning of your 
 
 The aim of Bash Infinity is to maximize readability of bash scripts, minimize the amount of code repeat and create a central repository for well-written, and a well-tested standard library for bash.
 
-Disclaimer: Not all of the modules work with earlier versions of bash, as I test primarily with **bash 4**. However, it should be possible (and relatively easy) to [port non-working parts](#porting-to-bash-3) to earlier versions.
+Bash Infinity transforms the often obfuscated "bash syntax" to a cleaner, more modern syntax.
+
+Disclaimer: Not all of the modules work with earlier versions of bash, as I test with **bash 4**. However, it should be possible (and relatively easy) to [port non-working parts](#porting-to-bash-3) to earlier versions.
 
 Quick-start
 ===========
