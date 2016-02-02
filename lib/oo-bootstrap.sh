@@ -1,3 +1,5 @@
+#!/usr/bin/env bash
+
 ###########################
 ### BOOTSTRAP FUNCTIONS ###
 ###########################
@@ -9,53 +11,6 @@ else
   alias DEBUG=":; #"
 fi
 
-System::ImportOld() {
-  local libPath
-  for libPath in "$@"; do
-    local requestedPath="$libPath"
-
-    [ ! -e "$libPath" ] && libPath="${__oo__libPath}/${libPath}"
-    [ ! -e "$libPath" ] && libPath="${libPath}.sh"
-
-    [ ! -e "$libPath" ] && libPath="${__oo__path}/${libPath}"
-    [ ! -e "$libPath" ] && libPath="${libPath}.sh"
-
-    # DEBUG subject=level4 Log "Trying to load from: ${__oo__path} / ${requestedPath}"
-
-    ## correct path if relative
-    if [ ! -e "$libPath" ]
-    then
-      # try a relative reference
-      #            local localPath="${BASH_SOURCE[1]%/*}"
-      local localPath="$( cd "${BASH_SOURCE[1]%/*}" && pwd )"
-      #            [ -f "$localPath" ] && localPath="$(dirname "$localPath")"
-      libPath="${localPath}/${requestedPath}"
-      # DEBUG subject=level4 Log "Trying to load from: ${localPath} / ${requestedPath}"
-
-      [ ! -e "$libPath" ] && libPath="${libPath}.sh"
-    fi
-
-    # DEBUG subject=level3 Log "Trying to load from: ${libPath}"
-    [ ! -e "$libPath" ] && e="Cannot import $libPath" throw && return 1
-
-    libPath="$(File::GetAbsolutePath "$libPath")"
-    # [ -e "$libPath" ] && echo "Trying to load from: ${libPath}"
-
-    if [ -d "$libPath" ]; then
-      local file
-      for file in "$libPath"/*.sh
-      do
-        System::SourceFile "$file"
-      done
-    else
-      System::SourceFile "$libPath"
-    fi
-  done
-  return 0
-}
-
-###
-
 System::SourceHTTP() {
   local URL="$1"
   local -i RETRIES=3
@@ -63,12 +18,11 @@ System::SourceHTTP() {
 
   if hash curl 2>/dev/null
   then
-    # curl --fail -sL --retry $RETRIES "${URL}" || { [[ "$URL" != *'.sh' && "$URL" != *'.bash' ]] && curl --fail -sL --retry $RETRIES "${URL}.sh"; } || echo "e='Cannot import $URL' throw"
     builtin source <(curl --fail -sL --retry $RETRIES "${URL}" || { [[ "$URL" != *'.sh' && "$URL" != *'.bash' ]] && curl --fail -sL --retry $RETRIES "${URL}.sh"; } || echo "e='Cannot import $URL' throw") "$@"
-    # builtin source <([[ "$URL" != *'.sh' && "$URL" != *'.bash' ]] && curl -sL --retry $RETRIES "${URL}.sh" || curl -sL --retry $RETRIES "${URL}" || echo "e='Cannot import $URL' throw") "$@"
   else
     builtin source <(wget -t $RETRIES -O - -o /dev/null "${URL}" || { [[ "$URL" != *'.sh' && "$URL" != *'.bash' ]] && wget -t $RETRIES -O - -o /dev/null "${URL}.sh"; } || echo "e='Cannot import $URL' throw") "$@"
   fi
+  __oo__importedFiles+=( "$URL" )
 }
 
 System::SourcePath() {
@@ -84,17 +38,11 @@ System::SourcePath() {
     done
   else
     System::SourceFile "$libPath" "$@" || System::SourceFile "${libPath}.sh" "$@"
-    # if [[ -e "$libPath" ]]
-    # then
-    #   System::SourceFile "$libPath"
-    # elif [[ -e "${libPath}.sh" ]]
-    # then
-    #   System::SourceFile "${libPath}.sh"
-    # else
-    #   return 1
-    # fi
   fi
 }
+
+declare -g __oo__fdPath=$(dirname <(echo))
+declare -gi __oo__fdLength=$(( ${#__oo__fdPath} + 1 ))
 
 System::ImportOne() {
   local libPath="$1"
@@ -108,6 +56,9 @@ System::ImportOne() {
   elif [[ "$requestedPath" == './'* ]]
   then
     requestedPath="${requestedPath:2}"
+  elif [[ "$requestedPath" == "$__oo__fdPath"* ]] # starts with /dev/fd
+  then
+    requestedPath="${requestedPath:$__oo__fdLength}"
   fi
 
   # [[ "$__oo__importParent" == 'http://'* || "$__oo__importParent" == 'https://'* ]] &&
@@ -122,15 +73,11 @@ System::ImportOne() {
     return
   fi
 
-  # 1. try with parent
-  # 2. try with parent with .sh
-  # 3. try without parent
-  # 4. try without parent with .sh
-  # 5. try global library
-  # 6. try global library with .sh
-  # 7. try local library
-  # 8. try local library with .sh
-  # 9. try relative to parent script
+  # try relative to parent script
+  # try with parent
+  # try without parent
+  # try global library
+  # try local library
   {
     local localPath="$( cd "${BASH_SOURCE[1]%/*}" && pwd )"
     localPath="${localPath}/${libPath}"

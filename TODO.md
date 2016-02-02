@@ -8,3 +8,4 @@
 * some functionality from how-to (http://wiki.bash-hackers.org/start)
 * md5sum of script requested online
 * recommend some libs, e.g. https://github.com/AsymLabs/realpath-lib
+* https://github.com/themattrix/bash-concurrent
