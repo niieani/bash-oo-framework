@@ -194,7 +194,7 @@ Console::WriteStdErr "This will be printed to STDERR, no matter what."
 Both the colors and the Powerline characters fallback gracefully on systems that don't support them.
 To see Powerline icons, you'll need to use a powerline-patched font.
 
-For the list of available colors and emoji's take a look into [lib/UI/color.sh](https://github.com/niieani/bash-oo-framework/blob/master/lib/UI/color.sh).
+For the list of available colors and emoji's take a look into [lib/UI/Color.sh](https://github.com/niieani/bash-oo-framework/blob/master/lib/UI/Color.sh).
 Fork and contribute more!
 
 See [Advanced Logging](#advanced-logging) below to learn more about advanced logging capabilities.
