@@ -16,6 +16,8 @@ Disclaimer: Not all of the modules work with earlier versions of bash, as I test
 Quick-start
 ===========
 
+**NOTE: The v2.0 which contained braking changes is not yet available as a release. Please refer to the old readme if you wish to use v1.0.**
+
 Since the v1.0 release, there's a great new way to include the framework in your scripts.
 If you don't mind a slightly slower startup of your script and know that an internet connection will be available at the time of execution, you can put this one-liner in front of your script to include the framework:
 
