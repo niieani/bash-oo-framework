@@ -16,25 +16,7 @@ Disclaimer: Not all of the modules work with earlier versions of bash, as I test
 Quick-start
 ===========
 
-**NOTE: The v2.0 which contained breaking changes is not yet available as a release. Please refer to the old readme if you wish to use v1.0.**
-
-Since the v1.0 release, there's a quick and dirty new way to include the framework in your scripts.
-If you don't mind a slightly slower startup of your script and know that an internet connection will be available at the time of execution, you can put this one-liner in front of your script to include the framework:
-
-```bash
-#!/usr/bin/env bash
-
-source <(VERSION=1.0.0; URL="https://github.com/niieani/bash-oo-framework/releases/download/$VERSION/oo-bootstrap.sh"; RETRIES=3; hash curl 2>/dev/null && curl -sL --retry $RETRIES "$URL" || wget -t $RETRIES -O - -o /dev/null "$URL" || echo "echo 'An error occurred while downloading the framework.' && exit 1")
-
-## your code goes here ##
-```
-
-**SECURITY NOTE: Avoid using this method in production, since it inherently insecure, prone to MITM attacks and adds a second or two to the runtime of the script.** 
-
-To load the framework locally, [read on](#how-to-use).
-
-Either `curl` or `wget` is required for the above to work.
-Note: sourcing the framework this way will not load the optional modules, such as the unit testing, and the type system modules. You need to import those manually.
+Single-file release and dynamic loading is not available for v2.0 yet. To load the framework locally, [read on](#how-to-use).
 
 Main modules
 ============
