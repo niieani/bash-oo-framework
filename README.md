@@ -1,6 +1,8 @@
 Bash Infinity
 =============
 
+[![Join the chat at https://gitter.im/niieani/bash-oo-framework](https://badges.gitter.im/niieani/bash-oo-framework.svg)](https://gitter.im/niieani/bash-oo-framework?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
+
 Bash Infinity is a standard library and a boilerplate framework for writing tools using **bash**.
 It's modular and lightweight, while managing to implement some concepts from C#, Java or JavaScript into bash.
 The Infinity Framework is also plug & play: include it at the beginning of your existing script to import any of the individual features such as error handling, and start using other features gradually.
