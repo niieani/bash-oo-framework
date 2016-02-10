@@ -96,8 +96,8 @@ array.forEach() {
   for index in "${!this[@]}"
   do
     item="${this[$index]}"
+    # eval "$action"
     $methodName "$item" "$index"
-
   done
 
   unset -f $methodName
@@ -131,9 +131,16 @@ array.map() {
 array.concatPush() {
   @required [array] concatWithArray
 
-  var: concatWithArray forEach 'this push "$(item)"'
+  # TODO: why doesn't this work? seems that it is run in a subshell?
+  # var: concatWithArray forEach 'var: self push "$(var: item)"'
 
-  @return this
+  local index
+  for index in "${!concatWithArray[@]}"
+  do
+    this push "${concatWithArray[$index]}"
+  done
+
+  @return
 }
 
 array.concat() {
@@ -141,7 +148,14 @@ array.concat() {
 
   array outArray=$(this)
 
-  var: concatWithArray forEach 'var: outArray push "$(item)"'
+  local index
+  for index in "${!concatWithArray[@]}"
+  do
+    var: outArray push "${concatWithArray[$index]}"
+  done
+
+  # TODO:
+  # var: concatWithArray forEach 'var: outArray push "$(var: item)"'
 
   @return outArray
 }

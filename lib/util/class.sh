@@ -96,6 +96,11 @@ Type::Construct() {
       local defaultValueIndirect=__${typeSanitized}_property_defaults[$propertyIndex]
       local defaultValue="${!defaultValueIndirect}"
 
+      if [[ $propertyType == 'boolean' ]] && [[ "$defaultValue" == 'false' || "$defaultValue" == 'true' ]]
+      then
+        defaultValue="${__primitive_extension_fingerprint__boolean}:$defaultValue"
+      fi
+
       local constructedPropertyDefinition="$defaultValue"
 
       DEBUG Log "iterating type: ${typeSanitized}, property: [$propertyIndex] $propertyName = $defaultValue"

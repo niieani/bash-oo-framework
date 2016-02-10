@@ -132,7 +132,7 @@ System::SourceFile() {
   then
     ## if already imported let's return
     # if declare -f "Array::Contains" &> /dev/null &&
-    if [[ ! -z "${__oo__importedFiles[*]}" ]] && Array::Contains "$file" "${__oo__importedFiles[@]}"
+    if [[ "${__oo__allowFileReloading}" != true ]] && [[ ! -z "${__oo__importedFiles[*]}" ]] && Array::Contains "$file" "${__oo__importedFiles[@]}"
     then
       # DEBUG subject=level3 Log "File previously imported: ${libPath}"
       return 0
@@ -179,12 +179,12 @@ declare -ag __oo__importedFiles
 
 ## stubs in case either exception or log is not loaded
 namespace() { :; }
-throw() { eval 'echo "Exception: $e ($*)"; read -s;'; }
+throw() { eval 'cat <<< "Exception: $e ($*)" 1>&2; read -s;'; }
 
 System::Bootstrap
 
 alias import="System::Import"
-alias source="System::ImportOne"
-alias .="System::ImportOne"
+alias source="__oo__allowFileReloading=true System::ImportOne"
+alias .="__oo__allowFileReloading=true System::ImportOne"
 
 declare -g __oo__bootstrapped=true

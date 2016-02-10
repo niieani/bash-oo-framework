@@ -4,7 +4,7 @@ namespace oo/type
 ### BOOLEAN
 
 boolean.__getter__() {
-  [[ "$this" == "${__primitive_extension_fingerprint__boolean}:true" ]]
+  test "$this" == "${__primitive_extension_fingerprint__boolean}:true"
 }
 
 boolean.toString() {

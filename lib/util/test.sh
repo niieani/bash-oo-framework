@@ -1,9 +1,10 @@
-import util/class util/tryCatch
+import util/class util/tryCatch UI/Cursor
 
 class:Test() {
   private UI.Cursor onStartCursor
-  private string errors
   private string groupName
+  public string errors
+  # public boolean errors = false
 
   Test.Start() {
     [string] verb
@@ -34,11 +35,12 @@ class:Test() {
 
   Test.DisplaySummary() {
     if [[ $(this errors) == true ]]
+    # if this errors
     then
-      echo "$(UI.Powerline.ArrowLeft) $(UI.Color.Magenta)Completed [$(Test groupName)]: $(UI.Color.Default)$(UI.Color.Red)There were errors $(UI.Color.Default)$(UI.Powerline.Lightning)"
+      echo "$(UI.Powerline.ArrowLeft) $(UI.Color.Magenta)Completed [$(UI.Color.White)$(this groupName)$(UI.Color.Magenta)]: $(UI.Color.Default)$(UI.Color.Red)There were errors $(UI.Color.Default)$(UI.Powerline.Lightning)"
       this errors = false
     else
-      echo "$(UI.Powerline.ArrowLeft) $(UI.Color.Magenta)Completed [$(Test groupName)]: $(UI.Color.Default)$(UI.Color.Yellow)Test group completed succesfully $(UI.Color.Default)$(UI.Powerline.ThumbsUp)"
+      echo "$(UI.Powerline.ArrowLeft) $(UI.Color.Magenta)Completed [$(UI.Color.White)$(this groupName)$(UI.Color.Magenta)]: $(UI.Color.Default)$(UI.Color.Yellow)Test group completed succesfully $(UI.Color.Default)$(UI.Powerline.ThumbsUp)"
     fi
     @return
   }
@@ -46,7 +48,7 @@ class:Test() {
   Test.NewGroup() {
     [string] groupName
 
-    echo "$(UI.Powerline.ArrowRight)" $(UI.Color.Magenta)Testing [$groupName]: $(UI.Color.Default)
+    echo "$(UI.Powerline.ArrowRight)" $(UI.Color.Magenta)Testing [$(UI.Color.White)${groupName}$(UI.Color.Magenta)]: $(UI.Color.Default)
 
     this groupName = "$groupName"
 

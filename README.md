@@ -479,19 +479,19 @@ Now you can use both the `Human` and the `SingletonExample` classes:
 Human Mark
 
 # call the string.= (setter) method
-Mark name = 'Mark'
+$var:Mark name = 'Mark'
 
 # call the integer.= (setter) method
-Mark height = 180
+$var:Mark height = 180
 
 # adds 'corn' to the Mark.eaten array and echoes the output
-Mark Eat 'corn'
+$var:Mark Eat 'corn'
 
 # adds 'blueberries' to the Mark.eaten array and echoes the uppercased output
-Mark : { Eat 'blueberries' } { toUpper }
+$var:Mark : { Eat 'blueberries' } { toUpper }
 
 # invoke the getter
-Mark
+$var:Mark
 
 # invoke the method on the static instance of SingletonExample
 SingletonExample PrintYoMama

@@ -226,7 +226,7 @@ Exception::ContinueOrBreak() (
     Console::WriteStdErr
     Console::WriteStdErr " $(UI.Color.Yellow)$(UI.Powerline.Lightning)$(UI.Color.White) Press $(UI.Color.Bold)[CTRL+C]$(UI.Color.White) to exit or $(UI.Color.Bold)[Return]$(UI.Color.White) to continue execution."
     read -s
-    Console::WriteStdErr " $(UI.Color.Blue)$(UI.Powerline.Cog)$(UI.Color.White) Continuing...$(UI.Color.Default)"
+    Console::WriteStdErr "$(UI.Color.Blue)$(UI.Powerline.Cog)$(UI.Color.White)  Continuing...$(UI.Color.Default)"
     return 0
   else
     Console::WriteStdErr

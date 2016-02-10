@@ -115,6 +115,9 @@ Variable::ExportDeclarationAndTypeToVariables() {
   then
     DEBUG Log "Object Type $variableName[__object_type] = ${!objectTypeIndirect}"
     variableType="${!objectTypeIndirect}"
+  # elif [[ ! -z ${__primitive_extension_fingerprint__boolean+x} && "$primitiveType" == '-' && "${!variableName}" == "${__primitive_extension_fingerprint__boolean}"* ]]
+  # then
+  #   variableType="boolean"
   else
     variableType="$(Variable::GetPrimitiveTypeFromDeclarationFlag "$primitiveType")"
     DEBUG Log "Primitive Type $primitiveType Resolved ${variableType}"

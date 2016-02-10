@@ -433,6 +433,7 @@ Type::RunCurrentStack() {
 
   # Log "Will assign: result=$(__return_self_and_result=true Type::ExecuteMethod "$type" "$variableName" "$method" "${params[@]}")"
   local resultString=$(__return_self_and_result=true Type::ExecuteMethod "$type" "$variableName" "$method" "${params[@]}" || { local falseBool="${__primitive_extension_fingerprint__boolean}:false"; __return_self_and_result=true @return falseBool $variableName; })
+  # || echo "${__return_separator}specialBool:${__primitive_extension_fingerprint__boolean}:false"
 
   ## TODO: some problem here sometimes
   DEBUG Log "Result string: START | $resultString | END"
@@ -457,7 +458,7 @@ Type::RunCurrentStack() {
     # the result is everything after the first occurrence of the separator
     resultString="${resultString#*$__return_separator}"
 
-    # Log "wtf $resultString"
+    # Log "resultString: $resultString"
     local -a result=$resultString
     # eval "local -a result=$resultString"
   fi
@@ -473,7 +474,8 @@ Type::RunCurrentStack() {
 
   local typeParam=$(Variable::GetDeclarationFlagFromType $type)
 
-  # Log "Will eval: | $variableName=$assignResult |"
+  DEBUG Log "Will eval: | $variableName=$assignResult |"
+  # [[ "${assignResult}" == "${__primitive_extension_fingerprint__boolean}:false" ]] && return 1
 
   if [[ "$typeParam" =~ [aA] ]]
   then
@@ -488,6 +490,8 @@ Type::RunCurrentStack() {
   # update the result
   returnValueDefinition="${result[1]}"
   returnValueType="${result[2]}"
+
+  # Log "returned: $returnValueType: $returnValueDefinition"
 
   # switch context for the next command
   if [[ "$assignResult" != "${returnValueDefinition}" ]]
@@ -668,7 +672,11 @@ Type::Handle() {
 
     if [[ "${#method}" -gt 0 ]]
     then
+      # Log 'running stack for:' $variableName
       Type::RunCurrentStack
+      # Log 'output was:' "${!variableName}"
+      ## TODO: this does not work: (false boolean should return fail)
+      [[ "${!variableName}" == "${__primitive_extension_fingerprint__boolean}:false" ]] && return 1 # && Log "LALALALA"
     elif [[ "$prevMode" == 'property' ]]
     then
       if [[ "$currentPropertyVisibility" == 'public' || "$__access_private" == "true" ]]
