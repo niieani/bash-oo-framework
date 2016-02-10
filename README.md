@@ -18,7 +18,7 @@ Quick-start
 
 **NOTE: The v2.0 which contained breaking changes is not yet available as a release. Please refer to the old readme if you wish to use v1.0.**
 
-Since the v1.0 release, there's a great new way to include the framework in your scripts.
+Since the v1.0 release, there's a quick and dirty new way to include the framework in your scripts.
 If you don't mind a slightly slower startup of your script and know that an internet connection will be available at the time of execution, you can put this one-liner in front of your script to include the framework:
 
 ```bash
@@ -29,10 +29,12 @@ source <(VERSION=1.0.0; URL="https://github.com/niieani/bash-oo-framework/releas
 ## your code goes here ##
 ```
 
-Either `curl` or `wget` is required for the above to work.
-Note: sourcing the framework this way will not load the optional modules, such as the unit testing, and the type system modules.
+**SECURITY NOTE: Avoid using this method in production, since it inherently insecure, prone to MITM attacks and adds a second or two to the runtime of the script.** 
 
-If you wish to load the framework locally, [read on](#how-to-use).
+To load the framework locally, [read on](#how-to-use).
+
+Either `curl` or `wget` is required for the above to work.
+Note: sourcing the framework this way will not load the optional modules, such as the unit testing, and the type system modules. You need to import those manually.
 
 Main modules
 ============
@@ -694,21 +696,21 @@ How to use?
     ```
 
 3. You may of course change the name of the **/lib/** directory to your liking, just change it in the script too.
-4. Out-of-box you'll get the core functionality described above, such as exceptions, try&catch, and so on.
-   However, if you wish to add more features, like enable the typing system, you'll need to import those modules:
+4. Out-of-box you only get the import functionality.
+   If you wish to use more features, such as the typing system, you'll need to import those modules as follows:
 
    ```shell
    # load the type system
-   import lib/type-core
+   import util/log util/exception util/tryCatch util/namedParameters
 
-   # load some basic types, such as Var, Array or String
-   import lib/types/base
+   # load the standard library for basic types and type the system
+   import util/class
    ```
 
 5. To import the unit test library you'll need to ```import lib/types/util/test```.
    The first error inside of the test will make the whole test fail.
 
-6. Don't use ```set -o errexit``` or ```set -e``` - it's not necessary, because error handling is done by the framework itself.
+6. When using `util/exception` or `util/tryCatch` don't use ```set -o errexit``` or ```set -e``` - it's not necessary, because error handling will be done by the framework itself.
 
 Contributing
 ============
@@ -732,7 +734,7 @@ Acknowledgments
 
 If a function's been adapted or copied from the web or any other libraries out there, I always mention it in a comment within the code.
 
-Additionally, in the making of the first version of Bash Infinity I took some inspiration from object-oriented bash libraries:
+Additionally, in the making of the v1 of Bash Infinity I took some inspiration from object-oriented bash libraries:
 
 * https://github.com/tomas/skull/
 * https://github.com/domachine/oobash/
