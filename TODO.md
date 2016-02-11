@@ -4,6 +4,7 @@
 * false boolean should return fail when invoked as a property
 * redirect throws to 3 or somewhere else and redirect that else to stderr, so they can't be supressed
 * md5sum in external imports
+* don't depend on mktemp (http://www.linuxsecurity.com/content/view/115462/151/#mozTocId316364)
 * save previous trap state before setting a new one and restore when unsetting
 * await/async for bash (perhaps coproc http://stackoverflow.com/questions/20017805/bash-capture-output-of-command-run-in-background & http://wiki.bash-hackers.org/syntax/keywords/coproc & http://www.ict.griffith.edu.au/anthony/info/shell/co-processes.hints or http://unix.stackexchange.com/a/116802/106138)
 * [function] argument resolver, checking if a method exists or defining an anonymous method
