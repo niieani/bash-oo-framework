@@ -1,4 +1,4 @@
-alias UI.Color.IsAvailable='[[ "${TERM}" == *"xterm"* ]] && [ -t 1 ]'
+alias UI.Color.IsAvailable='[ $(tput colors 2>/dev/null || echo 0) -ge 16 ] && [ -t 1 ]'
 if UI.Color.IsAvailable
 then
   alias UI.Color.Default="echo \$'\033[0m'"
