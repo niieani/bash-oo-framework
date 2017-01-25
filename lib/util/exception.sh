@@ -223,6 +223,7 @@ Exception::ContinueOrBreak() (
   # if in a terminal
   if [ -t 0 ]
   then
+    trap "stty sane; exit 1" INT
     Console::WriteStdErr
     Console::WriteStdErr " $(UI.Color.Yellow)$(UI.Powerline.Lightning)$(UI.Color.White) Press $(UI.Color.Bold)[CTRL+C]$(UI.Color.White) to exit or $(UI.Color.Bold)[Return]$(UI.Color.White) to continue execution."
     read -s
