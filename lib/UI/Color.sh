@@ -1,5 +1,5 @@
 alias UI.Color.IsAvailable='[ $(tput colors 2>/dev/null || echo 0) -ge 16 ] && [ -t 1 ]'
-if UI.Color.IsAvailable
+if [ UI.Color.IsAvailable ] || [ grep -Fxq "ID_LIKE=chromiumos" /etc/os-release ]
 then
   alias UI.Color.Default="echo \$'\033[0m'"
 
