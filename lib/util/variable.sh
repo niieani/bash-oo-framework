@@ -83,6 +83,7 @@ Variable::ExportDeclarationAndTypeToVariables() {
   local declaration
   local regexArray="declare -([a-zA-Z-]+) $variableName='(.*)'"
   local regex="declare -([a-zA-Z-]+) $variableName=\"(.*)\""
+  local regexArrayBash4_4="declare -([a-zA-Z-]+) $variableName=(.*)"
   local definition=$(declare -p $variableName 2> /dev/null || true)
 
   local escaped="'\\\'"
@@ -102,6 +103,9 @@ Variable::ExportDeclarationAndTypeToVariables() {
     declaration="${BASH_REMATCH[2]//$escaped/}" ## TODO: is this transformation needed?
     declaration="${declaration//$escapedQuotes/$singleQuote}"
     declaration="${declaration//$doubleSlashes/$singleSlash}"
+  elif [[ "$definition" =~ $regexArrayBash4_4 ]]
+  then
+    declaration="${BASH_REMATCH[2]}"
   fi
 
   local variableType
