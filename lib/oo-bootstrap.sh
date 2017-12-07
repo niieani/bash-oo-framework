@@ -46,7 +46,7 @@ declare -gi __oo__fdLength=$(( ${#__oo__fdPath} + 1 ))
 
 System::ImportOne() {
   local libPath="$1"
-  local __oo__importParent="${__oo__importParent}"
+  local __oo__importParent="${__oo__importParent-}"
   local requestedPath="$libPath"
   shift
 
@@ -132,7 +132,7 @@ System::SourceFile() {
   then
     ## if already imported let's return
     # if declare -f "Array::Contains" &> /dev/null &&
-    if [[ "${__oo__allowFileReloading}" != true ]] && [[ ! -z "${__oo__importedFiles[*]}" ]] && Array::Contains "$file" "${__oo__importedFiles[@]}"
+    if [[ "${__oo__allowFileReloading}" != true ]] && [[ ! -z "${__oo__importedFiles[*]}" ]] && Array::Contains "$libPath" "${__oo__importedFiles[@]}"
     then
       # DEBUG subject=level3 Log "File previously imported: ${libPath}"
       return 0
@@ -183,7 +183,7 @@ throw() { eval 'cat <<< "Exception: $e ($*)" 1>&2; read -s;'; }
 
 System::Bootstrap
 
-alias import="System::Import"
+alias import="__oo__allowFileReloading=false System::Import"
 alias source="__oo__allowFileReloading=true System::ImportOne"
 alias .="__oo__allowFileReloading=true System::ImportOne"
 
