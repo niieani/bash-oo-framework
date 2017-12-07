@@ -132,7 +132,7 @@ System::SourceFile() {
   then
     ## if already imported let's return
     # if declare -f "Array::Contains" &> /dev/null &&
-    if [[ "${__oo__allowFileReloading}" != true ]] && [[ ! -z "${__oo__importedFiles[*]}" ]] && Array::Contains "$file" "${__oo__importedFiles[@]}"
+    if [[ "${__oo__allowFileReloading}" != true ]] && [[ ! -z "${__oo__importedFiles[*]}" ]] && Array::Contains "$libPath" "${__oo__importedFiles[@]}"
     then
       # DEBUG subject=level3 Log "File previously imported: ${libPath}"
       return 0
