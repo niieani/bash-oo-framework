@@ -166,7 +166,7 @@ System::Bootstrap() {
 ########################
 
 # From: http://wiki.bash-hackers.org/scripting/debuggingtips
-export PS4='+(${BASH_SOURCE[1]##*/}:${LINENO}): ${FUNCNAME[0]:+${FUNCNAME[0]}(): }'
+export PS4='+(${BASH_SOURCE##*/}:${LINENO}): ${FUNCNAME[0]:+${FUNCNAME[0]}(): }'
 
 # Bash will remember & return the highest exitcode in a chain of pipes.
 # This way you can catch the error inside pipes, e.g. mysqldump | gzip
