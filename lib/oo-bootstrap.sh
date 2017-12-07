@@ -46,7 +46,7 @@ declare -gi __oo__fdLength=$(( ${#__oo__fdPath} + 1 ))
 
 System::ImportOne() {
   local libPath="$1"
-  local __oo__importParent="${__oo__importParent}"
+  local __oo__importParent="${__oo__importParent-}"
   local requestedPath="$libPath"
   shift
 
