@@ -183,7 +183,7 @@ throw() { eval 'cat <<< "Exception: $e ($*)" 1>&2; read -s;'; }
 
 System::Bootstrap
 
-alias import="System::Import"
+alias import="__oo__allowFileReloading=false System::Import"
 alias source="__oo__allowFileReloading=true System::ImportOne"
 alias .="__oo__allowFileReloading=true System::ImportOne"
 
