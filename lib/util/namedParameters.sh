@@ -101,23 +101,25 @@ Variable::TrapAssignNumberedParameter() {
       ;;
       'boolean')
         DEBUG Log passed "${!indirectAccess}", default "${__assign_varValue}"
+        local boolean_fingerprint="${__primitive_extension_fingerprint__boolean:+__primitive_extension_fingerprint__boolean:}"
+
         if [[ ! -z "${!indirectAccess}" ]]
         then
-          if [[ "${!indirectAccess}" == "${__primitive_extension_fingerprint__boolean}:"* ]]
+          if [[ "${!indirectAccess}" == "${boolean_fingerprint}"* ]]
           then
             __assign_varValue="${!indirectAccess}"
           elif [[ "${!indirectAccess}" == 'true' || "${!indirectAccess}" == 'false' ]]
           then
-            __assign_varValue="${__primitive_extension_fingerprint__boolean}:${!indirectAccess}"
+            __assign_varValue="${boolean_fingerprint}${!indirectAccess}"
           else
-            __assign_varValue="${__primitive_extension_fingerprint__boolean}:false"
+            __assign_varValue="${boolean_fingerprint}false"
           fi
         elif [[ "${__assign_varValue}" == 'true' || "${__assign_varValue}" == 'false' ]]
         then
-          __assign_varValue="${__primitive_extension_fingerprint__boolean}:${__assign_varValue}"
-        elif [[ "${__assign_varValue}" != "${__primitive_extension_fingerprint__boolean}:true" && "${__assign_varValue}" != "${__primitive_extension_fingerprint__boolean}:false" ]]
+          __assign_varValue="${boolean_fingerprint}${__assign_varValue}"
+        elif [[ "${__assign_varValue}" != "${boolean_fingerprint}true" && "${__assign_varValue}" != "${boolean_fingerprint}false" ]]
         then
-          __assign_varValue="${__primitive_extension_fingerprint__boolean}:false"
+          __assign_varValue="${boolean_fingerprint}false"
         fi
         eval "$__assign_varName=\"${__assign_varValue}\""
       ;;
