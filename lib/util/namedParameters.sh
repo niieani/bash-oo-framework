@@ -50,7 +50,7 @@ Variable::TrapAssignNumberedParameter() {
   local varValue="${varDeclaration#*=}"
   # TODO: checking for parameter existence or default value
 
-  if [[ ! -z $__assign_varType ]]
+  if [[ "${__assign_varType:-null}" != "null" ]]
   then
     local requiredType="$__assign_varType" ## TODO: use this information
     [[ $__assign_parameters == '-n' ]] && __assign_varType="reference"
@@ -199,9 +199,9 @@ Variable::InTrapCaptureParameters() {
 
   __capture_type="$_type"
   __capture_arrLength="$l"
-  __capture_valueRequired="$_isRequired"
-  __capture_valueReadOnly="$_isReadOnly"
-  __capture_noHandle="$_noHandle"
+  __capture_valueRequired="${_isRequired-false}"
+  __capture_valueReadOnly="${_isReadOnly-false}"
+  __capture_noHandle="${_noHandle-false}"
 }
 
 ## ARGUMENT RESOLVERS ##
