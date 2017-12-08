@@ -24,6 +24,7 @@ then
   # flags
   alias UI.Color.Bold="echo \$'\033[1m'"
   alias UI.Color.Dim="echo \$'\033[2m'"
+  alias UI.Color.Italics="echo \$'\033[3m'"
   alias UI.Color.Underline="echo \$'\033[4m'"
   alias UI.Color.Blink="echo \$'\033[5m'"
   alias UI.Color.Invert="echo \$'\033[7m'"
@@ -31,6 +32,7 @@ then
 
   alias UI.Color.NoBold="echo \$'\033[21m'"
   alias UI.Color.NoDim="echo \$'\033[22m'"
+  alias UI.Color.NoItalics="echo \$'\033[23m'"
   alias UI.Color.NoUnderline="echo \$'\033[24m'"
   alias UI.Color.NoBlink="echo \$'\033[25m'"
   alias UI.Color.NoInvert="echo \$'\033[27m'"
