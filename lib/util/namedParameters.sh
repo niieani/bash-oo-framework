@@ -88,6 +88,7 @@ Variable::TrapAssignNumberedParameter() {
     case "$__assign_varType" in
       'params')
       # passing array:
+        eval "__assign_arrLength=$__assign_arrLength"
         eval "$__assign_varName=( \"\${@:$__assign_paramNo:$__assign_arrLength}\" )"
 
         ## TODO: foreach param expand $var: indirectAccess
@@ -198,7 +199,7 @@ Variable::InTrapCaptureParameters() {
   # subject="parameters" Log --
 
   __capture_type="$_type"
-  __capture_arrLength="$l"
+  __capture_arrLength="${l-'${#@}'}"
   __capture_valueRequired="${_isRequired-false}"
   __capture_valueReadOnly="${_isReadOnly-false}"
   __capture_noHandle="${_noHandle-false}"
