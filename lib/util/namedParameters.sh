@@ -50,7 +50,7 @@ Variable::TrapAssignNumberedParameter() {
   local varValue="${varDeclaration#*=}"
   # TODO: checking for parameter existence or default value
 
-  if [[ ! -z $__assign_varType ]]
+  if [[ "${__assign_varType:-null}" != "null" ]]
   then
     local requiredType="$__assign_varType" ## TODO: use this information
     [[ $__assign_parameters == '-n' ]] && __assign_varType="reference"
@@ -88,6 +88,7 @@ Variable::TrapAssignNumberedParameter() {
     case "$__assign_varType" in
       'params')
       # passing array:
+        eval "__assign_arrLength=$__assign_arrLength"
         eval "$__assign_varName=( \"\${@:$__assign_paramNo:$__assign_arrLength}\" )"
 
         ## TODO: foreach param expand $var: indirectAccess
@@ -100,23 +101,25 @@ Variable::TrapAssignNumberedParameter() {
       ;;
       'boolean')
         DEBUG Log passed "${!indirectAccess}", default "${__assign_varValue}"
+        local boolean_fingerprint="${__primitive_extension_fingerprint__boolean:+__primitive_extension_fingerprint__boolean:}"
+
         if [[ ! -z "${!indirectAccess}" ]]
         then
-          if [[ "${!indirectAccess}" == "${__primitive_extension_fingerprint__boolean}:"* ]]
+          if [[ "${!indirectAccess}" == "${boolean_fingerprint}"* ]]
           then
             __assign_varValue="${!indirectAccess}"
           elif [[ "${!indirectAccess}" == 'true' || "${!indirectAccess}" == 'false' ]]
           then
-            __assign_varValue="${__primitive_extension_fingerprint__boolean}:${!indirectAccess}"
+            __assign_varValue="${boolean_fingerprint}${!indirectAccess}"
           else
-            __assign_varValue="${__primitive_extension_fingerprint__boolean}:false"
+            __assign_varValue="${boolean_fingerprint}false"
           fi
         elif [[ "${__assign_varValue}" == 'true' || "${__assign_varValue}" == 'false' ]]
         then
-          __assign_varValue="${__primitive_extension_fingerprint__boolean}:${__assign_varValue}"
-        elif [[ "${__assign_varValue}" != "${__primitive_extension_fingerprint__boolean}:true" && "${__assign_varValue}" != "${__primitive_extension_fingerprint__boolean}:false" ]]
+          __assign_varValue="${boolean_fingerprint}${__assign_varValue}"
+        elif [[ "${__assign_varValue}" != "${boolean_fingerprint}true" && "${__assign_varValue}" != "${boolean_fingerprint}false" ]]
         then
-          __assign_varValue="${__primitive_extension_fingerprint__boolean}:false"
+          __assign_varValue="${boolean_fingerprint}false"
         fi
         eval "$__assign_varName=\"${__assign_varValue}\""
       ;;
@@ -198,10 +201,10 @@ Variable::InTrapCaptureParameters() {
   # subject="parameters" Log --
 
   __capture_type="$_type"
-  __capture_arrLength="$l"
-  __capture_valueRequired="$_isRequired"
-  __capture_valueReadOnly="$_isReadOnly"
-  __capture_noHandle="$_noHandle"
+  __capture_arrLength="${l-'${#@}'}"
+  __capture_valueRequired="${_isRequired-false}"
+  __capture_valueReadOnly="${_isReadOnly-false}"
+  __capture_noHandle="${_noHandle-false}"
 }
 
 ## ARGUMENT RESOLVERS ##
