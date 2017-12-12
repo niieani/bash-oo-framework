@@ -76,7 +76,7 @@ else
   UI_Color_NoInvisible=""
 fi
 
-alias UI.Powerline.IsAvailable="UI.Color.IsAvailable && test -z \$NO_UNICODE && (echo -e $'\u1F3B7' | grep -v F3B7) &> /dev/null"
+alias UI.Powerline.IsAvailable="UI.Color.IsAvailable && test -z \${NO_UNICODE-} && (echo -e $'\u1F3B7' | grep -v F3B7) &> /dev/null"
 if UI.Powerline.IsAvailable
 then
   UI_Powerline_PointingArrow=$'\u27a1'
