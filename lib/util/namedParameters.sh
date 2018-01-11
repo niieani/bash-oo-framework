@@ -124,7 +124,7 @@ Variable::TrapAssignNumberedParameter() {
         eval "$__assign_varName=\"${__assign_varValue}\""
       ;;
       'string'|'integer'|'reference')
-        if [[ "$__assign_varType" == "reference" || ! -z "${!indirectAccess}" ]]
+        if [[ "$__assign_varType" == "reference" || ! -z "${!indirectAccess-}" ]]
         then
           if [[ "${!indirectAccess}" == "$ref:"* ]]
           then
