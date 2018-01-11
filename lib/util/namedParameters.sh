@@ -22,7 +22,6 @@ Variable::TrapAssignNumberedParameter() {
     return 0
   fi
 
-  __assign_next=false
   if [[ "${commandWithArgs[*]}" == "true" ]]
   then
     __assign_next=true
@@ -171,7 +170,7 @@ Variable::TrapAssignNumberedParameter() {
     fi
   fi
 
-  if [[ "$command" != "local" || "$__assign_next" != "true" ]]
+  if [[ "$command" != "local" || "${__assign_next-}" != "true" ]]
   then
     __assign_normalCodeStarted+=1
 
