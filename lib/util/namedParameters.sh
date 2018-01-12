@@ -28,7 +28,7 @@ Variable::TrapAssignNumberedParameter() {
     DEBUG subject="parameters-assign" Log "Will assign next one"
 
     local nextAssignment=$(( ${__assign_paramNo:-0} + 1 ))
-    if [[ "${!nextAssignment}" == "$ref:"* ]]
+    if [[ "${!nextAssignment-}" == "$ref:"* ]]
     then
       DEBUG subject="parameters-reference" Log "next param ($nextAssignment) is an object reference"
       __assign_parameters="-n"
@@ -67,7 +67,7 @@ Variable::TrapAssignNumberedParameter() {
 
     local indirectAccess="$__assign_paramNo"
 
-    if [[ "${!indirectAccess}" == "$var:"* ]]
+    if [[ "${!indirectAccess-}" == "$var:"* ]]
     then
       local realVarName="${!indirectAccess#*$var:}"
       if Variable::Exists "$realVarName"
@@ -103,7 +103,7 @@ Variable::TrapAssignNumberedParameter() {
         DEBUG Log passed "${!indirectAccess}", default "${__assign_varValue}"
         local boolean_fingerprint="${__primitive_extension_fingerprint__boolean:+__primitive_extension_fingerprint__boolean:}"
 
-        if [[ ! -z "${!indirectAccess}" ]]
+        if [[ ! -z "${!indirectAccess-}" ]]
         then
           if [[ "${!indirectAccess}" == "${boolean_fingerprint}"* ]]
           then
@@ -124,7 +124,7 @@ Variable::TrapAssignNumberedParameter() {
         eval "$__assign_varName=\"${__assign_varValue}\""
       ;;
       'string'|'integer'|'reference')
-        if [[ "$__assign_varType" == "reference" || ! -z "${!indirectAccess}" ]]
+        if [[ "$__assign_varType" == "reference" || ! -z "${!indirectAccess-}" ]]
         then
           if [[ "${!indirectAccess}" == "$ref:"* ]]
           then
@@ -170,7 +170,7 @@ Variable::TrapAssignNumberedParameter() {
     fi
   fi
 
-  if [[ "$command" != "local" || "$__assign_next" != "true" ]]
+  if [[ "$command" != "local" || "${__assign_next-}" != "true" ]]
   then
     __assign_normalCodeStarted+=1
 
