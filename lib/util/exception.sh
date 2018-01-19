@@ -5,7 +5,7 @@ import String/GetSpaces String/SlashReplacement UI/Color UI/Console
 ### HANDLE EXCEPTIONS ###
 #########################
 
-trap "__EXCEPTION_TYPE__=\"\$_\" command_not_found_handle \$BASH_COMMAND" ERR
+trap "__EXCEPTION_TYPE__=\"\$_\" command_not_found_handle \$? \$BASH_COMMAND" ERR
 set -o errtrace  # trace ERR through 'time command' and other functions
 
 # unalias throw 2> /dev/null || true
@@ -37,6 +37,8 @@ command_not_found_handle() {
 
   Exception::CustomCommandHandler "$@" && return 0 || true
 
+  local exit_code="${1}"
+  shift
   local script="${BASH_SOURCE[1]#./}"
   local lineNo="${BASH_LINENO[0]}"
   local undefinedObject="$*"
@@ -83,7 +85,7 @@ command_not_found_handle() {
   Exception::FillExceptionWithTraceElements
 
   Console::WriteStdErr
-  Console::WriteStdErr " $(UI.Color.Red)$(UI.Powerline.Fail) $(UI.Color.Bold)UNCAUGHT EXCEPTION: $(UI.Color.LightRed)${type}$(UI.Color.Default)"
+  Console::WriteStdErr " $(UI.Color.Red)$(UI.Powerline.Fail) $(UI.Color.Bold)UNCAUGHT EXCEPTION: $(UI.Color.LightRed)${type} $(UI.Color.Yellow)$(UI.Color.Italics)(${exit_code})$(UI.Color.Default)"
   Exception::PrintException "${exception[@]}"
 
   Exception::ContinueOrBreak
