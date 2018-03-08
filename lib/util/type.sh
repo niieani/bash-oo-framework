@@ -139,6 +139,7 @@ Type::RunFunctionGarbageCollector() {
     handler="${__oo__type_handler_functions[$index]}"
 
     local exists=
+    local variable
     for variable in "${variables[@]}"
     do
       # Log "comparing: ${variable} == $handler"

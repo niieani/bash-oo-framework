@@ -15,7 +15,7 @@ Variable::TrapAssignNumberedParameter() {
   local command="${commandWithArgs[0]}"
 
   shift
-  #  Log "TRAP: ${commandWithArgs[@]}"
+  DEBUG Log "TRAP: ${commandWithArgs[@]}" "$@" "/ called: ${FUNCNAME[1]}"
 
   if [[ "$command" == "trap" || "$command" == "l="* || "$command" == "_type="* || "$command" == "_isRequired="* || "$command" == "_isReadOnly="*  || "$command" == "_noHandle="* || "$command" == "_isGlobal="* ]]
   then
@@ -25,6 +25,7 @@ Variable::TrapAssignNumberedParameter() {
   if [[ "${commandWithArgs[*]}" == "true" ]]
   then
     __assign_next=true
+    __assign_arguments=("$@")
     DEBUG subject="parameters-assign" Log "Will assign next one"
 
     local nextAssignment=$(( ${__assign_paramNo:-0} + 1 ))
@@ -55,7 +56,11 @@ Variable::TrapAssignNumberedParameter() {
     local requiredType="$__assign_varType" ## TODO: use this information
     [[ $__assign_parameters == '-n' ]] && __assign_varType="reference"
 
-    DEBUG subject="parameters-setting" Log "SETTING: [$__assign_varType] $__assign_varName = \$$__assign_paramNo [rq:$__assign_valueRequired]" # [val:${!__assign_paramNo}]
+    local indirectAccess="__assign_arguments[${__assign_paramNo:-0}]"
+    DEBUG Log indirectAccess: ${indirectAccess} : ${!indirectAccess-}
+
+    DEBUG Log "All $*"
+    DEBUG subject="parameters-setting" Log "SETTING: [$__assign_varType] $__assign_varName = \${$indirectAccess} [rq:$__assign_valueRequired]" # [val:${!__assign_paramNo}]
     # subject="parameters-setting" Log --
 
     if [[ "$__assign_valueRequired" == 'true' && -z "${!__assign_paramNo+x}" ]]
@@ -64,8 +69,6 @@ Variable::TrapAssignNumberedParameter() {
     fi
 
     unset __assign_valueRequired __assign_valueReadOnly
-
-    local indirectAccess="$__assign_paramNo"
 
     if [[ "${!indirectAccess-}" == "$var:"* ]]
     then
@@ -143,15 +146,18 @@ Variable::TrapAssignNumberedParameter() {
         fi
       ;;
       *) # 'array'|'map'|objects
+        DEBUG Log "Value of this argument: ${!indirectAccess}"
         if [[ ! -z "${!indirectAccess}" ]]
         then
-          eval "local -$(Variable::GetDeclarationFlagFromType '$__assign_varType') tempMap=\"\$$indirectAccess\""
+          eval "local -$(Variable::GetDeclarationFlagFromType '$__assign_varType') tempMap=\"\${$indirectAccess}\""
           local index
           local value
 
           ## copy the array / map item by item
           for index in "${!tempMap[@]}"
           do
+            DEBUG Log Evaling: "$__assign_varName[$index]=\"${tempMap[$index]}\""
+            # DEBUG Log all these ${FUNCNAME[0]} ${FUNCNAME[1]} "$@"
             eval "$__assign_varName[\$index]=\"\${tempMap[\$index]}\""
           done
 
@@ -215,6 +221,8 @@ Variable::InTrapCaptureParameters() {
   __capture_valueGlobal="${_isGlobal-false}"
   __capture_noHandle="${_noHandle-false}"
 }
+
+declare -a __assign_arguments
 
 ## ARGUMENT RESOLVERS ##
 
