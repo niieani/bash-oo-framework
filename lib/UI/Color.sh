@@ -78,8 +78,8 @@ alias UI.Powerline.IsAvailable="UI.Color.IsAvailable && test -z \${NO_UNICODE-} 
 if UI.Powerline.IsAvailable
 then
   alias UI.Powerline.PointingArrow="echo -e $'\u27a1'"
-  alias UI.Powerline.ArrowLeft="echo -e $'\ue0b2'"
-  alias UI.Powerline.ArrowRight="echo -e $'\ue0b0'"
+  alias UI.Powerline.ArrowLeft="echo -e $'\u25c0'"
+  alias UI.Powerline.ArrowRight="echo -e $'\u25b6'"
   alias UI.Powerline.ArrowRightDown="echo -e $'\u2198'"
   alias UI.Powerline.ArrowDown="echo -e $'\u2B07'"
   alias UI.Powerline.PlusMinus="echo -e $'\ue00b1'"
