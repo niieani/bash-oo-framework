@@ -14,8 +14,9 @@ Exception::SetupTemp() {
 }
 
 Exception::CleanUp() {
+  local exitVal=$?
   rm -f $__oo__storedExceptionLineFile $__oo__storedExceptionSourceFile $__oo__storedExceptionBacktraceFile $__oo__storedExceptionFile || exit 1
-  exit 0
+  exit $exitVal
 }
 
 Exception::ResetStore() {
