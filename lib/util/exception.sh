@@ -38,7 +38,7 @@ command_not_found_handle() {
   Exception::CustomCommandHandler "$@" && return 0 || true
 
   local exit_code="${1}"
-  shift
+  shift || true # there might have not been any parameter, in which case "shift" would fail
   local script="${BASH_SOURCE[1]#./}"
   local lineNo="${BASH_LINENO[0]}"
   local undefinedObject="$*"
