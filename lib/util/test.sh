@@ -29,7 +29,10 @@ class:Test() {
   }
 
   Test.Fail() {
-    echo "$(UI.Color.Red)$(UI.Powerline.Fail) $(UI.Color.Yellow)[$(UI.Color.Red)$(UI.Color.Bold)FAIL$(UI.Color.NoBold)$(UI.Color.Yellow)]$(UI.Color.Default)"
+    [string] line
+    [string] error
+    [string] source
+    echo "$(UI.Color.Red)$(UI.Powerline.Fail) $(UI.Color.Yellow)[$(UI.Color.Red)$(UI.Color.Bold)FAIL$(UI.Color.NoBold)$(UI.Color.Yellow)]$(UI.Color.Default) in $(UI.Color.Yellow)${source}$(UI.Color.Default):$(UI.Color.Blue)${line}$(UI.Color.Default) $(UI.Powerline.RefersTo) $(UI.Color.Red)${error}$(UI.Color.Default)"
     @return
   }
 
@@ -66,6 +69,6 @@ alias describe='Test NewGroup'
 alias summary='Test DisplaySummary'
 alias caught="echo \"CAUGHT: $(UI.Color.Red)\$__BACKTRACE_COMMAND__$(UI.Color.Default) in \$__BACKTRACE_SOURCE__:\$__BACKTRACE_LINE__\""
 alias it="Test Start it"
-alias expectPass="Test OK; catch { Test errors = true; Test Fail; }"
+alias expectPass="Test OK; catch { Test errors = true; Test Fail \"\${__EXCEPTION__[@]}\"; }"
 alias expectOutputPass="Test EchoedOK; catch { Test errors = true; Test Fail; }"
 alias expectFail='catch { caught; Test EchoedOK; }; test $? -eq 1 && Test errors = false; '
