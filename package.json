@@ -1,0 +1,7 @@
+{
+  "name": "bash-oo-framework",
+  "version": "2.1.0",
+  "description": "Bash Infinity is a modern boilerplate / framework / standard library for bash",
+  "global": true,
+  "repo": "niieani/bash-oo-framework",
+}
