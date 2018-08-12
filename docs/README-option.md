@@ -12,13 +12,18 @@ To create an option menu:
 
 * Create an option menu and an option menu wrapper.
 
-  Options optionMenuYad
-  OptionsWrapper optionMenuWrapperYad
+  Options optionMenu
+  OptionsWrapper optionMenuWrapper
 
 * Create a default values array using index with the format:
 
-    [optionName,optionValue,optionLetter,optionFlag,optionRequired]
+  [optionName,optionValue,optionLetter,optionFlag,optionRequired]
 
+  declare -A DEFAULTS
+  DEFAULTS[one,1,a,false,true]=''
+  DEFAULTS[two,2,b,false,false]=''
+  DEFAULTS[verbose,false,v,true,false]=''
+  
   Where each index part is:
 
     * optionName: name of the option. Example: username.
@@ -34,14 +39,9 @@ To create an option menu:
     * optionRequired: true or false value indicating if this option is required. This attribute is
       used on the GUI to verify if the user left a required option empty.
 
-  declare -A DEFAULTS
-  DEFAULTS[one,1,a,false,true]=''
-  DEFAULTS[two,2,b,false,false]=''
-  DEFAULTS[verbose,false,v,true,false]=''
-
 * Set the default values:
 
-  Options optionMenuSample=$($var:optionMenuWrapperSample SetDefaults optionMenuSample DEFAULTS_SAMPLE)
+  Options optionMenuS=$($var:optionMenuWrapper SetDefaults optionMenu DEFAULTS)
 
 * Now you can use Option functions:
 
