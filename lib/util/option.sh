@@ -128,6 +128,58 @@ Type::Initialize Options
 
 class:OptionsWrapper() {
 
+  OptionsWrapper.SetDefaults() {
+    [reference] toSaveDefaultOptions
+    [reference] defaultOptions
+    string serializedOption
+    string indexList="$($var:defaultOptions)"
+    indexList=$($var:indexList unJsonfy)
+    Option toDefault
+
+    for serializedOption in $indexList; do
+      # Replace comma with space.
+      serializedOption=${serializedOption//,/ }
+      serializedArray=($serializedOption)
+      $var:toDefault name = "${serializedArray[0]}"
+      $var:toDefault value = "${serializedArray[1]}"
+      $var:toDefault letter = "${serializedArray[2]}"
+      $var:toDefault flag = "${serializedArray[3]}"
+      $var:toDefault required = "${serializedArray[4]}"
+      $var:toSaveDefaultOptions Set toDefault
+    done 
+    @return toSaveDefaultOptions
+  }
+
+  OptionsWrapper.ParseArguments() {
+    [reference] toSaveParsedOptions
+    optionsString=$($var:toSaveParsedOptions GetOptionsString)
+    string optionValue=''
+    optionName=''
+    optionFlag=false
+
+    shift
+    while getopts $optionsString opt; do
+      try {
+        ! [[ "$opt" == "?" ]]
+      } catch {
+        echo "Ilegal option '$opt'."
+        return 1
+      }
+
+      Option parsedOption=$($var:toSaveParsedOptions Search 'letter' "$opt")
+      optionFlag=$($var:parsedOption flag)
+      
+      optionValue=true
+      [[ "$optionFlag" == false ]] && optionValue="${OPTARG}"
+
+      optionValue=$($var:optionValue trim)
+      $var:parsedOption value = "$optionValue"
+      $var:toSaveParsedOptions Set parsedOption
+
+    done
+    @return toSaveParsedOptions
+  }
+
   OptionsWrapper.GetOptionsGUI() {
     [reference] toSaveOptionsGUI
     string serializedOption
@@ -216,58 +268,6 @@ class:OptionsWrapper() {
       ((index++))
     done
     @return toSaveOptionsGUI
-  }
-
-  OptionsWrapper.SetDefaults() {
-    [reference] toSaveDefaultOptions
-    [reference] defaultOptions
-    string serializedOption
-    string indexList="$($var:defaultOptions)"
-    indexList=$($var:indexList unJsonfy)
-    Option toDefault
-
-    for serializedOption in $indexList; do
-      # Replace comma with space.
-      serializedOption=${serializedOption//,/ }
-      serializedArray=($serializedOption)
-      $var:toDefault name = "${serializedArray[0]}"
-      $var:toDefault value = "${serializedArray[1]}"
-      $var:toDefault letter = "${serializedArray[2]}"
-      $var:toDefault flag = "${serializedArray[3]}"
-      $var:toDefault required = "${serializedArray[4]}"
-      $var:toSaveDefaultOptions Set toDefault
-    done 
-    @return toSaveDefaultOptions
-  }
-
-  OptionsWrapper.ParseArguments() {
-    [reference] toSaveParsedOptions
-    optionsString=$($var:toSaveParsedOptions GetOptionsString)
-    string optionValue=''
-    optionName=''
-    optionFlag=false
-
-    shift
-    while getopts $optionsString opt; do
-      try {
-        ! [[ "$opt" == "?" ]]
-      } catch {
-        echo "Ilegal option '$opt'."
-        return 1
-      }
-
-      Option parsedOption=$($var:toSaveParsedOptions Search 'letter' "$opt")
-      optionFlag=$($var:parsedOption flag)
-      
-      optionValue=true
-      [[ "$optionFlag" == false ]] && optionValue="${OPTARG}"
-
-      optionValue=$($var:optionValue trim)
-      $var:parsedOption value = "$optionValue"
-      $var:toSaveParsedOptions Set parsedOption
-
-    done
-    @return toSaveParsedOptions
   }
 }
 
