@@ -27,18 +27,18 @@ To create an option menu:
   ```
   
 * Set the default values:
-```python
+```javascript
   Options optionMenu=$($var:optionMenuWrapper SetDefaults optionMenu DEFAULTS)
   ```
   
  * Now you can use Option functions:
-```python
+```javascript
   declare -A PARAMETERS=$($var:optionMenuSample ToArray)
   echo "${PARAMETERS[one]}"
   echo "${PARAMETERS[two]}"
   ```
 * You can also add options manually:
- ```python
+ ```javascript
   Option optionA
   $var:optionA name = 'one'
   $var:optionA value = 1
@@ -50,7 +50,7 @@ To create an option menu:
 ## Manage Options: graphical user interface
 
 * Create the defaults as above and then call yad function:
- ```python
+ ```javascript
   Options optionMenu=$($var:optionMenuWrapper GetOptionsGUI optionMenu)
   ```
 ## Limitations
