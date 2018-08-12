@@ -21,8 +21,6 @@ Type::Initialize Option
 class:Options() {
 
   public map optionsMap
- 
-  # To check if GUI succeeded on getting options.
   public string yadSuccess
 
   Options.ToArray() {
