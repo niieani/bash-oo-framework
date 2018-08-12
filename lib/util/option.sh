@@ -18,6 +18,114 @@ class:Option() {
 
 Type::Initialize Option
 
+class:Options() {
+
+  public map optionsMap
+ 
+  # To check if GUI succeeded on getting options.
+  public string yadSuccess
+
+  Options.ToArray() {
+    map toSetOptionsArray
+    string indexList=$(this optionsMap)
+    indexList=$($var:indexList sanitizeJSON)
+    string serializedOption
+   
+    for serializedOption in $indexList; do
+      serializedOption=$($var:serializedOption sanitizeSingleJSON)
+      optionName=$(Options::GetSerializedAttribute "$serializedOption" 'name')
+      optionValue=$(Options::GetSerializedAttribute "$serializedOption" 'value')
+      toSetOptionsArray[$optionName]=$optionValue
+    done
+
+    @return toSetOptionsArray
+  }
+
+  Options.__getter__() {
+    string indexList=$(this optionsMap)
+    @return:value "$($var:indexList sanitizeJSON)"
+  }
+
+  Options.Set() {
+    [reference] toSet
+    this optionsMap set "$($var:toSet name)" "$($var:toSet)"
+  }
+
+  Options.Delete () {
+    [reference] toDelete
+    this optionsMap delete "$($var:toDelete name)"
+  }
+
+  Options::GetSerializedAttribute() {
+    [string] serializedOption
+    [string] attributeName
+    attributeValue=''
+    regex="$attributeName\":\"([[:alnum:]]+)"
+    [[ $serializedOption =~ $regex ]] && attributeValue="${BASH_REMATCH[1]}"
+    echo "$attributeValue"
+  }
+
+  Options::Unserialize() {
+    [string] serializedOption
+    [reference] toReturn
+    serializedOption=$($var:serializedOption sanitizeSingleJSON)
+    $var:toReturn name = $(Options::GetSerializedAttribute "$serializedOption" 'name')
+    $var:toReturn value = $(Options::GetSerializedAttribute "$serializedOption" 'value')
+    $var:toReturn letter = $(Options::GetSerializedAttribute "$serializedOption" 'letter')
+    $var:toReturn flag = $(Options::GetSerializedAttribute "$serializedOption" 'flag')
+    $var:toReturn required = $(Options::GetSerializedAttribute "$serializedOption" 'required')
+  }
+
+  Options.Search() {
+    [string] attributeName
+    [string] textToSearch
+    Option optionFound
+    string serializedOption
+    string indexList=$(this optionsMap)
+    indexList=$($var:indexList sanitizeJSON)
+    itemFound=false
+
+    for serializedOption in $indexList; do
+      serializedOption=$($var:serializedOption sanitizeSingleJSON)
+      attributeValue=$(Options::GetSerializedAttribute "$serializedOption" "$attributeName")
+      if [[ "$attributeValue" == "$textToSearch" ]]; then
+        itemFound=true
+        break
+      fi
+    done
+
+    [[ "$itemFound" == false ]] && return 1
+    Options::Unserialize "$serializedOption" $ref:optionFound
+    @return optionFound
+  }
+
+  Options.GetOptionsString() {
+    optionsString=''
+    optionLetter=''
+    optionFlag=false
+    string serializedOption
+    string indexList=$(this optionsMap)
+    indexList=$($var:indexList sanitizeJSON)
+
+    for serializedOption in $indexList; do
+      serializedOption=$($var:serializedOption sanitizeSingleJSON)
+      optionLetter=$(Options::GetSerializedAttribute "$serializedOption" 'letter')
+      optionFlag=$(Options::GetSerializedAttribute "$serializedOption" 'flag')
+
+      optionsString+=$optionLetter
+      if [[ "$optionFlag" == true ]]; then
+        optionsString+=','
+      else
+        optionsString+=':'
+      fi
+    done
+    @return:value $optionsString
+  }
+
+}
+
+Type::Initialize Options
+
 class:OptionsWrapper() {
 
   OptionsWrapper.GetOptionsGUI() {
@@ -29,7 +137,6 @@ class:OptionsWrapper() {
     optionName=''
     optionValue=''
     optionFlag=false
-
     $var:toSaveOptionsGUI yadSuccess = true
 
     yadInstalled=$(which 'yad')
@@ -165,114 +272,6 @@ class:OptionsWrapper() {
 }
 
 Type::Initialize OptionsWrapper
-
-class:Options() {
-
-  public map optionsMap
- 
-  # To check if GUI succeeded on getting options.
-  public string yadSuccess
-
-  Options.ToArray() {
-    map toSetOptionsArray
-    string indexList=$(this optionsMap)
-    indexList=$($var:indexList sanitizeJSON)
-    string serializedOption
-   
-    for serializedOption in $indexList; do
-      serializedOption=$($var:serializedOption sanitizeSingleJSON)
-      optionName=$(Options::GetSerializedAttribute "$serializedOption" 'name')
-      optionValue=$(Options::GetSerializedAttribute "$serializedOption" 'value')
-      toSetOptionsArray[$optionName]=$optionValue
-    done
-
-    @return toSetOptionsArray
-  }
-
-  Options.__getter__() {
-    string indexList=$(this optionsMap)
-    @return:value "$($var:indexList sanitizeJSON)"
-  }
-
-  Options.Set() {
-    [reference] toSet
-    this optionsMap set "$($var:toSet name)" "$($var:toSet)"
-  }
-
-  Options.Delete () {
-    [reference] toDelete
-    this optionsMap delete "$($var:toDelete name)"
-  }
-
-  Options::GetSerializedAttribute() {
-    [string] serializedOption
-    [string] attributeName
-    attributeValue=''
-    regex="$attributeName\":\"([[:alnum:]]+)"
-    [[ $serializedOption =~ $regex ]] && attributeValue="${BASH_REMATCH[1]}"
-    echo "$attributeValue"
-  }
-
-  Options::Unserialize() {
-    [string] serializedOption
-    [reference] toReturn
-    serializedOption=$($var:serializedOption sanitizeSingleJSON)
-    $var:toReturn name = $(Options::GetSerializedAttribute "$serializedOption" 'name')
-    $var:toReturn value = $(Options::GetSerializedAttribute "$serializedOption" 'value')
-    $var:toReturn letter = $(Options::GetSerializedAttribute "$serializedOption" 'letter')
-    $var:toReturn flag = $(Options::GetSerializedAttribute "$serializedOption" 'flag')
-    $var:toReturn required = $(Options::GetSerializedAttribute "$serializedOption" 'required')
-  }
-
-  Options.Search() {
-    [string] attributeName
-    [string] textToSearch
-    Option optionFound
-    string serializedOption
-    string indexList=$(this optionsMap)
-    indexList=$($var:indexList sanitizeJSON)
-    itemFound=false
-
-    for serializedOption in $indexList; do
-      serializedOption=$($var:serializedOption sanitizeSingleJSON)
-      attributeValue=$(Options::GetSerializedAttribute "$serializedOption" "$attributeName")
-      if [[ "$attributeValue" == "$textToSearch" ]]; then
-        itemFound=true
-        break
-      fi
-    done
-
-    [[ "$itemFound" == false ]] && return 1
-    Options::Unserialize "$serializedOption" $ref:optionFound
-    @return optionFound
-  }
-
-  Options.GetOptionsString() {
-    optionsString=''
-    optionLetter=''
-    optionFlag=false
-    string serializedOption
-    string indexList=$(this optionsMap)
-    indexList=$($var:indexList sanitizeJSON)
-
-    for serializedOption in $indexList; do
-      serializedOption=$($var:serializedOption sanitizeSingleJSON)
-      optionLetter=$(Options::GetSerializedAttribute "$serializedOption" 'letter')
-      optionFlag=$(Options::GetSerializedAttribute "$serializedOption" 'flag')
-
-      optionsString+=$optionLetter
-      if [[ "$optionFlag" == true ]]; then
-        optionsString+=','
-      else
-        optionsString+=':'
-      fi
-    done
-    @return:value $optionsString
-  }
-
-}
-
-Type::Initialize Options
 
 # Sanitize to a maximun of two levels only.
 string.sanitizeJSON() {

@@ -92,10 +92,9 @@ echo 'Get options string.'
 $var:optionMenu GetOptionsString
 echo '----------------'
 
-# Simulate call the script like: ./example-option.sh -a 777
+# Simulate call the script like: ./option.sh -a 777
 echo 'Parse arguments -a 777'
 set -- "${@:1:2}" '-a 777'
-
 Options optionMenu=$($var:optionMenuWrapper ParseArguments optionMenu "$@")
 $var:optionMenu
 echo '----------------'

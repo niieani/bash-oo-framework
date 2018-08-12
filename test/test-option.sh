@@ -91,7 +91,7 @@ expectPass
 
 it 'should parse arguments.'
 try
-  # Simulate call the script like: ./example-option.sh -a 777
+  # Simulate call the script like: ./test-option.sh -a 777
   set -- "${@:1:2}" '-a 777'
   Options optionMenu=$($var:optionMenuWrapper ParseArguments optionMenu "$@")
   serializedOptions=$($var:optionMenu)
