@@ -1,8 +1,8 @@
-# Options Handling
+# Options Handling.
 
 Set of scripts to handle script options/parameters.
 
-## Manage Options: text mode
+## Manage Options: text mode.
 
 To create an option menu:
 
@@ -33,9 +33,9 @@ To create an option menu:
   
  * Now you can use Option functions:
 ```javascript
-  declare -A PARAMETERS=$($var:optionMenuSample ToArray)
-  echo "${PARAMETERS[one]}"
-  echo "${PARAMETERS[two]}"
+  declare -A OPTIONS=$($var:optionMenuSample ToArray)
+  echo "${OPTIONS[one]}"
+  echo "${OPTIONS[two]}"
   ```
 * You can also add options manually:
  ```javascript
@@ -47,13 +47,23 @@ To create an option menu:
   $var:optionA required = true
   $var:optionMenu Set optionA
   ```
-## Manage Options: graphical user interface
+## Manage Options: graphical user interface.
 
 * Create the defaults as above and then call yad function:
  ```javascript
   Options optionMenu=$($var:optionMenuWrapper GetOptionsGUI optionMenu)
   ```
-## Limitations
+## Manage Options: fast text mode.
 
-* Currently only supports one word option values.
+* Create the arrays DEFAULTS and OPTIONS same as above and then call the call the fast get arguments funtion:
+  ```javascript
+  Options::FastParseArguments DEFAULTS OPTIONS "$@"
+  ```
+
+## Manage Options: fast GUI mode.
+
+* Create the arrays DEFAULTS and OPTIONS same as above and then call the call the fast get arguments funtion:
+  ```javascript
+  Options::FastGetOptionsGUI DEFAULTS_FAST_GUI OPTIONS_FAST_GUI
+  ```
 
