@@ -64,6 +64,6 @@ To create an option menu:
 
 * Create the arrays DEFAULTS and OPTIONS same as above and then call the call the fast get arguments funtion:
   ```javascript
-  Options::FastGetOptionsGUI DEFAULTS_FAST_GUI OPTIONS_FAST_GUI
+  Options::FastGetOptionsGUI DEFAULTS OPTIONS
   ```
 
