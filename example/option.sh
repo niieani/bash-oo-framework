@@ -6,25 +6,6 @@ source "$( cd "${BASH_SOURCE[0]%/*}" && cd .. && pwd )/lib/oo-bootstrap.sh"
 
 import util/option
 
-echo 'Fast get options GUI.'
-
-# Name,value,letter,flag,required.
-declare -A DEFAULTS_FAST_GUI
-DEFAULTS_FAST_GUI[one,1,a,false,true]=''
-DEFAULTS_FAST_GUI[two,2,b,false,false]=''
-DEFAULTS_FAST_GUI[verbose,false,v,true,false]=''
-
-declare -A OPTIONS_FAST_GUI
-
-Options::FastGetOptionsGUI DEFAULTS_FAST_GUI OPTIONS_FAST_GUI
-
-echo "${!OPTIONS_FAST_GUI[@]}"
-echo "${OPTIONS_FAST_GUI[@]}"
-
-echo '----------------'
-
-exit 0
-
 OptionsWrapper optionMenuWrapper
 Options optionMenu
 
