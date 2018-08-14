@@ -35,7 +35,6 @@ class:Options() {
       optionValue=$(Options::GetSerializedAttribute "$serializedOption" 'value')
       toSetOptionsArray[$optionName]=$optionValue
     done
-
     @return toSetOptionsArray
   }
 
@@ -133,18 +132,27 @@ class:OptionsWrapper() {
     string indexList="$($var:defaultOptions)"
     indexList=$($var:indexList unJsonfy)
     Option toDefault
+    optionName=''
+    optionValue=''
+    optionLetter=''
+    optionFlag=false
+    optionRequired=false
 
-    for serializedOption in $indexList; do
-      # Replace comma with space.
-      serializedOption=${serializedOption//,/ }
-      serializedArray=($serializedOption)
-      $var:toDefault name = "${serializedArray[0]}"
-      $var:toDefault value = "${serializedArray[1]}"
-      $var:toDefault letter = "${serializedArray[2]}"
-      $var:toDefault flag = "${serializedArray[3]}"
-      $var:toDefault required = "${serializedArray[4]}"
+    DEFAULT_IFS="$IFS"
+    IFS='|'
+    for attributeList in $indexList; do
+      IFS=','
+      attributesArray=($attributeList)
+
+      IFS=$DEFAULT_IFS
+      $var:toDefault name = "${attributesArray[0]}"
+      $var:toDefault value = "${attributesArray[1]}"
+      $var:toDefault letter = "${attributesArray[2]}"
+      $var:toDefault flag = "${attributesArray[3]}"
+      $var:toDefault required = "${attributesArray[4]}"
       $var:toSaveDefaultOptions Set toDefault
-    done 
+    done
+    IFS="$DEFAULT_IFS"
     @return toSaveDefaultOptions
   }
 
@@ -241,12 +249,13 @@ class:OptionsWrapper() {
 
     # Read the values and store them on the options map.
     index=0
+    DEFAULT_IFS="$IFS"
     IFS='|' read -ra input <<< "$yadInput"
     for value in "${input[@]}"; do
+      IFS="$DEFAULT_IFS"
       optionName="${yadLabels[$index]}"
       optionValue="$value"
 
-      # Search option on defaults.
       Option guiOption=$($var:toSaveOptionsGUI Search 'name' "$optionName")
 
       # If required value must be provided.
@@ -259,12 +268,14 @@ class:OptionsWrapper() {
           $var:toSaveOptionsGUI yadSuccess = false
         }
       fi
-
-      # Set new value.
+   
       $var:guiOption value = "$optionValue"
+
       $var:toSaveOptionsGUI Set guiOption
       ((index++))
+      IFS='|'
     done
+    IFS="$DEFAULT_IFS"
     @return toSaveOptionsGUI
   }
 }
@@ -276,6 +287,9 @@ string.sanitizeJSON() {
   @resolve:this
   local toSanitize="$this"
   local sanitizedJSONString=''
+
+  # Trim.
+  toSanitize=$(var: toSanitize trim)
 
   # Remove \".
   toSanitize="${toSanitize//\\\"/}"
@@ -291,17 +305,20 @@ string.sanitizeJSON() {
   toSanitize="${toSanitize//\)/}}"
   # Replace space} with }.
   toSanitize="${toSanitize//\ \}/}}"
-  # Replace space with space,.
-  toSanitize="${toSanitize// / ,}"
-  # Trim.
-  toSanitize=$(var: toSanitize trim)
+  # Replace }space with }.
+  toSanitize="${toSanitize//\}/\}}"
+  # Replace }space with }|.
+  toSanitize="${toSanitize//\} /\}\|}"
 
-  # Sanitize object by object.
+  # Sanitize json object by object.
+  DEFAULT_IFS="$IFS"
+  IFS="|"
   for jsonItem in $toSanitize; do
     jsonItem=$(var: jsonItem sanitizeSingleJSON)
     sanitizedJSONString+=$jsonItem
     sanitizedJSONString+=' ,'
   done
+  IFS="$DEFAULT_IFS"
   sanitizedJSONString="${sanitizedJSONString::-2}"
 
   # Verify if this is a single json option.
@@ -365,10 +382,20 @@ string.unJsonfy() {
   # Remove ".
   toUnJsonfy="${toUnJsonfy//\"/}"
 
-  # Replace [ with space,.
-  toUnJsonfy=${toUnJsonfy//\[/ ,}
+  # Replace [ with |,
+  # Here we use | to denote option separation.
+  toUnJsonfy=${toUnJsonfy//\[/\|}
+
+  # Replace space| with |.
+  toUnJsonfy=${toUnJsonfy// \|/\|}
+
+  # Replace |space with |.
+  toUnJsonfy=${toUnJsonfy//\| /\|}
+
   toUnJsonfy=$(var: toUnJsonfy trim)
-  [[ "${toUnJsonfy:0:1}" == ',' ]] && toUnJsonfy="${toUnJsonfy:1}"
+
+  # Delete first |.
+  [[ "${toUnJsonfy:0:1}" == '|' ]] && toUnJsonfy="${toUnJsonfy:1}"
   @return toUnJsonfy
 }
 
