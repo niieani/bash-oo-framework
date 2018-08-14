@@ -119,6 +119,207 @@ class:Options() {
     @return:value $optionsString
   }
 
+  ################################################################
+  # Creates an options menu array from defaults values array and
+  # the arguments string $@.
+  # Unlike OptionsWrapper.ParseArguments this function does not
+  # uses objects, this with the purpose of improve performance.
+  # Arguments:
+  #   sourceDefaults: default values array, 
+  #     it must have indexes with the format:
+  #       name,value,letter,flag,required.
+  #   destinyOptions: array where to store options.
+  # Globals:
+  #   $@: string arguments passed to this script.
+  # Returns:
+  #   The options menu in the destiny array name.
+  ################################################################
+  Options::FastParseArguments() {
+    sourceDefaults=$1
+    destinyOptions=$2
+    optionsString=''
+    optionName=''
+    optionValue=''
+    optionLetter=''
+    optionFlag=false
+    local -a 'valuesIndex=("${!'"$sourceDefaults"'[*]}")'
+
+    # Set default values and create options string.
+    for valueIndex in $valuesIndex; do
+      attributesArray=($valueIndex)
+      DEFAULT_IFS="$IFS"
+      IFS=","
+      attributeItemArray=($attributesArray)
+      IFS="$DEFAULT_IFS"
+
+      optionName="${attributeItemArray[0]}"
+      optionValue="${attributeItemArray[1]}"
+      optionLetter="${attributeItemArray[2]}"
+      optionFlag="${attributeItemArray[3]}"
+      optionsString+="$optionLetter"
+
+      # If option is a flag then an argument is not required.
+      if [[ "$optionFlag" == true ]]; then
+        optionsString+=','
+      else
+        optionsString+=':'
+      fi
+      eval $destinyOptions[$optionName]="$(echo $optionValue)"
+    done
+
+    shift 2
+    while getopts $optionsString opt; do
+      try {
+        ! [[ "$opt" == "?" ]]
+      } catch {
+        echo "Ilegal option '$opt'."
+        return 1
+      }
+
+      for valueIndex in $valuesIndex; do
+        letterRegex=',([[:alpha:]]{1}),'
+
+        if [[ $valueIndex =~ $letterRegex ]]; then
+          optionLetter="${BASH_REMATCH[1]}"
+          if [[ "$optionLetter" == "$opt" ]]; then
+            attributesArray=($valueIndex)
+            DEFAULT_IFS="$IFS"
+            IFS=","
+            attributeItemArray=($attributesArray)
+            optionName="${attributeItemArray[0]}"
+            optionValue="${attributeItemArray[1]}"
+            optionFlag="${attributeItemArray[3]}"
+            optionsString+="$opt"
+            IFS="$DEFAULT_IFS"
+
+            # If option is a flag then value is always true (present).
+            if [[ "$optionFlag" == true ]]; then
+              optionValue=true
+            else
+              optionValue="${OPTARG}"
+            fi
+            
+            # Overwrite default value.
+            eval $destinyOptions[$optionName]="$(echo $optionValue)"
+            # Option found.
+            break
+          fi
+        fi
+      done
+    done
+    return 0
+  }
+
+  ################################################################
+  # Shows a GUI with yad to capture option values.
+  # Unlike OptionsWrapper.GetOptionsGUI this function does not
+  # uses objects, this with the purpose of improve performance.
+  # Arguments:
+  #   sourceDefaults: default values array, 
+  #     it must have indexes with the format:
+  #       name,value,letter,flag,required.
+  #   destinyOptions: array where to store options.
+  # Returns:
+  #   The options menu in the destiny array name.
+  ################################################################
+  Options::FastGetOptionsGUI() {
+    sourceDefaults=$1
+    destinyOptions=$2
+    local -a 'valuesIndex=("${!'"$sourceDefaults"'[*]}")'
+    optionName=''
+    optionValue=''
+    optionFlag=false
+    optionRequired=false
+
+    yadInstalled=$(which 'yad')
+    if [[ -z "$yadInstalled" ]]; then
+      return 1
+    fi
+
+    # Yad form.
+    yadString='yad --form --title="Set options" '
+    yadOptionsString=''
+    yadFlagsString=''
+    yadOption=''
+    yadLabels=''
+
+    # Save index names to manipulate options array later.
+    optionsNamesList=''
+    flagsNamesList=''
+
+    # Set defaults and create yad form string.
+    for valueIndex in $valuesIndex; do
+      attributesArray=($valueIndex)
+      DEFAULT_IFS="$IFS"
+      IFS=","
+      attributeItemArray=($attributesArray)
+      IFS="$DEFAULT_IFS"
+
+      optionName="${attributeItemArray[0]}"
+      optionValue="${attributeItemArray[1]}"
+      optionFlag="${attributeItemArray[3]}"
+
+      # Set default value.
+      eval $destinyOptions[$optionName]="$(echo $optionValue)"
+
+      # When executing yad with eval, the text with the form: --field="${option[value]}"
+      # does not get well parsed, to prevent that, add to the yad string the keywords 'name:' and 'value'
+      # and then replace them with the actual values.
+      yadOption='--field="name": value '
+      yadOption=${yadOption/name/$optionName}
+
+      # Set the type to checkbox.
+      if [[ "$optionFlag" == true ]]; then
+        yadOption=${yadOption/ value/CHK $optionValue}
+        yadFlagsString+=$yadOption
+        flagsNamesList+="$optionName "
+   
+      else
+        yadOption=${yadOption/value/$optionValue}
+        yadOptionsString+=$yadOption
+        optionsNamesList+="$optionName "
+      fi
+    done
+
+    # Show menu.
+    yadString+=${yadOptionsString}${yadFlagsString}
+    yadInput=$(eval $yadString)
+
+    string optionsLabelsList="${optionsNamesList}${flagsNamesList}"
+
+    optionsLabelsList=$($var:optionsLabelsList trim)
+    yadLabels=($optionsLabelsList)
+
+    # Read the values and store them on the options map.
+    index=0
+    DEFAULT_IFS="$IFS"
+    IFS='|' read -ra input <<< "$yadInput"
+    for optionValue in "${input[@]}"; do
+      IFS="$DEFAULT_IFS"
+      optionName="${yadLabels[$index]}"
+
+      # Find option to check if is required.
+      nameValueRegex="$optionName,.*,.*,.*,([[:alpha:]]+)"
+      for valueIndex in $valuesIndex; do
+
+        if [[ $valueIndex =~ $nameValueRegex ]]; then
+          optionRequired="${BASH_REMATCH[1]}"   
+          if [[ "$optionRequired" == true ]] && [[ -z "$optionValue" ]]; then
+            echo "The option '$optionName' is required, process aborted." | yad --text-info --width=400 --height=200
+            return 1
+          fi
+        fi
+      done
+  
+      # Rewrite default.
+      eval $destinyOptions[$optionName]="$(echo '$optionValue')"
+      ((index++))
+      IFS='|'
+    done
+    IFS="$DEFAULT_IFS"
+    return 0
+  }
+
 }
 
 Type::Initialize Options
@@ -264,7 +465,7 @@ class:OptionsWrapper() {
         try {
           ! [[ -z "$optionValue" ]]
         } catch {
-          echo "The option $optionName is required, process aborted." | yad --text-info --width=400 --height=200
+          echo "The option '$optionName' is required, process aborted." | yad --text-info --width=400 --height=200
           $var:toSaveOptionsGUI yadSuccess = false
         }
       fi

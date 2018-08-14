@@ -6,6 +6,25 @@ source "$( cd "${BASH_SOURCE[0]%/*}" && cd .. && pwd )/lib/oo-bootstrap.sh"
 
 import util/option
 
+echo 'Fast get options GUI.'
+
+# Name,value,letter,flag,required.
+declare -A DEFAULTS_FAST_GUI
+DEFAULTS_FAST_GUI[one,1,a,false,true]=''
+DEFAULTS_FAST_GUI[two,2,b,false,false]=''
+DEFAULTS_FAST_GUI[verbose,false,v,true,false]=''
+
+declare -A OPTIONS_FAST_GUI
+
+Options::FastGetOptionsGUI DEFAULTS_FAST_GUI OPTIONS_FAST_GUI
+
+echo "${!OPTIONS_FAST_GUI[@]}"
+echo "${OPTIONS_FAST_GUI[@]}"
+
+echo '----------------'
+
+exit 0
+
 OptionsWrapper optionMenuWrapper
 Options optionMenu
 
@@ -100,8 +119,8 @@ $var:optionMenu
 echo '----------------'
 
 echo 'Copy values from Object to associative array.'
-declare -A PARAMETERS=$($var:optionMenu ToArray)
-echo "${PARAMETERS[@]}"
+declare -A OPTIONS=$($var:optionMenu ToArray)
+echo "${OPTIONS[@]}"
 echo '----------------'
 
 echo 'Basic use: read defaults from array, write results to associative array.'
@@ -121,14 +140,14 @@ DEFAULTS_SAMPLE[one,1,a,false,true]=''
 DEFAULTS_SAMPLE[two,2,b,false,false]=''
 Options optionMenuSample=$($var:optionMenuWrapperSample SetDefaults optionMenuSample DEFAULTS_SAMPLE)
 
-declare -A PARAMETERS_SAMPLE=$($var:optionMenuSample ToArray)
+declare -A OPTIONS_SAMPLE=$($var:optionMenuSample ToArray)
 
-for index in "${!PARAMETERS_SAMPLE[@]}"; do
-  echo "$index : ${PARAMETERS_SAMPLE[$index]}"
+for index in "${!OPTIONS_SAMPLE[@]}"; do
+  echo "$index : ${OPTIONS_SAMPLE[$index]}"
 done
 
-echo "${PARAMETERS_SAMPLE[one]}"
-echo "${PARAMETERS_SAMPLE[two]}"
+echo "${OPTIONS_SAMPLE[one]}"
+echo "${OPTIONS_SAMPLE[two]}"
 echo '----------------'
 
 echo 'Graphical User Interface with yad.'
@@ -149,6 +168,41 @@ if [[ "$($var:optionMenuYad yadSuccess)" == true ]]; then
 else
   echo "An error happend with yad."
 fi
+echo '----------------'
+
+echo 'Fast parse arguments.'
+
+# Name,value,letter,flag,required.
+declare -A DEFAULTS_FAST
+DEFAULTS_FAST[one,1,a,false,true]=''
+DEFAULTS_FAST[two,2,b,false,false]=''
+DEFAULTS_FAST[verbose,false,v,true,false]=''
+
+declare -A OPTIONS_FAST
+
+set -- "${@:1:2}" '-a 777'
+Options::FastParseArguments DEFAULTS_FAST OPTIONS_FAST "$@"
+
+echo "${!OPTIONS_FAST[@]}"
+echo "${OPTIONS_FAST[@]}"
+
+echo '----------------'
+
+echo 'Fast get options GUI.'
+
+# Name,value,letter,flag,required.
+declare -A DEFAULTS_FAST_GUI
+DEFAULTS_FAST_GUI[one,1,a,false,true]=''
+DEFAULTS_FAST_GUI[two,2,b,false,false]=''
+DEFAULTS_FAST_GUI[verbose,false,v,true,false]=''
+
+declare -A OPTIONS_FAST_GUI
+
+Options::FastGetOptionsGUI DEFAULTS_FAST_GUI OPTIONS_FAST_GUI
+
+echo "${!OPTIONS_FAST_GUI[@]}"
+echo "${OPTIONS_FAST_GUI[@]}"
+
 echo '----------------'
 
 exit 0

@@ -105,3 +105,14 @@ try
   [[ "${PARAMETERS[two]}" = '2' ]]
 expectPass
 
+it 'should fast parse arguments.'
+try
+  declare -A DEFAULTS_FAST
+  DEFAULTS_FAST[one,1,a,false,true]=''
+  declare -A OPTIONS_FAST
+  set -- "${@:1:2}" '-a 777'
+  Options::FastParseArguments DEFAULTS_FAST OPTIONS_FAST "$@"
+  testText="${!OPTIONS_FAST[@]}"
+  [[ "$testText" = *'one'* ]]
+expectPass
+
