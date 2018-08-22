@@ -36,6 +36,12 @@ Log::DisableFilter() {
 }
 
 Log() {
+  # support verbosing logging
+  local V="${V:-0}"
+  if [[ $VERBOSE < $V ]]; then
+    return
+  fi
+
   local callingFunction="${FUNCNAME[1]}"
   local callingScript="${BASH_SOURCE[1]}"
   local scope
