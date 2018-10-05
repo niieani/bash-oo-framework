@@ -698,7 +698,9 @@ Contributing
 ============
 
 Feel free to fork, suggest changes or new modules and file a pull request.
-The two features that I'd love to add are:
+Because of limitations and unnecessary complexity of the current implementation we're currently brainstorming a 3.0 rewrite in #45.
+
+The things that I'd love to add are:
 
 * unit tests for all important methods
 * port to bash 3 (preferably a dynamic port that imports the right file for the right version)
