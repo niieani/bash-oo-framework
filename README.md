@@ -11,7 +11,19 @@ The aim of Bash Infinity is to maximize readability of bash scripts, minimize th
 
 Bash Infinity transforms the often obfuscated "bash syntax" to a cleaner, more modern syntax.
 
-Disclaimer: Not all of the modules work with earlier versions of bash, as I test with **bash 4**. However, it should be possible (and relatively easy) to [port non-working parts](#porting-to-bash-3) to earlier versions.
+Disclaimer
+==========
+
+Some components are more sturdy than others, and as-it-stands the framework lacks good test coverage (we need your help!).
+
+Due to the above and relatively high code-complexity, we have decided that it will make the most sense to do a rewrite for the next major version 3.0 (see discussion in #45), taking the best parts of the framework, while re-using established tools from bash community.
+
+At this point, I would **not recommend starting major projects** based on the whole framework. Instead, copy and paste parts you need, ideally those you understand, if you found a particular feature useful.
+
+Compatibility
+=============
+
+Not all of the modules work with earlier versions of bash, as I test with **bash 4**. However, it should be possible (and relatively easy) to [port non-working parts](#porting-to-bash-3) to earlier versions.
 
 Quick-start
 ===========
