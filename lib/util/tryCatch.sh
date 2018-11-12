@@ -3,7 +3,7 @@ declare -ig __oo__insideTryCatch=0
 declare -g __oo__presetShellOpts="$-"
 
 # in case try-catch is nested, we set +e before so the parent handler doesn't catch us instead
-alias try='[[ $__oo__insideTryCatch -eq 0 ]] || __oo__presetShellOpts="$-"; __oo__insideTryCatch+=1; set +e; ( set -e; true; '
+alias try='[[ $__oo__insideTryCatch -eq 0 ]] || __oo__presetShellOpts="$(echo $- | sed 's/[is]//g')"; __oo__insideTryCatch+=1; set +e; ( set -e; true; '
 alias catch='); declare __oo__tryResult=$?; __oo__insideTryCatch+=-1; [[ $__oo__insideTryCatch -lt 1 ]] || set -${__oo__presetShellOpts:-e} && Exception::Extract $__oo__tryResult || '
 
 Exception::SetupTemp() {
