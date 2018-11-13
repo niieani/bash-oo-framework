@@ -22,4 +22,3 @@ EX_TEMPFAIL=75  # temp failure; user is invited to retry
 EX_PROTOCOL=76  # remote error in protocol
 EX_NOPERM=77  # permission denied
 EX_CONFIG=78  # configuration error
-EX__MAX=78  # maximum listed value
