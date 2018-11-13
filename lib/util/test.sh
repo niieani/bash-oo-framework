@@ -43,7 +43,7 @@ class:Test() {
       echo "$(UI.Powerline.ArrowLeft) $(UI.Color.Magenta)Completed [$(UI.Color.White)$(this groupName)$(UI.Color.Magenta)]: $(UI.Color.Default)$(UI.Color.Red)There were errors $(UI.Color.Default)$(UI.Powerline.Lightning)"
       this errors = false
     else
-      echo "$(UI.Powerline.ArrowLeft) $(UI.Color.Magenta)Completed [$(UI.Color.White)$(this groupName)$(UI.Color.Magenta)]: $(UI.Color.Default)$(UI.Color.Yellow)Test group completed succesfully $(UI.Color.Default)$(UI.Powerline.ThumbsUp)"
+      echo "$(UI.Powerline.ArrowLeft) $(UI.Color.Magenta)Completed [$(UI.Color.White)$(this groupName)$(UI.Color.Magenta)]: $(UI.Color.Default)$(UI.Color.Yellow)Test group completed successfully $(UI.Color.Default)$(UI.Powerline.ThumbsUp)"
     fi
     @return
   }
