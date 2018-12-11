@@ -1,14 +1,14 @@
 dotenv () {
   envfile="${1:-$(pwd)}/.env"
-  N='�' # CHR(160)
 
   if [[ -f "$envfile" ]]
   then
-    locals=( $(egrep -v '^#' "$envfile" | tr ' ' "$N" | xargs) )
+    IFS=$'\n' locals=( $(egrep -v '^#' "$envfile") )
+    IFS=$' \t\n'
 
     for var in "${locals[@]}"
     do
-      export "$(echo $var | tr "$N" ' ')"
+      export "$var"
     done
   fi
 }
