@@ -1,9 +1,23 @@
-script:
+install:
   - bash --version
+  - gcc -v || echo ignore
+  - make -v || echo ignore
+  - sudo apt-get -y install build-essential
+  - gcc -v
+  - make -v
+  - wget http://ftp.gnu.org/gnu/bash/bash-4.4.tar.gz
+  - tar xf bash-4.4.tar.gz
+  - cd bash-4.4
+  - ./configure
+  - make
+  - cd ..
+  - export PATH=$PWD/bash-4.4:$PATH
+  - bash --version
+script:
   - cd example
   #- for f in *.sh; do ./$f; done
-  #- ./array.sh  
-  - ./human.sh  
+  - ../bash-4.4/bash ./array.sh  
+  - bash ./human.sh  
   - ./string.sh  
   - ./testing.sh  
   - ./trycatch.sh
