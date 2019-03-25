@@ -1,0 +1,3 @@
+script:
+  - cd example
+  - for f in *.sh; do ./$f; done
