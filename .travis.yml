@@ -1,7 +1,8 @@
 script:
+  - bash --version
   - cd example
   #- for f in *.sh; do ./$f; done
-  - ./array.sh  
+  #- ./array.sh  
   - ./human.sh  
   - ./string.sh  
   - ./testing.sh  
