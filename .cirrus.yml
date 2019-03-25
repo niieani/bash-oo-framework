@@ -1,0 +1,13 @@
+container:
+  image: gcc:latest
+test_task:
+  check_env_script:
+    - apt-cache policy bash
+  test_script: 
+    - bash --version
+    - cd example
+    - ./array.sh  
+    - ./human.sh  
+    - ./string.sh  
+    - ./testing.sh
+    - ./trycatch.sh
