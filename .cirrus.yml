@@ -1,8 +1,8 @@
+container:
+  image: gcc:latest
 test_task:
-  #container:
-    #image: gradle:jdk8
-    #cpu: 4
-    #memory: 10G
+  check_env_script:
+    - apt-cache policy bash
   test_script: 
     - bash --version
     - cd example
