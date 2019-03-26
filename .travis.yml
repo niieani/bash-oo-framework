@@ -1,25 +1,17 @@
-# upgrade to bash 4.4
-install:
-  - apt-cache policy bash gcc make
-  - bash --version
-  # install gcc and make
-  - sudo apt-get -y install build-essential
-  - gcc -v
-  - make -v
-  - wget http://ftp.gnu.org/gnu/bash/bash-4.4.tar.gz
-  - tar xf bash-4.4.tar.gz
-  - cd bash-4.4
-  - ./configure
-  - make
-  - cd ..
-  - export PATH=$PWD/bash-4.4:$PATH
-  - bash --version
+language: bash
 
-# run examples
+env:
+  - BASH=latest
+  - BASH=5.0.3
+  - BASH=4.4.23
+  - BASH=4.3.48
+  - BASH=4.2.53
+before_script: 
+  - docker pull bash:$BASH
+  - docker run bash --version
 script:
-  - cd example
-  - ./array.sh  
-  - ./human.sh  
-  - ./string.sh  
-  #- ./testing.sh  hanging
-  #- ./trycatch.sh hanging
+  - docker run -v $PWD:/bash bash bash/example/array.sh
+  - docker run -v $PWD:/bash bash bash/example/human.sh
+  - docker run -v $PWD:/bash bash bash/example/string.sh
+  - docker run -v $PWD:/bash bash bash/example/testing.sh
+  - docker run -v $PWD:/bash bash bash/example/trycatch.sh
