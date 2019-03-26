@@ -1,23 +1,17 @@
 language: bash
 
-services:
-  - docker
-
 env:
   - BASH=latest
   - BASH=5.0.3
   - BASH=4.4.23
   - BASH=4.3.48
   - BASH=4.2.53
-# run examples
 before_script: 
   - docker pull bash:$BASH
   - docker run bash --version
 script:
-  - bash --version
-  - cd example
-  - ./array.sh  
-  #- ./human.sh  
-  #- ./string.sh  
-  #- ./testing.sh  hanging
-  #- ./trycatch.sh hanging
+  - docker run -v $PWD:/bash bash bash/example/array.sh
+  - docker run -v $PWD:/bash bash bash/example/human.sh
+  - docker run -v $PWD:/bash bash bash/example/string.sh
+  - docker run -v $PWD:/bash bash bash/example/testing.sh
+  - docker run -v $PWD:/bash bash bash/example/trycatch.sh
