@@ -1,25 +1,16 @@
-# upgrade to bash 4.4
-install:
-  - apt-cache policy bash gcc make
-  - bash --version
-  # install gcc and make
-  - sudo apt-get -y install build-essential
-  - gcc -v
-  - make -v
-  - wget http://ftp.gnu.org/gnu/bash/bash-4.4.tar.gz
-  - tar xf bash-4.4.tar.gz
-  - cd bash-4.4
-  - ./configure
-  - make
-  - cd ..
-  - export PATH=$PWD/bash-4.4:$PATH
-  - bash --version
-
+language: bash
+bash:
+  - latest
+  - 5.0.3
+  - 4.4.23
+  - 4.3.48
+  - 4.2.53
 # run examples
+before_script: bash --version
 script:
   - cd example
   - ./array.sh  
   - ./human.sh  
   - ./string.sh  
-  #- ./testing.sh  hanging
-  #- ./trycatch.sh hanging
+  - ./testing.sh  hanging
+  - ./trycatch.sh hanging
