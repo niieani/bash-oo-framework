@@ -1,10 +1,12 @@
-container:
-  image: gcc:latest
 test_task:
-  check_env_script:
-    - apt-cache policy bash
-  test_script: 
-    - bash --version
+  container:
+    matrix:
+      image: bash:5
+      image: bash:4
+    cpu: 1
+    memory: 512M
+  version_script: bash --version
+  test_script:
     - cd example
     - ./array.sh  
     - ./human.sh  
