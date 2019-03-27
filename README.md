@@ -1,6 +1,7 @@
 Bash Infinity
 =============
-
+[![Build Status](https://travis-ci.com/niieani/bash-oo-framework.svg?branch=master)](https://travis-ci.com/niieani/bash-oo-framework)
+[![Build Status](https://api.cirrus-ci.com/github/niieani/bash-oo-framework.svg)](https://cirrus-ci.com/github/niieani/bash-oo-framework)
 [![Join the chat at https://gitter.im/niieani/bash-oo-framework](https://badges.gitter.im/niieani/bash-oo-framework.svg)](https://gitter.im/niieani/bash-oo-framework?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
 
 Bash Infinity is a standard library and a boilerplate framework for writing tools using **bash**.

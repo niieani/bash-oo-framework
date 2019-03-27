@@ -1,0 +1,19 @@
+test_task:
+  container:
+    matrix:
+      # version numbers found on https://hub.docker.com/_/bash
+      image: bash:latest
+      image: bash:5.0.3
+      image: bash:4.4.23
+      image: bash:4.3.48
+      image: bash:4.2.53
+    cpu: 1
+    memory: 512M
+  version_script: bash --version
+  test_script:
+    - cd example
+    - ./array.sh  
+    - ./human.sh  
+    - ./string.sh  
+    - ./testing.sh
+    - ./trycatch.sh

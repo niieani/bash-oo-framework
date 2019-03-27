@@ -1,0 +1,17 @@
+language: bash
+
+env:
+  - BASH=latest
+  - BASH=5.0.3
+  - BASH=4.4.23
+  - BASH=4.3.48
+  - BASH=4.2.53
+before_script: 
+  - docker pull bash:$BASH
+  - docker run bash:$BASH --version
+script:
+  - docker run -v $PWD:/bash bash:$BASH bash/example/array.sh
+  - docker run -v $PWD:/bash bash:$BASH bash/example/human.sh
+  - docker run -v $PWD:/bash bash:$BASH bash/example/string.sh
+  - docker run -v $PWD:/bash bash:$BASH bash/example/testing.sh
+  - docker run -v $PWD:/bash bash:$BASH bash/example/trycatch.sh
