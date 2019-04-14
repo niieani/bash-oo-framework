@@ -445,7 +445,7 @@ class:Human() {
     this eaten push "$food"
 
     # will return a string with the value:
-    @return:value "$this just ate $food, which is the same as $1"
+    @return:value "$(this name) just ate $food, which is the same as $1"
   }
 
   Human.WhatDidHeEat() {
