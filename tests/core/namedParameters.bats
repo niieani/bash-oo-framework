@@ -2,7 +2,6 @@
 
 export SUITE='named parameters'
 
-pwd
 . vendor/bats-support/load.bash
 . vendor/bats-assert/load.bash
 . src/core/namedParameters.sh
