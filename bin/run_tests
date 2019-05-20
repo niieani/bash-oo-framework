@@ -1,0 +1,11 @@
+#!/usr/bin/bash
+
+pwd
+if [[ ! -d vendor/bats-core ]]; then
+  printf '%s\n' 'Installing dependencies'
+  git clone https://github.com/bats-core/bats-core.git vendor/bats-core
+  git clone https://github.com/ztombol/bats-support vendor/bats-support
+  git clone https://github.com/ztombol/bats-assert vendor/bats-assert
+fi
+
+vendor/bats-core/bin/bats tests/**
