@@ -36,6 +36,16 @@ export SUITE='named parameters'
   assert_output 'declare -- str="passed"'
 }
 
+@test "$SUITE: string - declare parameter with passed value containing spaces" {
+  f() {
+    [string] str='value'
+    declare -p str
+  }
+
+  run f 'passed value'
+  assert_output 'declare -- str="passed value"'
+}
+
 @test "$SUITE: integer - declare empty parameter" {
   f() {
     [integer] int
@@ -74,6 +84,66 @@ export SUITE='named parameters'
 
   run f 'string'
   assert_failure
+}
+
+@test "$SUITE: boolean - declare empty parameter as false" {
+  f() {
+    [boolean] bool
+    declare -p bool
+  }
+
+  run f
+  assert_output 'declare -- bool="false"'
+}
+
+@test "$SUITE: boolean - declare parameter with default value" {
+  f() {
+    [boolean] bool=true
+    declare -p bool
+  }
+
+  run f
+  assert_output 'declare -- bool="true"'
+}
+
+@test "$SUITE: boolean - declare parameter with passed value" {
+  f() {
+    [boolean] bool=false
+    declare -p bool
+  }
+
+  run f true
+  assert_output 'declare -- bool="true"'
+}
+
+@test "$SUITE: boolean - declare as false when argument is not true/false" {
+  f() {
+    [boolean] bool=true
+    declare -p bool
+  }
+
+  run f 'string'
+  assert_output 'declare -- bool="false"'
+}
+
+@test "$SUITE: rest - declare parameter with no value" {
+  f() {
+    [...rest] rest
+    declare -p rest
+  }
+
+  run f
+  assert_output "declare -a rest=()"
+}
+
+@test "$SUITE: rest - declare parameter with multiple arguments" {
+  f() {
+    [...rest] rest
+    declare -p rest
+  }
+
+  run f 'string' 10 'with space'
+  assert_output "declare -a rest=([0]=\"string\" [1]=\"10\" [2]=\"with space\")"
 }
 
 @test "$SUITE: fail when a required parameter is not given" {
