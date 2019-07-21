@@ -146,6 +146,19 @@ export SUITE='named parameters'
   assert_output "declare -a rest=([0]=\"string\" [1]=\"10\" [2]=\"with space\")"
 }
 
+@test "$SUITE: rest - declare parameter with multiple arguments after another" {
+  f() {
+    [string] str
+    [...rest] rest
+    declare -p str
+    declare -p rest
+  }
+
+  run f 'passed' 10 'with space'
+  assert_output --partial 'declare -- str="passed"'
+  assert_output --partial "declare -a rest=([0]=\"10\" [1]=\"with space\")"
+}
+
 @test "$SUITE: fail when a required parameter is not given" {
   f() {
     @required [integer] int
