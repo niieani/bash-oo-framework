@@ -37,7 +37,7 @@ command_not_found_handle() {
 
   Exception::CustomCommandHandler "$@" && return 0 || true
 
-  local exit_code="${1}"
+  local exit_code="${1:-0}"
   shift || true # there might have not been any parameter, in which case "shift" would fail
   local script="${BASH_SOURCE[1]#./}"
   local lineNo="${BASH_LINENO[0]}"
@@ -58,6 +58,9 @@ command_not_found_handle() {
   then
     subject=level3 Log "inside Try No.: $__oo__insideTryCatch"
 
+    if [[ ! -s $__oo__storedExceptionErrorcodeFile ]]; then
+        echo "$exit_code" > $__oo__storedExceptionErrorcodeFile
+    fi
     if [[ ! -s $__oo__storedExceptionLineFile ]]; then
       echo "$lineNo" > $__oo__storedExceptionLineFile
     fi
@@ -74,13 +77,13 @@ command_not_found_handle() {
     return 1 # needs to be return 1
   fi
 
-  if [[ $BASH_SUBSHELL -ge 25 ]] ## TODO: configurable
+  if (( $BASH_SUBSHELL >= 25 )) ## TODO: configurable
   then
     echo "ERROR: Call stack exceeded (25)."
     Exception::ContinueOrBreak || exit 1
   fi
 
-  local -a exception=( "$lineNo" "$undefinedObject" "$script" )
+  local -a exception=( "${exit_code:-0}" "$lineNo" "$undefinedObject" "$script" )
 
   Exception::FillExceptionWithTraceElements
 
@@ -107,6 +110,8 @@ Exception::PrintException() {
   #for traceElement in Exception::GetLastException
   while [[ $counter -lt ${#exception[@]} ]]
   do
+    backtraceErrorcode[$backtraceNo]="${exception[$counter]}"
+    counter+=1
     backtraceLine[$backtraceNo]="${exception[$counter]}"
     counter+=1
     backtraceCommand[$backtraceNo]="${exception[$counter]}"
@@ -121,7 +126,7 @@ Exception::PrintException() {
 
   while [[ $index -lt $backtraceNo ]]
   do
-    Console::WriteStdErr "$(Exception::FormatExceptionSegment "${backtraceFile[$index]}" "${backtraceLine[$index]}" "${backtraceCommand[($index - 1)]}" $(( $index + $backtraceIndentationLevel )) )"
+    Console::WriteStdErr "$(Exception::FormatExceptionSegment "${backtraceErrorcode[$index]}" "${backtraceFile[$index]}" "${backtraceLine[$index]}" "${backtraceCommand[($index - 1)]}" $(( $index + $backtraceIndentationLevel )) )"
     index+=1
   done
 }
@@ -173,10 +178,12 @@ Exception::GetUnderlinedPart() {
 }
 
 Exception::FormatExceptionSegment() {
-  local script="$1"
-  local -i lineNo="$2"
-  local stringToMark="$3"
-  local -i callPosition="${4:-1}"
+  local errorcode="$1"
+  local script="$2"
+  local -i lineNo="$3"
+  local stringToMark="$4"
+  local -i callPosition="${5:-1}"
+  #    [integer] errorcode
   #    [string] script
   #    [integer] lineNo
   #    [string] stringToMark
@@ -253,6 +260,7 @@ Exception::DumpBacktrace() {
     then
       local -a trace=( $(caller $i) )
 
+      echo "0"
       echo "${trace[0]}"
       echo "${trace[1]}"
       echo "${trace[@]:2}"
