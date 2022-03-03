@@ -7,6 +7,7 @@ alias try='[[ $__oo__insideTryCatch -eq 0 ]] || __oo__presetShellOpts="$(echo $-
 alias catch='); declare __oo__tryResult=$?; __oo__insideTryCatch+=-1; [[ $__oo__insideTryCatch -lt 1 ]] || set -${__oo__presetShellOpts:-e} && Exception::Extract $__oo__tryResult || '
 
 Exception::SetupTemp() {
+  declare -g __oo__storedExceptionErrorcodeFile="$(mktemp -t stored_exception_errorcode.$$.XXXXXXXXXX)"
   declare -g __oo__storedExceptionLineFile="$(mktemp -t stored_exception_line.$$.XXXXXXXXXX)"
   declare -g __oo__storedExceptionSourceFile="$(mktemp -t stored_exception_source.$$.XXXXXXXXXX)"
   declare -g __oo__storedExceptionBacktraceFile="$(mktemp -t stored_exception_backtrace.$$.XXXXXXXXXX)"
@@ -15,11 +16,12 @@ Exception::SetupTemp() {
 
 Exception::CleanUp() {
   local exitVal=$?
-  rm -f $__oo__storedExceptionLineFile $__oo__storedExceptionSourceFile $__oo__storedExceptionBacktraceFile $__oo__storedExceptionFile || exit 1
+  rm -f $__oo__storedExceptionErrorcodeFile $__oo__storedExceptionLineFile $__oo__storedExceptionSourceFile $__oo__storedExceptionBacktraceFile $__oo__storedExceptionFile || exit 1
   exit $exitVal
 }
 
 Exception::ResetStore() {
+  > $__oo__storedExceptionErrorcodeFile
   > $__oo__storedExceptionLineFile
   > $__oo__storedExceptionFile
   > $__oo__storedExceptionSourceFile
@@ -29,6 +31,7 @@ Exception::ResetStore() {
 Exception::GetLastException() {
   if [[ -s $__oo__storedExceptionFile ]]
   then
+    cat $__oo__storedExceptionErrorcodeFile
     cat $__oo__storedExceptionLineFile
     cat $__oo__storedExceptionFile
     cat $__oo__storedExceptionSourceFile
@@ -36,7 +39,7 @@ Exception::GetLastException() {
 
     Exception::ResetStore
   else
-    echo -e "${BASH_LINENO[1]}\n \n${BASH_SOURCE[2]#./}"
+    echo -e "$?\n${BASH_LINENO[1]}\n \n${BASH_SOURCE[2]#./}"
   fi
 }
 
@@ -54,6 +57,8 @@ Exception::Extract() {
 
     while [[ $counter -lt ${#__EXCEPTION__[@]} ]]
     do
+      __BACKTRACE_EXITCODE__[$backtraceNo]="${__EXCEPTION__[$counter]}"
+      counter+=1
       __BACKTRACE_LINE__[$backtraceNo]="${__EXCEPTION__[$counter]}"
       counter+=1
       __BACKTRACE_COMMAND__[$backtraceNo]="${__EXCEPTION__[$counter]}"
