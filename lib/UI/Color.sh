@@ -61,6 +61,7 @@ else
   # flags
   alias UI.Color.Bold="echo"
   alias UI.Color.Dim="echo"
+  alias UI.Color.Italics="echo"
   alias UI.Color.Underline="echo"
   alias UI.Color.Blink="echo"
   alias UI.Color.Invert="echo"
@@ -68,6 +69,7 @@ else
 
   alias UI.Color.NoBold="echo"
   alias UI.Color.NoDim="echo"
+  alias UI.Color.NoItalics="echo"
   alias UI.Color.NoUnderline="echo"
   alias UI.Color.NoBlink="echo"
   alias UI.Color.NoInvert="echo"
